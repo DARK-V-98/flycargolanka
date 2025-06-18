@@ -11,8 +11,23 @@ export default function Footer() {
             <span className="text-2xl font-bold">FlyCargo Lanka</span>
           </Link>
         </div>
-        <p className="text-base">&copy; {new Date().getFullYear()} FlyCargo Lanka. All rights reserved.</p>
-        <p className="text-sm mt-2 opacity-80">Powered by Fly Cargo Lanka</p>
+        
+        <div className="space-y-4">
+          <div>
+            <p className="text-base font-semibold">Contact Us</p>
+            <address className="mt-2 text-sm opacity-90 not-italic space-y-1">
+              <p>Fly cargo lanka. No.05, avariwatta, katunayake</p>
+              <p>Corporate Line: <a href="tel:+94112260310" className="hover:underline">+94 112 260 310</a></p>
+              <p>Hotline: <a href="tel:+94711318725" className="hover:underline">+94 711 318 725</a></p>
+              <p>Email: <a href="mailto:info@flycargolanka.lk" className="hover:underline">info@flycargolanka.lk</a></p>
+            </address>
+          </div>
+
+          <div className="pt-6 border-t border-accent-foreground/20">
+            <p className="text-base">&copy; {new Date().getFullYear()} FlyCargo Lanka. All rights reserved.</p>
+            <p className="text-sm mt-2 opacity-80">Powered by Fly Cargo Lanka</p>
+          </div>
+        </div>
       </div>
     </footer>
   );
