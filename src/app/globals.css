@@ -74,8 +74,17 @@
     filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.6)) drop-shadow(0 0 12px hsl(var(--primary) / 0.4));
   }
 
+  .text-outline-navy {
+    text-shadow: 
+      -1px -1px 0 hsl(var(--foreground)),  
+       1px -1px 0 hsl(var(--foreground)),
+      -1px  1px 0 hsl(var(--foreground)),
+       1px  1px 0 hsl(var(--foreground));
+  }
+
   .glass-pane {
     /* Light theme glass pane */
     @apply bg-[hsl(var(--card)/0.5)] backdrop-blur-md;
   }
 }
+
