@@ -4,19 +4,29 @@ import Image from 'next/image';
 export default function FlyCargoLogo() {
   return (
     <Link href="/" className="flex items-center space-x-2 text-3xl font-bold text-primary hover:text-primary/80 transition-colors font-headline">
-      <div className="relative w-10 h-10"> {/* Container for logo image and spinner */}
-        <Image 
-          src="/fg.png" 
-          alt="FlyCargo Logo" 
-          width={40} 
-          height={40} 
-          className="object-contain w-full h-full" 
-        />
-        {/* Spinning circle element */}
-        <div 
-          className="absolute inset-[-4px] border-2 border-primary rounded-full animate-spin-logo"
+      {/* Container for logo and spinner, sized to fit the spinner */}
+      <div className="relative w-12 h-12 flex items-center justify-center">
+        {/* Conic gradient spinner - fills its container (48px) */}
+        <div
+          className="absolute inset-0 rounded-full animate-spin-logo"
+          style={{
+            background: `conic-gradient(hsl(var(--primary)) 0% 50%, hsl(240, 60%, 25%) 50% 100%)`, // Gold and Navy Blue
+          }}
           aria-hidden="true"
-        ></div>
+        />
+        {/* Mask to create the ring effect - 44px diameter, centered, with page background color */}
+        <div
+          className="absolute w-11 h-11 rounded-full bg-background" /* Approx 44px */
+          aria-hidden="true"
+        />
+        {/* Logo image - 40px diameter, centered and on top */}
+        <Image
+          src="/fg.png"
+          alt="FlyCargo Logo"
+          width={40}
+          height={40}
+          className="object-contain w-10 h-10 relative z-10" // z-10 ensures it's above mask
+        />
       </div>
       <span>FlyCargo</span>
     </Link>
