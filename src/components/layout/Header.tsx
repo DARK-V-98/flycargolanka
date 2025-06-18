@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserPlus } from "lucide-react";
+import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import type { Route } from 'next';
 

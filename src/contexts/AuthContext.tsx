@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
+            photoURL: firebaseUser.photoURL, // This line ensures photoURL is captured
             role: determinedRole,
             createdAt: serverTimestamp(),
           };
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error.code === 'auth/email-already-in-use') {
         throw new Error("This email address is already registered. Please log in or use a different email.");
       }
-      throw error; // Rethrow other errors to be caught by the form
+      throw error; 
     }
   };
   
@@ -117,7 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         throw new Error("Invalid email or password. Please try again.");
       }
-      throw error; // Rethrow other errors to be caught by the form
+      throw error; 
     }
   };
 
