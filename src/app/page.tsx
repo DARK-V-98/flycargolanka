@@ -39,7 +39,7 @@ export default function Home() {
 
             {/* Column for the logo */}
             <div className="relative w-full h-full flex items-center justify-center opacity-0 animate-fadeInUp delay-500 order-3 mt-8 md:mt-0 py-12">
-              <div className="transform scale-200 md:scale-250">
+              <div className="transform scale-[5]">
                 <FlyCargoLogo hideText />
               </div>
             </div>

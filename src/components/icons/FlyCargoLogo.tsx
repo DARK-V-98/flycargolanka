@@ -28,8 +28,8 @@ export default function FlyCargoLogo({ hideText = false }: FlyCargoLogoProps) {
         <Image
           src="/fg.png"
           alt="FlyCargo Lanka Logo"
-          width={80}
-          height={80}
+          width={400}
+          height={400}
           className="object-contain w-10 h-10 relative z-10"
           priority
         />
