@@ -139,7 +139,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
             <div className="opacity-0 animate-fadeInUp delay-200"> {/* Image for About Us */}
-              <Image src="/about.png" alt="About FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" />
+              <Image src="/about.jpg" alt="About FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400"> {/* Text Content for About Us */}
               <div className="space-y-4">
