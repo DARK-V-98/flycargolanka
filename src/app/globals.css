@@ -94,4 +94,7 @@
   .marquee-item {
     @apply flex flex-shrink-0 items-center justify-center mx-6 relative transition-transform duration-300 ease-in-out hover:scale-105 h-24;
   }
+  .logo-remove-bg {
+    mix-blend-mode: multiply;
+  }
 }

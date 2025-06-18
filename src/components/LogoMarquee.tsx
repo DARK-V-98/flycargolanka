@@ -3,10 +3,12 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 interface LogoInfo {
   name: string;
   src: string;
+  removeBg?: boolean;
 }
 
 interface LogoMarqueeProps {
@@ -31,7 +33,10 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = '40s' }) => {
               alt={logo.name}
               width={150} 
               height={75}
-              className="object-contain"
+              className={cn(
+                "object-contain",
+                logo.removeBg && "logo-remove-bg"
+              )}
             />
           </div>
         ))}
