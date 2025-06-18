@@ -1,11 +1,11 @@
 
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Globe2, MapPin, Truck, Archive } from 'lucide-react';
 import TypingEffect from '@/components/TypingEffect';
+import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 
 const services = [
   { name: "International Shipping", icon: Globe2, description: "Reliable and fast international courier services to destinations worldwide.", href:"/services#international" },
@@ -22,7 +22,7 @@ export default function Home() {
             
             <div className="md:text-left text-center space-y-6 order-1">
               <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
-                Welcome to <TypingEffect text="FlyCargo Lanka" />
+                Welcome to <TypingEffect text="FlyCargo Lanka" typingSpeed={70} deletingSpeed={40} pauseDuration={1500} />
               </h1>
               <p className="text-xl md:text-2xl text-foreground/80 mb-8 opacity-0 animate-fadeInUp delay-200">
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
@@ -37,16 +37,11 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative w-full opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
-              <Image 
-                src="/her.png" 
-                alt="Hero Image FlyCargo Lanka" 
-                width={800} 
-                height={800} 
-                className="w-full h-full object-cover"
-                data-ai-hint="promotional banner"
-                priority
-              />
+            {/* Column for the logo (previously image) */}
+            <div className="relative w-full h-full flex items-center justify-center opacity-0 animate-fadeInUp delay-500 order-3 mt-8 md:mt-0 py-12">
+              <div className="transform scale-150 md:scale-200">
+                <FlyCargoLogo />
+              </div>
             </div>
           </div>
         </div>
