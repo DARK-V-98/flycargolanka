@@ -15,21 +15,43 @@ const services = [
 export default function Home() {
   return (
     <div className="space-y-16">
-      <section className="text-center py-12 md:py-20 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg overflow-hidden">
+      <section className="py-12 md:py-20 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg overflow-hidden relative">
         <div className="container mx-auto px-4">
-          <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
-            Welcome to FlyCargo
-          </h1>
-          <p className="text-xl md:text-2xl text-foreground/80 mb-8 max-w-3xl mx-auto opacity-0 animate-fadeInUp delay-200">
-            Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
-          </p>
-          <div className="space-x-4 opacity-0 animate-fadeInUp delay-400">
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-300 hover:scale-105">
-              <Link href="/book">Book a Courier</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 transition-transform duration-300 hover:scale-105">
-              <Link href="/calculator">Get a Quote</Link>
-            </Button>
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_auto_minmax(0,_3fr)] gap-x-8 items-center">
+            
+            <div className="md:text-left text-center space-y-6 order-1">
+              <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
+                Welcome to FlyCargo
+              </h1>
+              <p className="text-xl md:text-2xl text-foreground/80 mb-8 opacity-0 animate-fadeInUp delay-200">
+                Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
+              </p>
+              <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start opacity-0 animate-fadeInUp delay-400">
+                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-300 hover:scale-105">
+                  <Link href="/book">Book a Courier</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 transition-transform duration-300 hover:scale-105">
+                  <Link href="/calculator">Get a Quote</Link>
+                </Button>
+              </div>
+            </div>
+
+            <div className="hidden md:flex order-2 self-stretch justify-center items-center mx-4">
+              <div className="h-3/4 w-16 glass-pane rounded-lg"></div>
+            </div>
+
+            <div className="relative w-full h-auto aspect-video opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
+              <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline 
+                src="/hero.webm" 
+                className="w-full h-full object-cover"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
           </div>
         </div>
       </section>
