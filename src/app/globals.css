@@ -9,89 +9,89 @@ body {
 
 @layer base {
   :root {
-    --background: 212 40% 8%; /* Very Dark Navy - effectively black */
-    --foreground: 47 50% 90%; /* Light, slightly warm off-white for text */
+    --background: 0 0% 5%; /* Very Dark Grey / Near Black */
+    --foreground: 0 0% 90%; /* Light Grey / Off-white for text */
 
-    --card: 212 40% 12%; /* Slightly lighter dark navy for cards */
-    --card-foreground: 47 50% 90%; /* Light text in cards */
+    --card: 0 0% 10%; /* Slightly lighter dark grey for cards */
+    --card-foreground: 0 0% 90%; /* Light text in cards */
 
-    --popover: 212 40% 12%; /* Dark popover */
-    --popover-foreground: 47 50% 90%; /* Light text in popovers */
+    --popover: 0 0% 10%; /* Dark popover */
+    --popover-foreground: 0 0% 90%; /* Light text in popovers */
 
     --primary: 45 90% 58%; /* Neon Gold */
-    --primary-foreground: 210 30% 15%; /* Dark desaturated blue for text on gold */
+    --primary-foreground: 0 0% 10%; /* Very Dark Grey for text on gold */
 
-    --secondary: 212 30% 20%; /* Medium-dark navy for secondary elements */
-    --secondary-foreground: 47 50% 80%; /* Lighter text for secondary */
+    --secondary: 0 0% 15%; /* Medium-dark grey for secondary elements */
+    --secondary-foreground: 0 0% 80%; /* Lighter text for secondary */
 
-    --muted: 212 30% 18%; /* Muted dark navy */
-    --muted-foreground: 47 50% 70%; /* Muted text */
+    --muted: 0 0% 12%; /* Muted dark grey */
+    --muted-foreground: 0 0% 70%; /* Muted text */
 
-    --accent: 210 60% 50%; /* Noticeable medium royal/navy blue for accents */
-    --accent-foreground: 0 0% 100%; /* White for text on blue accent */
+    --accent: 45 90% 58%; /* Neon Gold (same as primary) */
+    --accent-foreground: 0 0% 10%; /* Very Dark Grey for text on gold accent */
 
     --destructive: 0 70% 60%; /* Vibrant Red for destructive actions */
     --destructive-foreground: 0 0% 100%; /* White text on red */
 
-    --border: 212 30% 25%; /* Subtle dark navy border */
-    --input: 212 30% 15%; /* Dark input field background */
-    --ring: 45 90% 58%; /* Neon Gold for focus rings */
+    --border: 0 0% 20%; /* Subtle dark grey border */
+    --input: 0 0% 10%; /* Dark input field background (same as card) */
+    --ring: 45 90% 58%; /* Neon Gold for focus rings (same as primary) */
 
     --chart-1: 45 90% 58%;  /* Neon Gold */
-    --chart-2: 210 60% 60%; /* Lighter Accent Blue */
+    --chart-2: 45 90% 65%; /* Lighter Gold */
     --chart-3: 45 85% 50%;  /* Darker Neon Gold */
-    --chart-4: 210 50% 40%; /* Darker Accent Blue */
-    --chart-5: 40 95% 65%;  /* Lighter Neon Gold */
+    --chart-4: 45 80% 45%; /* Another shade of gold */
+    --chart-5: 40 95% 65%;  /* Lighter Neon Gold (slightly different hue) */
     --radius: 0.5rem;
 
     /* Sidebar specific colors - now matching the dark theme */
-    --sidebar-background: 212 40% 5%; 
-    --sidebar-foreground: 47 50% 90%; 
+    --sidebar-background: 0 0% 3%; 
+    --sidebar-foreground: 0 0% 90%; 
     --sidebar-primary: 45 90% 58%; /* Neon Gold */
-    --sidebar-primary-foreground: 210 30% 15%; 
-    --sidebar-accent: 210 60% 50%; /* Medium Blue Accent */
-    --sidebar-accent-foreground: 0 0% 100%; 
-    --sidebar-border: 212 30% 20%;
+    --sidebar-primary-foreground: 0 0% 10%; 
+    --sidebar-accent: 45 90% 58%; /* Neon Gold Accent */
+    --sidebar-accent-foreground: 0 0% 10%; 
+    --sidebar-border: 0 0% 15%;
     --sidebar-ring: 45 90% 58%; /* Neon Gold */
   }
 
   .dark {
-    --background: 212 40% 8%; 
-    --foreground: 47 50% 90%; 
+    --background: 0 0% 5%; 
+    --foreground: 0 0% 90%; 
 
-    --card: 212 40% 12%; 
-    --card-foreground: 47 50% 90%; 
+    --card: 0 0% 10%; 
+    --card-foreground: 0 0% 90%; 
 
-    --popover: 212 40% 12%;
-    --popover-foreground: 47 50% 90%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 90%;
 
-    --primary: 45 90% 58%; /* Neon Gold (could be slightly lighter for dark mode if needed, but keeping consistent for now) */
-    --primary-foreground: 210 30% 15%; 
+    --primary: 45 90% 58%; 
+    --primary-foreground: 0 0% 10%; 
 
-    --secondary: 212 30% 20%; 
-    --secondary-foreground: 47 50% 80%; 
+    --secondary: 0 0% 15%; 
+    --secondary-foreground: 0 0% 80%; 
 
-    --muted: 212 30% 18%;
-    --muted-foreground: 47 50% 70%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 210 60% 50%; 
-    --accent-foreground: 0 0% 100%; 
+    --accent: 45 90% 58%; 
+    --accent-foreground: 0 0% 10%; 
 
     --destructive: 0 70% 60%; 
     --destructive-foreground: 0 0% 100%;
 
-    --border: 212 30% 25%;
-    --input: 212 30% 15%; 
+    --border: 0 0% 20%;
+    --input: 0 0% 10%; 
     --ring: 45 90% 58%;
     
     /* Sidebar dark theme adjustments - consistent with new default dark */
-    --sidebar-background: 212 40% 5%; 
-    --sidebar-foreground: 47 50% 90%; 
+    --sidebar-background: 0 0% 3%; 
+    --sidebar-foreground: 0 0% 90%; 
     --sidebar-primary: 45 90% 58%; 
-    --sidebar-primary-foreground: 210 30% 15%; 
-    --sidebar-accent: 210 60% 50%; 
-    --sidebar-accent-foreground: 0 0% 100%; 
-    --sidebar-border: 212 30% 20%;
+    --sidebar-primary-foreground: 0 0% 10%; 
+    --sidebar-accent: 45 90% 58%; 
+    --sidebar-accent-foreground: 0 0% 10%; 
+    --sidebar-border: 0 0% 15%;
     --sidebar-ring: 45 90% 58%;
   }
 }
@@ -158,6 +158,6 @@ body {
   }
 
   .glass-pane {
-    @apply bg-white/5 backdrop-blur-md; /* Adjusted for darker background, less white opacity */
+    @apply bg-[hsl(0_0%_100%_/_0.05)] backdrop-blur-md; /* Adjusted for darker background, less white opacity */
   }
 }

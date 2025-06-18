@@ -10,7 +10,7 @@ export default function FlyCargoLogo() {
         <div
           className="absolute inset-0 rounded-full animate-spin-logo"
           style={{
-            background: `conic-gradient(hsl(var(--primary)) 0% 50%, hsl(212, 56%, 11%) 50% 100%)`, 
+            background: `conic-gradient(hsl(var(--primary)) 0% 50%, hsl(var(--background)) 50% 100%)`, 
           }}
           aria-hidden="true"
         />
