@@ -14,14 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog } from "lucide-react"; // Added UserCog
+import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog, Info } from "lucide-react"; // Added UserCog, Info
 import { useAuth } from '@/contexts/AuthContext';
 import type { Route } from 'next';
 
 
 const baseNavItems = [
   { href: '/', label: 'Home' },
-  { href: '/services', label: 'Services' },
+  { href: '/services', label: 'About Us' }, // Changed "Services" to "About Us"
   { href: '/calculator', label: 'Calculator' },
   { href: '/book', label: 'Book Courier' },
 ];
@@ -52,6 +52,7 @@ export default function Header() {
               <NavLink key={item.label} href={item.href} className="text-base px-2 py-1.5">
                 {item.label === 'Admin Dashboard' && <ShieldCheck className="inline-block mr-0.5 h-3.5 w-3.5" />}
                 {item.label === 'Track Package' && <PackageSearch className="inline-block mr-0.5 h-3.5 w-3.5" />}
+                {item.label === 'About Us' && <Info className="inline-block mr-0.5 h-3.5 w-3.5" />}
                 {item.label}
               </NavLink>
             ))}
@@ -116,6 +117,7 @@ export default function Header() {
                     <NavLink key={item.label} href={item.href} className="text-lg text-center py-2.5">
                        {item.label === 'Admin Dashboard' && <ShieldCheck className="inline-block mr-2 h-5 w-5" />}
                        {item.label === 'Track Package' && <PackageSearch className="inline-block mr-2 h-5 w-5" />}
+                       {item.label === 'About Us' && <Info className="inline-block mr-2 h-5 w-5" />}
                       {item.label}
                     </NavLink>
                   ))}
