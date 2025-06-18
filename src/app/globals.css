@@ -83,7 +83,7 @@
   }
 
   .marquee-container {
-    @apply w-full overflow-hidden py-4 bg-white;
+    @apply w-full overflow-hidden py-4;
   }
   .marquee-content {
     @apply flex animate-marquee whitespace-nowrap;
