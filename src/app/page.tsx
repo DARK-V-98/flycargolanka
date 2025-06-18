@@ -27,7 +27,7 @@ export default function Home() {
           src="/bg.mp4"
           type="video/mp4"
         />
-        <div className="absolute inset-0 w-full h-full bg-black/30 z-10"></div> {/* Overlay */}
+        {/* The overlay div that was here has been removed */}
         
         <div className="container mx-auto px-4 relative z-20"> {/* Content on top */}
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
