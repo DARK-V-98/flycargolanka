@@ -9,7 +9,7 @@ interface FlyCargoLogoProps {
 
 export default function FlyCargoLogo({ hideText = false, showSpinner = true }: FlyCargoLogoProps) {
   return (
-    <Link href="/" className="flex items-center space-x-2 text-3xl font-bold text-primary hover:text-primary/80 transition-colors font-headline">
+    <Link href="/" className="flex items-center space-x-2 text-3xl font-bold hover:text-[hsl(var(--chart-1))]/80 transition-colors font-headline">
       {/* Container for logo and spinner, sized to fit the spinner */}
       <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
         {showSpinner && (
@@ -39,7 +39,7 @@ export default function FlyCargoLogo({ hideText = false, showSpinner = true }: F
           priority
         />
       </div>
-      {!hideText && <span className="text-glow-primary">FlyCargo Lanka</span>}
+      {!hideText && <span className="text-glow-primary text-[hsl(var(--chart-1))]">FlyCargo Lanka</span>}
     </Link>
   );
 }
