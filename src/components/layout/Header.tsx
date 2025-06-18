@@ -49,9 +49,9 @@ export default function Header() {
         <div className="flex items-center space-x-4">
           <nav className="hidden md:flex space-x-1 items-center">
             {navItemsToDisplay.map((item) => (
-              <NavLink key={item.label} href={item.href} className="text-base px-3 py-1.5">
-                {item.label === 'Admin Dashboard' && <ShieldCheck className="inline-block mr-1 h-4 w-4" />}
-                {item.label === 'Track Package' && <PackageSearch className="inline-block mr-1 h-4 w-4" />}
+              <NavLink key={item.label} href={item.href} className="text-base px-2 py-1.5">
+                {item.label === 'Admin Dashboard' && <ShieldCheck className="inline-block mr-0.5 h-3.5 w-3.5" />}
+                {item.label === 'Track Package' && <PackageSearch className="inline-block mr-0.5 h-3.5 w-3.5" />}
                 {item.label}
               </NavLink>
             ))}
