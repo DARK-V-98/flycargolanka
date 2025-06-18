@@ -161,30 +161,44 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Our Vision Section - Full width, glass-pane */}
+      {/* Our Vision Section - Text Left, Image Right */}
       <section className="py-12 md:py-16 opacity-0 animate-fadeInUp delay-500">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto p-6 md:p-10 text-primary-foreground rounded-xl shadow-2xl overflow-hidden glass-pane">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6 text-center">
-              Our Vision
-            </h2>
-            <p className="text-lg md:text-xl text-center">
-              "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
-            </p>
+          <div className="opacity-0 animate-fadeInUp">
+            <PageHeader title="Our Vision" />
+          </div>
+          <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
+            <div className="opacity-0 animate-fadeInUp delay-200"> {/* Text Content for Vision */}
+              <div className="p-6 md:p-10 text-primary-foreground rounded-xl shadow-2xl overflow-hidden glass-pane">
+                <p className="text-lg md:text-xl text-center">
+                  "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
+                </p>
+              </div>
+            </div>
+            <div className="opacity-0 animate-fadeInUp delay-400"> {/* Image for Vision */}
+              <Image src="https://placehold.co/600x400.png" alt="Our Vision" width={600} height={400} className="rounded-lg shadow-xl object-cover aspect-[3/2]" data-ai-hint="future strategy" />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Our Mission Section - Full width, glass-pane */}
+      {/* Our Mission Section - Image Left, Text Right */}
       <section className="py-12 md:py-16 opacity-0 animate-fadeInUp delay-600">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto p-6 md:p-10 text-primary-foreground rounded-xl shadow-2xl overflow-hidden glass-pane">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6 text-center">
-              Our Mission
-            </h2>
-            <p className="text-lg md:text-xl text-center">
-              "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
-            </p>
+          <div className="opacity-0 animate-fadeInUp">
+            <PageHeader title="Our Mission" />
+          </div>
+          <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
+            <div className="opacity-0 animate-fadeInUp delay-200"> {/* Image for Mission */}
+              <Image src="https://placehold.co/600x400.png" alt="Our Mission" width={600} height={400} className="rounded-lg shadow-xl object-cover aspect-[3/2]" data-ai-hint="team action" />
+            </div>
+            <div className="opacity-0 animate-fadeInUp delay-400"> {/* Text Content for Mission */}
+              <div className="p-6 md:p-10 text-primary-foreground rounded-xl shadow-2xl overflow-hidden glass-pane">
+                <p className="text-lg md:text-xl text-center">
+                  "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
