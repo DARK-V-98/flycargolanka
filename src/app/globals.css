@@ -3,12 +3,57 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Poppins', sans-serif;
-}
-
 @layer base {
   :root {
+    /* FlyCargo Light Theme (Default) */
+    --background: 45 67% 94%; /* #FAF5E7 (Very light tint of gold) */
+    --foreground: 209 47% 11%; /* #0D1B2A (Dark navy blue for text) */
+
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 209 47% 11%; /* Dark navy blue */
+
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 209 47% 11%; /* Dark navy blue */
+
+    --primary: 45 79% 51%; /* #D4AF37 (Gold) */
+    --primary-foreground: 209 47% 11%; /* Dark navy blue (text on gold) */
+    
+    --secondary: 45 60% 88%; /* #F7F0DF (Lighter gold/beige) */
+    --secondary-foreground: 209 47% 11%; /* Dark navy blue */
+
+    --muted: 45 60% 92%; /* #F9F5ED (Even lighter gold/beige) */
+    --muted-foreground: 209 47% 25%; /* #2A3B4D (Slightly lighter navy for muted text) */
+
+    --accent: 209 47% 11%; /* #0D1B2A (Dark navy blue) */
+    --accent-foreground: 0 0% 100%; /* White (text on navy accent) */
+
+    --destructive: 0 84% 60%; /* Standard Red */
+    --destructive-foreground: 0 0% 100%; /* White text on red */
+
+    --border: 45 50% 80%; /* #EBE2C9 (Light gold/beige border) */
+    --input: 0 0% 100%; /* White input background */
+    --ring: 45 79% 51%; /* Gold for focus rings */
+
+    --chart-1: 45 79% 45%;  /* Darker Gold */
+    --chart-2: 45 79% 55%; /* Medium Gold */
+    --chart-3: 35 75% 40%;  /* Orangey Gold */
+    --chart-4: 209 40% 30%; /* Darker Navy */
+    --chart-5: 209 50% 50%;  /* Brighter Navy */
+    --radius: 0.5rem;
+
+    /* Sidebar light theme */
+    --sidebar-background: 45 60% 96%; /* #FCF8F1 (Slightly off-white goldish) */
+    --sidebar-foreground: 209 47% 11%; /* Dark navy */
+    --sidebar-primary: 45 79% 51%; /* Gold */
+    --sidebar-primary-foreground: 209 47% 11%; /* Dark navy */
+    --sidebar-accent: 209 47% 11%; /* Dark navy */
+    --sidebar-accent-foreground: 0 0% 100%; /* White */
+    --sidebar-border: 45 50% 80%; /* Light gold/beige border */
+    --sidebar-ring: 45 79% 51%; /* Gold */
+  }
+
+  .dark {
+    /* FlyCargo Dark Theme (Original "Neon Gold" theme) */
     --background: 0 0% 5%; /* Very Dark Grey / Near Black */
     --foreground: 0 0% 90%; /* Light Grey / Off-white for text */
 
@@ -27,7 +72,7 @@ body {
     --muted: 0 0% 12%; /* Muted dark grey */
     --muted-foreground: 0 0% 70%; /* Muted text */
 
-    --accent: 45 90% 58%; /* Neon Gold (same as primary) */
+    --accent: 45 90% 58%; /* Neon Gold (same as primary for dark theme) */
     --accent-foreground: 0 0% 10%; /* Very Dark Grey for text on gold accent */
 
     --destructive: 0 70% 60%; /* Vibrant Red for destructive actions */
@@ -42,49 +87,8 @@ body {
     --chart-3: 45 85% 50%;  /* Darker Neon Gold */
     --chart-4: 45 80% 45%; /* Another shade of gold */
     --chart-5: 40 95% 65%;  /* Lighter Neon Gold (slightly different hue) */
-    --radius: 0.5rem;
-
-    /* Sidebar specific colors - now matching the dark theme */
-    --sidebar-background: 0 0% 3%; 
-    --sidebar-foreground: 0 0% 90%; 
-    --sidebar-primary: 45 90% 58%; /* Neon Gold */
-    --sidebar-primary-foreground: 0 0% 10%; 
-    --sidebar-accent: 45 90% 58%; /* Neon Gold Accent */
-    --sidebar-accent-foreground: 0 0% 10%; 
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 45 90% 58%; /* Neon Gold */
-  }
-
-  .dark {
-    --background: 0 0% 5%; 
-    --foreground: 0 0% 90%; 
-
-    --card: 0 0% 10%; 
-    --card-foreground: 0 0% 90%; 
-
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 90%;
-
-    --primary: 45 90% 58%; 
-    --primary-foreground: 0 0% 10%; 
-
-    --secondary: 0 0% 15%; 
-    --secondary-foreground: 0 0% 80%; 
-
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 70%;
-
-    --accent: 45 90% 58%; 
-    --accent-foreground: 0 0% 10%; 
-
-    --destructive: 0 70% 60%; 
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 20%;
-    --input: 0 0% 10%; 
-    --ring: 45 90% 58%;
     
-    /* Sidebar dark theme adjustments - consistent with new default dark */
+    /* Sidebar dark theme adjustments */
     --sidebar-background: 0 0% 3%; 
     --sidebar-foreground: 0 0% 90%; 
     --sidebar-primary: 45 90% 58%; 
@@ -102,6 +106,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    transition-colors duration-300 ease-in-out; /* Add transition for theme change */
   }
 }
 
@@ -158,6 +163,11 @@ body {
   }
 
   .glass-pane {
-    @apply bg-[hsl(0_0%_100%_/_0.05)] backdrop-blur-md; /* Adjusted for darker background, less white opacity */
+    /* Light theme glass pane */
+    @apply bg-[hsl(var(--card)/0.5)] backdrop-blur-md;
+  }
+  .dark .glass-pane {
+    /* Dark theme glass pane */
+    @apply bg-[hsl(0_0%_100%_/_0.05)] backdrop-blur-md;
   }
 }
