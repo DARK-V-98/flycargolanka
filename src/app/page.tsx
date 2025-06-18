@@ -66,7 +66,7 @@ export default function Home() {
           <PageHeader title="Why Choose FlyCargo Lanka?" description="Experience the difference with our commitment to excellence." />
         </div>
         <div className="grid md:grid-cols-3 gap-8">
-          <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-200 glass-pane">
+          <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-200">
             <CardHeader>
               <CardTitle className="text-accent flex items-center"><Truck className="mr-2 h-6 w-6 text-primary" />Reliability</CardTitle>
             </CardHeader>
@@ -74,7 +74,7 @@ export default function Home() {
               <p className="text-foreground/90">Count on us for on-time deliveries and secure handling of your valuable packages.</p>
             </CardContent>
           </Card>
-          <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-300 glass-pane">
+          <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-300">
             <CardHeader>
               <CardTitle className="text-accent flex items-center"><Globe2 className="mr-2 h-6 w-6 text-primary" />Global Reach</CardTitle>
             </CardHeader>
@@ -82,7 +82,7 @@ export default function Home() {
               <p className="text-foreground/90">We connect you to a vast network of destinations, both locally and internationally.</p>
             </CardContent>
           </Card>
-          <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-400 glass-pane">
+          <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-400">
             <CardHeader>
               <CardTitle className="text-accent flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-6 w-6"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>Customer Support</CardTitle>
             </CardHeader>
@@ -101,7 +101,7 @@ export default function Home() {
           {services.map((service, index) => (
             <Card 
               key={service.name} 
-              className="shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 opacity-0 animate-fadeInScaleUp glass-pane"
+              className="shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 opacity-0 animate-fadeInScaleUp"
               style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
             >
               <CardHeader className="items-center">
@@ -248,3 +248,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
