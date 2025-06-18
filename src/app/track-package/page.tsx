@@ -47,7 +47,7 @@ export default function TrackPackagePage() {
 
   const onSubmit = (data: TrackingFormValues) => {
     // Mock tracking logic
-    alert(\`Tracking package: \${data.trackingNumber}\`);
+    alert(`Tracking package: ${data.trackingNumber}`);
     form.reset();
   };
 
