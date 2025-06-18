@@ -5,6 +5,7 @@ import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Globe2, MapPin, Truck, Archive } from 'lucide-react';
+import TypingEffect from '@/components/TypingEffect';
 
 const services = [
   { name: "International Shipping", icon: Globe2, description: "Reliable and fast international courier services to destinations worldwide.", href:"/services#international" },
@@ -21,7 +22,7 @@ export default function Home() {
             
             <div className="md:text-left text-center space-y-6 order-1">
               <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
-                Welcome to FlyCargo Lanka
+                Welcome to <TypingEffect text="FlyCargo Lanka" />
               </h1>
               <p className="text-xl md:text-2xl text-foreground/80 mb-8 opacity-0 animate-fadeInUp delay-200">
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
