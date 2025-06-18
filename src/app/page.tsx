@@ -44,8 +44,8 @@ export default function Home() {
               <Image 
                 src="/he.png" 
                 alt="Hero Image" 
-                width={600} 
-                height={400} 
+                width={1200} 
+                height={800} 
                 className="w-full h-full object-cover"
                 data-ai-hint="promotional banner"
                 priority
@@ -131,3 +131,4 @@ export default function Home() {
     </div>
   );
 }
+
