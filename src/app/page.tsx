@@ -17,7 +17,7 @@ export default function Home() {
     <div className="space-y-16">
       <section className="py-12 md:py-20 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg overflow-hidden relative">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_auto_minmax(0,_3fr)] gap-x-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
             
             <div className="md:text-left text-center space-y-6 order-1">
               <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
@@ -34,10 +34,6 @@ export default function Home() {
                   <Link href="/calculator">Get a Quote</Link>
                 </Button>
               </div>
-            </div>
-
-            <div className="hidden md:flex order-2 self-stretch justify-center items-center mx-4">
-              <div className="h-3/4 w-16 glass-pane rounded-lg"></div>
             </div>
 
             <div className="relative w-full h-auto opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
