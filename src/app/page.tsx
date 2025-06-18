@@ -17,14 +17,14 @@ const services = [
 
 export default function Home() {
   const partnerLogos = [
-    { name: "AliExpress", src: "/logos/ali.webp" },
-    { name: "Walmart", src: "/logos/wall.webp" },
-    { name: "Amazon", src: "/logos/amazon.svg" },
-    { name: "Bonanza", src: "/logos/bonanza.jpg" },
-    { name: "eBay", src: "/logos/ebay.svg" },
-    { name: "Etsy", src: "/logos/etsy.svg" },
-    { name: "Payoneer", src: "/logos/Payoneer.webp" },
-    { name: "Wish", src: "/logos/Wish.svg" },
+    { name: "AliExpress", src: "/ali.webp" },
+    { name: "Walmart", src: "/wall.webp" },
+    { name: "Amazon", src: "/amazon.svg" },
+    { name: "Bonanza", src: "/bonanza.jpg" },
+    { name: "eBay", src: "/ebay.svg" },
+    { name: "Etsy", src: "/etsy.svg" },
+    { name: "Payoneer", src: "/Payoneer.webp" },
+    { name: "Wish", src: "/Wish.svg" },
   ];
 
   return (
@@ -197,3 +197,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
