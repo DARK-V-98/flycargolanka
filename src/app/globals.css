@@ -82,9 +82,16 @@
        1px  1px 0 hsl(var(--foreground));
   }
 
+  .text-shadow-3d-navy {
+    text-shadow:
+      1px 1px 0px hsl(var(--accent)),
+      2px 2px 0px hsl(var(--accent) / 0.9),
+      3px 3px 0px hsl(var(--accent) / 0.8),
+      4px 4px 2px hsl(var(--accent) / 0.3);
+  }
+
   .glass-pane {
     /* Light theme glass pane */
     @apply bg-[hsl(var(--card)/0.5)] backdrop-blur-md;
   }
 }
-
