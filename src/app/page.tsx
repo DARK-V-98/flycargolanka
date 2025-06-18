@@ -107,7 +107,7 @@ export default function Home() {
       </section>
 
       {/* Why Us Section - Text Left, Image Right */}
-      <section className="py-12 md:py-16">
+      <section className="py-12 md:py-16 opacity-0 animate-fadeInUp">
         <div className="container mx-auto px-4">
           <div className="opacity-0 animate-fadeInUp">
             <PageHeader title="Why Us?" description="Key advantages of partnering with FlyCargo Lanka."/>
@@ -135,24 +135,24 @@ export default function Home() {
       </section>
 
       {/* About Us Section - Image Left, Text Right */}
-      <section className="py-12 md:py-16">
+      <section className="py-12 md:py-16 opacity-0 animate-fadeInUp delay-300">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
+          <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
             <div className="opacity-0 animate-fadeInUp delay-200"> {/* Image for About Us */}
               <Image src="https://placehold.co/600x400.png" alt="About FlyCargo Lanka" width={600} height={400} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400"> {/* Text Content for About Us */}
-              <div className="p-6 md:p-10 text-primary-foreground rounded-xl shadow-2xl overflow-hidden glass-pane">
-                <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6 text-center">
+              <div className="space-y-4">
+                <h2 className="text-3xl md:text-4xl font-bold font-headline text-accent mb-6 text-center">
                   About Us
                 </h2>
-                <p className="text-lg md:text-xl mb-4 text-center">
+                <p className="text-lg md:text-xl mb-4 text-center text-foreground/80">
                   At FlyCargo Lanka, we empower ecommerce businesses to soar beyond borders with fast, reliable, and affordable air cargo solutions.
                 </p>
-                <p className="text-lg md:text-xl mb-4 text-center">
+                <p className="text-lg md:text-xl mb-4 text-center text-foreground/80">
                   We understand the unique needs of online sellers, which is why we offer free insurance for your shipments, ensuring peace of mind with every delivery. Our commitment to competitive rates means you can send parcels worldwide without breaking the bank.
                 </p>
-                <p className="text-lg md:text-xl text-center">
+                <p className="text-lg md:text-xl text-center text-foreground/80">
                   Powered by innovative technology and a customer-first approach, we provide seamless logistics to help Sri Lankan ecommerce entrepreneurs thrive in the global marketplace. Trust FlyCargo Lanka to deliver your success, one parcel at a time.
                 </p>
               </div>
@@ -169,8 +169,8 @@ export default function Home() {
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
             <div className="opacity-0 animate-fadeInUp delay-200"> {/* Text Content for Vision */}
-              <div className="p-6 md:p-10 text-primary-foreground rounded-xl shadow-2xl overflow-hidden glass-pane">
-                <p className="text-lg md:text-xl text-center">
+              <div>
+                <p className="text-lg md:text-xl text-center text-foreground/80">
                   "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
                 </p>
               </div>
@@ -193,8 +193,8 @@ export default function Home() {
               <Image src="/mission.png" alt="Our Mission" width={600} height={400} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="team action" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400"> {/* Text Content for Mission */}
-              <div className="p-6 md:p-10 text-primary-foreground rounded-xl shadow-2xl overflow-hidden glass-pane">
-                <p className="text-lg md:text-xl text-center">
+              <div>
+                <p className="text-lg md:text-xl text-center text-foreground/80">
                   "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
                 </p>
               </div>
@@ -220,3 +220,4 @@ export default function Home() {
     </div>
   );
 }
+
