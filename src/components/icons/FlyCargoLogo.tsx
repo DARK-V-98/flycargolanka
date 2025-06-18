@@ -1,7 +1,12 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function FlyCargoLogo() {
+interface FlyCargoLogoProps {
+  hideText?: boolean;
+}
+
+export default function FlyCargoLogo({ hideText = false }: FlyCargoLogoProps) {
   return (
     <Link href="/" className="flex items-center space-x-2 text-3xl font-bold text-primary hover:text-primary/80 transition-colors font-headline">
       {/* Container for logo and spinner, sized to fit the spinner */}
@@ -29,7 +34,7 @@ export default function FlyCargoLogo() {
           priority
         />
       </div>
-      <span className="text-glow-primary">FlyCargo Lanka</span>
+      {!hideText && <span className="text-glow-primary">FlyCargo Lanka</span>}
     </Link>
   );
 }
