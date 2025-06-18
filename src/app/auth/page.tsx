@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, LogIn, UserPlus, Mail, Lock, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, LogIn, UserPlus, Mail, Lock, RefreshCcw, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
 const loginSchema = z.object({
@@ -41,6 +41,7 @@ type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export default function AuthPage() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
   const { signInWithGoogle, signUpWithEmail, signInWithEmail, sendPasswordReset } = useAuth();
   const { toast } = useToast();
 
@@ -59,6 +60,11 @@ export default function AuthPage() {
     defaultValues: { email: '' },
   });
 
+  const isAnyAuthOperationPending = 
+    loginForm.formState.isSubmitting || 
+    signupForm.formState.isSubmitting || 
+    forgotPasswordForm.formState.isSubmitting ||
+    isGoogleSigningIn;
 
   const handleLogin: SubmitHandler<LoginFormValues> = async (data) => {
     try {
@@ -108,8 +114,9 @@ export default function AuthPage() {
     }
   };
 
-
   const handleGoogleSignIn = async () => {
+    if (isAnyAuthOperationPending) return;
+    setIsGoogleSigningIn(true);
     try {
       await signInWithGoogle();
       // Redirect is handled by AuthContext
@@ -120,6 +127,8 @@ export default function AuthPage() {
         variant: "destructive",
         action: <AlertTriangle className="text-yellow-500" />
       });
+    } finally {
+      setIsGoogleSigningIn(false);
     }
   };
   
@@ -189,13 +198,28 @@ export default function AuthPage() {
                     </FormItem>
                   )}
                 />
-                 <Button type="button" variant="link" onClick={() => setShowForgotPassword(true)} className="px-0 text-sm text-primary hover:text-primary/80">
+                 <Button 
+                    type="button" 
+                    variant="link" 
+                    onClick={() => setShowForgotPassword(true)} 
+                    className="px-0 text-sm text-primary hover:text-primary/80"
+                    disabled={isAnyAuthOperationPending}
+                  >
                       Forgot Password?
                   </Button>
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
-                <Button type="submit" className="w-full py-3 text-base" size="lg">
-                  <LogIn className="mr-2 h-5 w-5"/> Login
+                <Button 
+                    type="submit" 
+                    className="w-full py-3 text-base" 
+                    size="lg"
+                    disabled={isAnyAuthOperationPending}
+                >
+                  {loginForm.formState.isSubmitting ? (
+                    <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Logging in...</>
+                  ) : (
+                    <><LogIn className="mr-2 h-5 w-5"/> Login</>
+                  )}
                 </Button>
                 <div className="relative w-full my-2">
                   <div className="absolute inset-0 flex items-center">
@@ -207,13 +231,29 @@ export default function AuthPage() {
                     </span>
                   </div>
                 </div>
-                <Button variant="outline" type="button" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
-                   <Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" />
-                  Sign in with Google
+                <Button 
+                    variant="outline" 
+                    type="button" 
+                    onClick={handleGoogleSignIn} 
+                    className="w-full py-3 text-base" 
+                    size="lg"
+                    disabled={isAnyAuthOperationPending}
+                >
+                   {isGoogleSigningIn ? (
+                     <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Signing in...</>
+                   ) : (
+                     <><Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" /> Sign in with Google</>
+                   )}
                 </Button>
                 <p className="text-sm text-muted-foreground pt-2">
                   Don't have an account?{' '}
-                  <Button variant="link" type="button" onClick={() => setIsFlipped(prev => !prev)} className="text-primary hover:text-primary/80 px-1">
+                  <Button 
+                    variant="link" 
+                    type="button" 
+                    onClick={() => !isAnyAuthOperationPending && setIsFlipped(prev => !prev)} 
+                    className="text-primary hover:text-primary/80 px-1"
+                    disabled={isAnyAuthOperationPending}
+                  >
                     Sign Up <UserPlus className="ml-1 h-4 w-4" />
                   </Button>
                 </p>
@@ -281,8 +321,17 @@ export default function AuthPage() {
                 />
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
-                <Button type="submit" className="w-full py-3 text-base" size="lg">
-                  <UserPlus className="mr-2 h-5 w-5"/> Sign Up
+                <Button 
+                    type="submit" 
+                    className="w-full py-3 text-base" 
+                    size="lg"
+                    disabled={isAnyAuthOperationPending}
+                >
+                  {signupForm.formState.isSubmitting ? (
+                    <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Signing Up...</>
+                  ) : (
+                    <><UserPlus className="mr-2 h-5 w-5"/> Sign Up</>
+                  )}
                 </Button>
                  <div className="relative w-full my-2">
                   <div className="absolute inset-0 flex items-center">
@@ -294,13 +343,29 @@ export default function AuthPage() {
                     </span>
                   </div>
                 </div>
-                 <Button variant="outline" type="button" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
-                   <Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" />
-                  Sign up with Google
+                 <Button 
+                    variant="outline" 
+                    type="button" 
+                    onClick={handleGoogleSignIn} 
+                    className="w-full py-3 text-base" 
+                    size="lg"
+                    disabled={isAnyAuthOperationPending}
+                 >
+                   {isGoogleSigningIn ? (
+                     <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Signing in...</>
+                   ) : (
+                     <><Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" /> Sign up with Google</>
+                   )}
                 </Button>
                 <p className="text-sm text-muted-foreground pt-2">
                   Already have an account?{' '}
-                  <Button variant="link" type="button" onClick={() => setIsFlipped(prev => !prev)} className="text-primary hover:text-primary/80 px-1">
+                  <Button 
+                    variant="link" 
+                    type="button" 
+                    onClick={() => !isAnyAuthOperationPending && setIsFlipped(prev => !prev)} 
+                    className="text-primary hover:text-primary/80 px-1"
+                    disabled={isAnyAuthOperationPending}
+                  >
                     Login <LogIn className="ml-1 h-4 w-4" />
                   </Button>
                 </p>
@@ -340,10 +405,25 @@ export default function AuthPage() {
               />
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full py-3 text-base" size="lg">
-                <RefreshCcw className="mr-2 h-5 w-5" /> Send Reset Link
+              <Button 
+                type="submit" 
+                className="w-full py-3 text-base" 
+                size="lg"
+                disabled={isAnyAuthOperationPending}
+              >
+                {forgotPasswordForm.formState.isSubmitting ? (
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Sending Link...</>
+                ) : (
+                  <><RefreshCcw className="mr-2 h-5 w-5" /> Send Reset Link</>
+                )}
               </Button>
-              <Button variant="link" type="button" onClick={() => setShowForgotPassword(false)} className="text-sm">
+              <Button 
+                variant="link" 
+                type="button" 
+                onClick={() => !isAnyAuthOperationPending && setShowForgotPassword(false)} 
+                className="text-sm"
+                disabled={isAnyAuthOperationPending}
+               >
                 Back to Login
               </Button>
             </CardFooter>
@@ -359,3 +439,6 @@ export default function AuthPage() {
     </div>
   );
 }
+
+
+    
