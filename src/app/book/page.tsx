@@ -84,13 +84,13 @@ export default function BookingPage() {
   };
 
   return (
-    <div>
+    <div className="opacity-0 animate-fadeInUp">
       <PageHeader
         title="Book Your Courier"
         description="Fill in the details below to schedule your shipment."
       />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className="space-y-12">
+        <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className="space-y-12 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
           <Card className="shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl font-headline text-accent">Sender Details</CardTitle>

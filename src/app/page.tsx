@@ -7,6 +7,12 @@ import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target } fr
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import Image from 'next/image';
 
+import usImage from '../../public/us.png';
+import aboutImage from '../../public/about.jpg';
+import visionImage from '../../public/vision.png';
+import missionImage from '../../public/mission.png';
+
+
 const services = [
   { name: "International Shipping", icon: Globe2, description: "Reliable and fast international courier services to destinations worldwide.", href:"/services#international" },
   { name: "Local Delivery", icon: MapPin, description: "Swift and secure local delivery services across the region.", href:"/services#local"  },
@@ -38,7 +44,7 @@ export default function Home() {
             </div>
 
             <div className="relative w-full h-full flex items-center justify-center opacity-0 animate-fadeInUp delay-500 order-3 mt-8 md:mt-0 py-12">
-              <div className="transform scale-[5]">
+              <div className="transform scale-[3] sm:scale-[4] md:scale-[5]">
                 <FlyCargoLogo hideText showSpinner={false} />
               </div>
             </div>
@@ -106,14 +112,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Why Us Section - Text Left, Image Right */}
       <section className="py-12 md:py-16 opacity-0 animate-fadeInUp">
         <div className="container mx-auto px-4">
           <div className="opacity-0 animate-fadeInUp">
             <PageHeader title="Why Us?" description="Key advantages of partnering with FlyCargo Lanka."/>
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
-            <div className="space-y-10"> {/* Text Content for Why Us */}
+            <div className="space-y-10">
               <div className="opacity-0 animate-fadeInUp delay-200">
                 <div className="flex items-start space-x-4">
                   <ShoppingCart size={40} className="text-primary mt-1 shrink-0" />
@@ -137,37 +142,38 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="opacity-0 animate-fadeInUp delay-400 md:order-last order-first"> {/* Image for Why Us */}
-              <Image src="/us.png" alt="E-commerce Solutions" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team" />
+            <div className="opacity-0 animate-fadeInUp delay-400 md:order-last order-first">
+              <Image src={usImage} alt="E-commerce Solutions" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team" placeholder="blur" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* About Us Section - Image Left, Text Right */}
       <section className="py-12 md:py-16 opacity-0 animate-fadeInUp delay-300">
         <div className="container mx-auto px-4">
            <div className="opacity-0 animate-fadeInUp">
             <PageHeader title="About Us" />
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
-            <div className="opacity-0 animate-fadeInUp delay-200"> {/* Image for About Us */}
-              <Image src="/about.jpg" alt="About FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" />
+            <div className="opacity-0 animate-fadeInUp delay-200">
+              <Image src={aboutImage} alt="About FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" placeholder="blur" />
             </div>
-            <div className="opacity-0 animate-fadeInUp delay-400 space-y-4"> {/* Text Content for About Us */}
-              <div className="flex items-center space-x-3">
-                <Building2 size={32} className="text-primary shrink-0" />
-                <h2 className="text-2xl font-semibold text-accent">
-                  Empowering E-commerce
-                </h2>
+            <div className="opacity-0 animate-fadeInUp delay-400 space-y-4">
+              <div className="flex items-start space-x-4">
+                <Building2 size={32} className="text-primary mt-1 shrink-0" />
+                <div>
+                  <h3 className="text-2xl font-semibold text-accent mb-2">
+                    Empowering E-commerce
+                  </h3>
+                  <p className="text-lg text-foreground/80 leading-relaxed">
+                    At FlyCargo Lanka, we empower ecommerce businesses to soar beyond borders with fast, reliable, and affordable air cargo solutions.
+                  </p>
+                </div>
               </div>
-              <p className="text-lg text-foreground/80">
-                At FlyCargo Lanka, we empower ecommerce businesses to soar beyond borders with fast, reliable, and affordable air cargo solutions.
-              </p>
-              <p className="text-lg text-foreground/80">
+              <p className="text-lg text-foreground/80 leading-relaxed">
                 We understand the unique needs of online sellers, which is why we offer free insurance for your shipments, ensuring peace of mind with every delivery. Our commitment to competitive rates means you can send parcels worldwide without breaking the bank.
               </p>
-              <p className="text-lg text-foreground/80">
+              <p className="text-lg text-foreground/80 leading-relaxed">
                 Powered by innovative technology and a customer-first approach, we provide seamless logistics to help Sri Lankan ecommerce entrepreneurs thrive in the global marketplace. Trust FlyCargo Lanka to deliver your success, one parcel at a time.
               </p>
             </div>
@@ -175,62 +181,63 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Our Vision Section - Text Left, Image Right */}
       <section className="py-12 md:py-16 opacity-0 animate-fadeInUp delay-500">
         <div className="container mx-auto px-4">
           <div className="opacity-0 animate-fadeInUp">
             <PageHeader title="Our Vision" />
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
-            <div className="opacity-0 animate-fadeInUp delay-200 space-y-4"> {/* Text Content for Vision */}
-              <div className="flex items-center space-x-3">
-                  <Eye size={32} className="text-primary shrink-0" />
-                  <h2 className="text-2xl font-semibold text-accent">Sri Lanka's Most Trusted Partner</h2>
+            <div className="opacity-0 animate-fadeInUp delay-200 space-y-4">
+              <div className="flex items-start space-x-4">
+                  <Eye size={32} className="text-primary mt-1 shrink-0" />
+                  <div>
+                    <h3 className="text-2xl font-semibold text-accent mb-2">Sri Lanka's Most Trusted Partner</h3>
+                    <p className="text-lg text-foreground/80 leading-relaxed">
+                      "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
+                    </p>
+                  </div>
               </div>
-              <p className="text-lg text-foreground/80">
-                "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
-              </p>
             </div>
-            <div className="opacity-0 animate-fadeInUp delay-400"> {/* Image for Vision */}
-              <Image src="/vision.png" alt="Our Vision" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="future strategy" />
+            <div className="opacity-0 animate-fadeInUp delay-400">
+              <Image src={visionImage} alt="Our Vision" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="future strategy" placeholder="blur" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Our Mission Section - Image Left, Text Right */}
       <section className="py-12 md:py-16 opacity-0 animate-fadeInUp delay-600">
         <div className="container mx-auto px-4">
           <div className="opacity-0 animate-fadeInUp">
             <PageHeader title="Our Mission" />
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
-            <div className="opacity-0 animate-fadeInUp delay-200"> {/* Image for Mission */}
-              <Image src="/mission.png" alt="Our Mission" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="team action" />
+            <div className="opacity-0 animate-fadeInUp delay-200">
+              <Image src={missionImage} alt="Our Mission" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="team action" placeholder="blur" />
             </div>
-            <div className="opacity-0 animate-fadeInUp delay-400 space-y-4"> {/* Text Content for Mission */}
-               <div className="flex items-center space-x-3">
-                  <Target size={32} className="text-primary shrink-0" />
-                  <h2 className="text-2xl font-semibold text-accent">Customer-Centric Cargo Services</h2>
+            <div className="opacity-0 animate-fadeInUp delay-400 space-y-4">
+               <div className="flex items-start space-x-4">
+                  <Target size={32} className="text-primary mt-1 shrink-0" />
+                  <div>
+                    <h3 className="text-2xl font-semibold text-accent mb-2">Customer-Centric Cargo Services</h3>
+                    <p className="text-lg text-foreground/80 leading-relaxed">
+                      "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
+                    </p>
+                  </div>
               </div>
-              <p className="text-lg text-foreground/80">
-                "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
-              </p>
             </div>
           </div>
         </div>
       </section>
 
-
-      <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground rounded-xl shadow-lg overflow-hidden">
+      <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground rounded-xl shadow-lg overflow-hidden opacity-0 animate-fadeInUp" style={{animationDelay: '0.7s'}}>
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
+          <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp" style={{animationDelay: '0.8s'}}>
             Ready to Ship?
           </h2>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-0 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-0 animate-fadeInUp" style={{animationDelay: '0.9s'}}>
             Get started today with FlyCargo Lanka. We make shipping simple and efficient.
           </p>
-          <Button asChild size="lg" className="bg-background hover:bg-background/90 text-foreground transition-transform duration-300 hover:scale-105 opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
+          <Button asChild size="lg" className="bg-background hover:bg-background/90 text-foreground transition-transform duration-300 hover:scale-105 opacity-0 animate-fadeInUp" style={{animationDelay: '1s'}}>
             <Link href="/book">Book Your Shipment Now</Link>
           </Button>
         </div>

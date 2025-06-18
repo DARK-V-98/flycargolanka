@@ -1,3 +1,4 @@
+
 import PageHeader from '@/components/PageHeader';
 import ServiceCard from '@/components/ServiceCard';
 import { Globe2, MapPin, Truck, Archive } from 'lucide-react';
@@ -47,7 +48,12 @@ export default function ServicesPage() {
       />
       <div className="space-y-16">
         {services.map((service, index) => (
-          <section key={service.id} id={service.id} className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-8 p-6 bg-card rounded-lg shadow-lg`}>
+          <section 
+            key={service.id} 
+            id={service.id} 
+            className={`opacity-0 animate-fadeInUp flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-8 p-6 bg-card rounded-lg shadow-lg`}
+            style={{ animationDelay: `${index * 0.1 + 0.1}s` }}
+          >
             <div className="md:w-1/2">
               <Image 
                 src={service.image} 
@@ -56,6 +62,7 @@ export default function ServicesPage() {
                 height={400} 
                 className="rounded-lg object-cover aspect-video"
                 data-ai-hint={service.imageHint}
+                quality={100} 
               />
             </div>
             <div className="md:w-1/2 space-y-4">

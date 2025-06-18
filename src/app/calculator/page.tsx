@@ -71,12 +71,12 @@ export default function CalculatorPage() {
 
 
   return (
-    <div>
+    <div className="opacity-0 animate-fadeInUp">
       <PageHeader
         title="Shipping Cost Calculator"
         description="Get an instant estimate for your shipment. Enter the details below."
       />
-      <Card className="max-w-2xl mx-auto shadow-xl">
+      <Card className="max-w-2xl mx-auto shadow-xl opacity-0 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
         <CardHeader>
           <CardTitle className="text-2xl font-headline text-accent">Shipment Details</CardTitle>
         </CardHeader>
@@ -182,7 +182,7 @@ export default function CalculatorPage() {
           </Form>
         </CardContent>
         {estimatedCost && (
-          <CardFooter className="mt-6 bg-primary/10 p-6 rounded-md">
+          <CardFooter className="mt-6 bg-primary/10 p-6 rounded-md opacity-0 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
             <div className="text-center w-full">
               <h3 className="text-xl font-semibold text-accent">Estimated Shipping Cost:</h3>
               <p className="text-3xl font-bold text-primary mt-2">{estimatedCost}</p>
