@@ -10,13 +10,13 @@ export default function FlyCargoLogo() {
         <div
           className="absolute inset-0 rounded-full animate-spin-logo"
           style={{
-            background: `conic-gradient(hsl(var(--primary)) 0% 50%, hsl(var(--background)) 50% 100%)`, 
+            background: `conic-gradient(hsl(var(--primary)) 0% 25%, hsl(var(--background)) 25% 100%)`,
           }}
           aria-hidden="true"
         />
         {/* Mask to create the ring effect - 44px diameter, centered, with page background color */}
         <div
-          className="absolute w-11 h-11 rounded-full bg-background" 
+          className="absolute w-11 h-11 rounded-full bg-background"
           aria-hidden="true"
         />
         {/* Logo image - 40px diameter, centered and on top */}
@@ -25,7 +25,7 @@ export default function FlyCargoLogo() {
           alt="FlyCargo Logo"
           width={40}
           height={40}
-          className="object-contain w-10 h-10 relative z-10" 
+          className="object-contain w-10 h-10 relative z-10"
         />
       </div>
       <span className="text-glow-primary">FlyCargo</span>
