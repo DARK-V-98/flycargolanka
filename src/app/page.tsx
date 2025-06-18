@@ -22,7 +22,7 @@ export default function Home() {
     { name: "Amazon", src: "/amazon.svg" },
     { name: "Bonanza", src: "/bonanza.jpg" },
     { name: "eBay", src: "/ebay.svg" },
-    { name: "Etsy", src: "/etsy.svg" },
+    { name: "Etsy", src: "/Etsy.svg" },
     { name: "Payoneer", src: "/Payoneer.webp" },
     { name: "Wish", src: "/Wish.svg" },
   ];
@@ -40,7 +40,6 @@ export default function Home() {
           type="video/mp4"
         />
         
-        {/* Removed overlay: <div className="absolute inset-0 w-full h-full bg-black/30 z-10"></div> */}
         
         <div className="container mx-auto px-4 relative z-20"> {/* Content on top */}
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
@@ -197,5 +196,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
