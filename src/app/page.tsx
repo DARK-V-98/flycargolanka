@@ -36,7 +36,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative w-full h-auto opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
+            <div className="relative w-full opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
               <Image 
                 src="/he.png" 
                 alt="Hero Image" 
@@ -111,6 +111,25 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="py-12 md:py-20 bg-primary text-primary-foreground rounded-xl shadow-lg overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp">
+              About FlyCargo Lanka
+            </h2>
+            <p className="text-lg md:text-xl mb-4 opacity-0 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
+              At FlyCargo Lanka, we empower ecommerce businesses to soar beyond borders with fast, reliable, and affordable air cargo solutions.
+            </p>
+            <p className="text-lg md:text-xl mb-4 opacity-0 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
+              We understand the unique needs of online sellers, which is why we offer free insurance for your shipments, ensuring peace of mind with every delivery. Our commitment to competitive rates means you can send parcels worldwide without breaking the bank.
+            </p>
+            <p className="text-lg md:text-xl opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
+              Powered by innovative technology and a customer-first approach, we provide seamless logistics to help Sri Lankan ecommerce entrepreneurs thrive in the global marketplace. Trust FlyCargo Lanka to deliver your success, one parcel at a time.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground rounded-xl shadow-lg overflow-hidden">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
@@ -119,7 +138,7 @@ export default function Home() {
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-0 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
             Get started today with FlyCargo. We make shipping simple and efficient.
           </p>
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-300 hover:scale-105 opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
+          <Button asChild size="lg" className="bg-background hover:bg-background/90 text-foreground transition-transform duration-300 hover:scale-105 opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
             <Link href="/book">Book Your Shipment Now</Link>
           </Button>
         </div>
