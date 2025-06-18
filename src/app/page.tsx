@@ -23,7 +23,7 @@ export default function Home() {
             
             <div className="md:text-left text-center space-y-6 order-1">
               <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
-                <span className="whitespace-nowrap">Welcome to </span><TypingEffect text="FlyCargo Lanka" typingSpeed={70} deletingSpeed={40} pauseDuration={1500} />
+                <span className="whitespace-nowrap text-4xl md:text-5xl">Welcome to </span><TypingEffect text="FlyCargo Lanka" typingSpeed={70} deletingSpeed={40} pauseDuration={1500} />
               </h1>
               <p className="text-xl md:text-2xl text-foreground/80 mb-8 opacity-0 animate-fadeInUp delay-200">
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
