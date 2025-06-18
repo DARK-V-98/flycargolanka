@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 type UserRole = 'user' | 'admin' | 'developer';
@@ -51,8 +51,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (userDocSnap.exists()) {
           const profileData = userDocSnap.data() as UserProfile;
-          setUserProfile(profileData);
-          setRole(profileData.role);
+          const updates: Partial<UserProfile> = {};
+          let needsUpdate = false;
+
+          // Sync displayName if different or missing in Firestore
+          if (firebaseUser.displayName && firebaseUser.displayName !== profileData.displayName) {
+            updates.displayName = firebaseUser.displayName;
+            needsUpdate = true;
+          }
+          // Sync photoURL if different or missing in Firestore
+          if (firebaseUser.photoURL && firebaseUser.photoURL !== profileData.photoURL) {
+            updates.photoURL = firebaseUser.photoURL;
+            needsUpdate = true;
+          }
+          // Also ensure email is synced if it's somehow different (less common)
+          if (firebaseUser.email && firebaseUser.email !== profileData.email) {
+            updates.email = firebaseUser.email;
+            needsUpdate = true;
+          }
+
+
+          if (needsUpdate) {
+            try {
+              await updateDoc(userDocRef, updates);
+              setUserProfile({ ...profileData, ...updates });
+            } catch (error) {
+              console.error("Error updating user profile in Firestore:", error);
+              setUserProfile(profileData); // Use existing profile data if update fails
+            }
+          } else {
+            setUserProfile(profileData);
+          }
+          setRole(profileData.role); // Role is managed separately and not synced from firebaseUser object
+
         } else {
           // New user, create profile in Firestore
           const determinedRole: UserRole = firebaseUser.email === DEVELOPER_EMAIL ? 'developer' : 'user';
@@ -60,13 +91,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL, // This line ensures photoURL is captured
+            photoURL: firebaseUser.photoURL,
             role: determinedRole,
             createdAt: serverTimestamp(),
           };
-          await setDoc(userDocRef, newUserProfile);
-          setUserProfile(newUserProfile);
-          setRole(determinedRole);
+          try {
+            await setDoc(userDocRef, newUserProfile);
+            setUserProfile(newUserProfile);
+            setRole(determinedRole);
+          } catch (error) {
+             console.error("Error creating new user profile in Firestore:", error);
+          }
         }
       } else {
         setUser(null);
