@@ -29,8 +29,8 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = '40s' }) => {
             <Image
               src={logo.src}
               alt={logo.name}
-              width={160} // Adjusted to match new w-40 of marquee-item
-              height={96}  // Adjusted to match new h-24 of marquee-item
+              width={192} // Adjusted to match new w-48 of marquee-item
+              height={128}  // Adjusted to match new h-32 of marquee-item
               className="object-contain" // Ensures image scales within dimensions, maintaining aspect ratio
             />
           </div>

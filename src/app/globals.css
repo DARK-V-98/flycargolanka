@@ -100,8 +100,6 @@
     animation-play-state: paused;
   }
   .marquee-item {
-    @apply mx-4 flex h-24 w-40 items-center justify-center rounded-lg transition-transform duration-300 hover:scale-105 relative overflow-hidden;
-    /* Removed card specific styling: border border-border/30 bg-card shadow-md */
-    /* Increased size from h-16 w-28 */
+    @apply mx-4 flex h-32 w-48 items-center justify-center rounded-lg transition-transform duration-300 hover:scale-105 relative overflow-hidden;
   }
 }
