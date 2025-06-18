@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true); // Set loading to true at the start of auth state change
       if (firebaseUser) {
         setUser(firebaseUser);
         const userDocRef = doc(db, 'users', firebaseUser.uid);
@@ -56,42 +57,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
           // Sync displayName
           if (firebaseUser.displayName !== profileData.displayName) {
-            updates.displayName = firebaseUser.displayName; // Handles null from firebaseUser
+            updates.displayName = firebaseUser.displayName;
             needsUpdate = true;
           }
           // Sync photoURL
           if (firebaseUser.photoURL !== profileData.photoURL) {
-            updates.photoURL = firebaseUser.photoURL; // Handles null from firebaseUser
+            updates.photoURL = firebaseUser.photoURL;
             needsUpdate = true;
           }
-          // Sync email (firebaseUser.email should generally be non-null for an authenticated user)
+          // Sync email
           if (firebaseUser.email && firebaseUser.email !== profileData.email) {
             updates.email = firebaseUser.email;
             needsUpdate = true;
           }
 
-
           if (needsUpdate) {
             try {
               await updateDoc(userDocRef, updates);
-              setUserProfile({ ...profileData, ...updates }); // Update local state with merged data
+              const updatedProfile = { ...profileData, ...updates };
+              setUserProfile(updatedProfile);
+              setRole(updatedProfile.role);
             } catch (error) {
               console.error("Error updating user profile in Firestore:", error);
-              setUserProfile(profileData); // Use existing profile data if update fails
+              setUserProfile(profileData); // Fallback to existing data on error
+              setRole(profileData.role);
             }
           } else {
-            setUserProfile(profileData); // No updates needed, use existing profile data
+            setUserProfile(profileData);
+            setRole(profileData.role);
           }
-          setRole(profileData.role); // Role is managed separately and not synced from firebaseUser object
-
         } else {
           // New user, create profile in Firestore
           const determinedRole: UserRole = firebaseUser.email === DEVELOPER_EMAIL ? 'developer' : 'user';
           const newUserProfile: UserProfile = {
             uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName, // Will be null if not provided by auth (e.g. email signup)
-            photoURL: firebaseUser.photoURL,       // Will be null if not provided by auth
+            email: firebaseUser.email, // From firebaseUser, should be present
+            displayName: firebaseUser.displayName, // From firebaseUser, could be null
+            photoURL: firebaseUser.photoURL,       // From firebaseUser, could be null
             role: determinedRole,
             createdAt: serverTimestamp(),
           };
@@ -101,6 +103,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setRole(determinedRole);
           } catch (error) {
              console.error("Error creating new user profile in Firestore:", error);
+             // Set profile to a minimal state or null if creation fails
+             setUserProfile({
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                photoURL: firebaseUser.photoURL,
+                role: determinedRole // Or a default 'user' role
+             });
+             setRole(determinedRole);
           }
         }
       } else {
@@ -118,7 +129,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // onAuthStateChanged will handle profile creation/update
+      // onAuthStateChanged will handle profile creation/update & navigation
       router.push('/');
     } catch (error) {
       console.error("Error signing in with Google:", error);
@@ -129,7 +140,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUpWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will handle profile creation
+      // onAuthStateChanged will handle profile creation & navigation
       router.push('/');
       return userCredential.user;
     } catch (error: any) {
@@ -137,14 +148,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error.code === 'auth/email-already-in-use') {
         throw new Error("This email address is already registered. Please log in or use a different email.");
       }
-      throw error;
+      throw error; // Re-throw other errors
     }
   };
 
   const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will update user state
+      // onAuthStateChanged will update user state & navigation
       router.push('/');
       return userCredential.user;
     } catch (error: any) {
@@ -152,7 +163,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         throw new Error("Invalid email or password. Please try again.");
       }
-      throw error;
+      throw error; // Re-throw other errors
     }
   };
 
@@ -168,6 +179,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     await firebaseSignOut(auth);
+    // onAuthStateChanged will clear user state
     router.push('/');
   };
 
@@ -185,3 +197,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
