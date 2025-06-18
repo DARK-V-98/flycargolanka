@@ -18,7 +18,7 @@ body {
     --popover: 0 0% 100%;
     --popover-foreground: 212 56% 11%; /* Navy text in popovers */
 
-    --primary: 45 76% 52%; /* Gold (#D4AF37) */
+    --primary: 45 90% 58%; /* Neon Gold */
     --primary-foreground: 210 30% 15%; /* Dark desaturated blue for text on gold */
 
     --secondary: 220 10% 90%; /* Light Gray */
@@ -35,64 +35,64 @@ body {
 
     --border: 220 10% 85%; /* Light gray border */
     --input: 0 0% 100%; /* White input background, border will be --border or --ring */
-    --ring: 45 76% 52%; /* Gold for focus rings */
+    --ring: 45 90% 58%; /* Neon Gold for focus rings */
 
-    --chart-1: 45 76% 52%;  /* Gold */
+    --chart-1: 45 90% 58%;  /* Neon Gold */
     --chart-2: 212 56% 35%; /* Medium Navy */
-    --chart-3: 45 70% 40%;  /* Darker Gold */
+    --chart-3: 45 85% 50%;  /* Darker Neon Gold */
     --chart-4: 212 56% 20%; /* Darker Navy */
-    --chart-5: 40 90% 65%;  /* Lighter Gold */
+    --chart-5: 40 95% 65%;  /* Lighter Neon Gold */
     --radius: 0.5rem;
 
     /* Sidebar specific colors - Light Mode */
-    --sidebar-background: 0 0% 98%; /* Light almost white, can be same as main background */
-    --sidebar-foreground: 212 56% 11%; /* Navy text */
-    --sidebar-primary: 45 76% 52%; /* Gold */
-    --sidebar-primary-foreground: 210 30% 15%; /* Dark blue on gold */
-    --sidebar-accent: 212 56% 11%; /* Navy */
-    --sidebar-accent-foreground: 0 0% 100%; /* White on navy */
+    --sidebar-background: 0 0% 98%; 
+    --sidebar-foreground: 212 56% 11%; 
+    --sidebar-primary: 45 90% 58%; /* Neon Gold */
+    --sidebar-primary-foreground: 210 30% 15%; 
+    --sidebar-accent: 212 56% 11%; 
+    --sidebar-accent-foreground: 0 0% 100%; 
     --sidebar-border: 220 10% 80%;
-    --sidebar-ring: 45 76% 52%; /* Gold */
+    --sidebar-ring: 45 90% 58%; /* Neon Gold */
   }
 
   .dark {
-    --background: 212 40% 8%; /* Very Dark Blue/Navy */
-    --foreground: 47 50% 85%; /* Light Gold/Cream text */
+    --background: 212 40% 8%; 
+    --foreground: 47 50% 85%; 
 
-    --card: 212 40% 12%; /* Slightly Lighter Dark Navy for cards */
-    --card-foreground: 47 50% 85%; /* Light Gold/Cream text in cards */
+    --card: 212 40% 12%; 
+    --card-foreground: 47 50% 85%; 
 
     --popover: 212 40% 12%;
     --popover-foreground: 47 50% 85%;
 
-    --primary: 45 80% 60%; /* Lighter Gold for dark mode */
-    --primary-foreground: 210 30% 15%; /* Dark text for lighter gold */
+    --primary: 45 90% 65%; /* Lighter Neon Gold for dark mode */
+    --primary-foreground: 210 30% 15%; 
 
-    --secondary: 212 30% 20%; /* Medium Dark Navy */
-    --secondary-foreground: 47 50% 75%; /* Lighter Gold/Cream for text */
+    --secondary: 212 30% 20%; 
+    --secondary-foreground: 47 50% 75%; 
 
     --muted: 212 30% 18%;
     --muted-foreground: 47 50% 65%;
 
-    --accent: 212 56% 25%; /* A slightly lighter/more vibrant Navy for dark mode accents */
-    --accent-foreground: 0 0% 100%; /* White */
+    --accent: 212 56% 25%; 
+    --accent-foreground: 0 0% 100%; 
 
-    --destructive: 0 60% 50%; /* Slightly desaturated red for dark mode */
+    --destructive: 0 60% 50%; 
     --destructive-foreground: 0 0% 100%;
 
     --border: 212 30% 25%;
-    --input: 212 30% 15%; /* Dark input background */
-    --ring: 45 80% 60%; /* Lighter Gold for rings */
+    --input: 212 30% 15%; 
+    --ring: 45 90% 65%; /* Lighter Neon Gold for rings */
     
     /* Sidebar dark theme adjustments */
-    --sidebar-background: 212 40% 5%; /* Darkest Navy */
-    --sidebar-foreground: 47 50% 85%; /* Light Gold/Cream text */
-    --sidebar-primary: 45 80% 60%; /* Lighter Gold */
-    --sidebar-primary-foreground: 210 30% 15%; /* Dark text on gold */
-    --sidebar-accent: 212 56% 25%; /* Lighter Navy for accents */
-    --sidebar-accent-foreground: 0 0% 100%; /* White on navy */
+    --sidebar-background: 212 40% 5%; 
+    --sidebar-foreground: 47 50% 85%; 
+    --sidebar-primary: 45 90% 65%; /* Lighter Neon Gold */
+    --sidebar-primary-foreground: 210 30% 15%; 
+    --sidebar-accent: 212 56% 25%; 
+    --sidebar-accent-foreground: 0 0% 100%; 
     --sidebar-border: 212 30% 20%;
-    --sidebar-ring: 45 80% 60%; /* Lighter Gold */
+    --sidebar-ring: 45 90% 65%; /* Lighter Neon Gold */
   }
 }
 
@@ -152,4 +152,8 @@ body {
   .delay-400 { animation-delay: 0.4s; }
   .delay-500 { animation-delay: 0.5s; }
   .delay-600 { animation-delay: 0.6s; }
+
+  .text-glow-primary {
+    filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.6)) drop-shadow(0 0 12px hsl(var(--primary) / 0.4));
+  }
 }

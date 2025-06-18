@@ -17,7 +17,7 @@ export default function Home() {
     <div className="space-y-16">
       <section className="text-center py-12 md:py-20 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg overflow-hidden">
         <div className="container mx-auto px-4">
-          <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp">
+          <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
             Welcome to FlyCargo
           </h1>
           <p className="text-xl md:text-2xl text-foreground/80 mb-8 max-w-3xl mx-auto opacity-0 animate-fadeInUp delay-200">
