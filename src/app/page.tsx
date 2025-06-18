@@ -29,7 +29,7 @@ export default function Home() {
               <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
                 <Link 
                   href="/book" 
-                  className="group relative block w-48 h-auto rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 cursor-pointer border-2 border-primary hover:border-primary/80"
+                  className="group relative block w-40 h-auto rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 cursor-pointer border-2 border-primary hover:border-primary/80"
                   aria-label="Book a courier - video preview"
                 >
                   <video
