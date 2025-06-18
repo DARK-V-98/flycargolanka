@@ -54,17 +54,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const updates: Partial<UserProfile> = {};
           let needsUpdate = false;
 
-          // Sync displayName if different or missing in Firestore
-          if (firebaseUser.displayName && firebaseUser.displayName !== profileData.displayName) {
-            updates.displayName = firebaseUser.displayName;
+          // Sync displayName
+          if (firebaseUser.displayName !== profileData.displayName) {
+            updates.displayName = firebaseUser.displayName; // Handles null from firebaseUser
             needsUpdate = true;
           }
-          // Sync photoURL if different or missing in Firestore
-          if (firebaseUser.photoURL && firebaseUser.photoURL !== profileData.photoURL) {
-            updates.photoURL = firebaseUser.photoURL;
+          // Sync photoURL
+          if (firebaseUser.photoURL !== profileData.photoURL) {
+            updates.photoURL = firebaseUser.photoURL; // Handles null from firebaseUser
             needsUpdate = true;
           }
-          // Also ensure email is synced if it's somehow different (less common)
+          // Sync email (firebaseUser.email should generally be non-null for an authenticated user)
           if (firebaseUser.email && firebaseUser.email !== profileData.email) {
             updates.email = firebaseUser.email;
             needsUpdate = true;
@@ -74,13 +74,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (needsUpdate) {
             try {
               await updateDoc(userDocRef, updates);
-              setUserProfile({ ...profileData, ...updates });
+              setUserProfile({ ...profileData, ...updates }); // Update local state with merged data
             } catch (error) {
               console.error("Error updating user profile in Firestore:", error);
               setUserProfile(profileData); // Use existing profile data if update fails
             }
           } else {
-            setUserProfile(profileData);
+            setUserProfile(profileData); // No updates needed, use existing profile data
           }
           setRole(profileData.role); // Role is managed separately and not synced from firebaseUser object
 
@@ -90,8 +90,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const newUserProfile: UserProfile = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
+            displayName: firebaseUser.displayName, // Will be null if not provided by auth (e.g. email signup)
+            photoURL: firebaseUser.photoURL,       // Will be null if not provided by auth
             role: determinedRole,
             createdAt: serverTimestamp(),
           };
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await signInWithPopup(auth, provider);
       // onAuthStateChanged will handle profile creation/update
-      router.push('/'); 
+      router.push('/');
     } catch (error) {
       console.error("Error signing in with Google:", error);
       throw error;
@@ -137,10 +137,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error.code === 'auth/email-already-in-use') {
         throw new Error("This email address is already registered. Please log in or use a different email.");
       }
-      throw error; 
+      throw error;
     }
   };
-  
+
   const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         throw new Error("Invalid email or password. Please try again.");
       }
-      throw error; 
+      throw error;
     }
   };
 
