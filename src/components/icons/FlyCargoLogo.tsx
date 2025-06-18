@@ -23,9 +23,10 @@ export default function FlyCargoLogo() {
         <Image
           src="/fg.png"
           alt="FlyCargo Logo"
-          width={40}
-          height={40}
+          width={80}
+          height={80}
           className="object-contain w-10 h-10 relative z-10"
+          priority
         />
       </div>
       <span className="text-glow-primary">FlyCargo</span>
