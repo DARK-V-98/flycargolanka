@@ -7,11 +7,6 @@ import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target } fr
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import Image from 'next/image';
 
-import usImage from '../../public/us.png';
-import aboutImage from '../../public/about.jpg';
-import visionImage from '../../public/vision.png';
-import missionImage from '../../public/mission.png';
-
 
 const services = [
   { name: "International Shipping", icon: Globe2, description: "Reliable and fast international courier services to destinations worldwide.", href:"/services#international" },
@@ -22,22 +17,38 @@ const services = [
 export default function Home() {
   return (
     <div className="space-y-16">
-      <section className="py-12 md:py-20 bg-gradient-to-br from-background to-secondary/30 rounded-xl shadow-lg overflow-hidden relative">
-        <div className="container mx-auto px-4">
+      <section className="py-12 md:py-20 rounded-xl shadow-lg overflow-hidden relative">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          src="/bg.mp4"
+          type="video/mp4"
+        />
+        <div className="absolute inset-0 w-full h-full bg-black/30 z-10"></div> {/* Overlay */}
+        
+        <div className="container mx-auto px-4 relative z-20"> {/* Content on top */}
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
             
             <div className="md:text-left text-center space-y-6 order-1">
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
                 <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
               </h1>
-              <p className="text-xl md:text-2xl text-foreground/80 mb-8 opacity-0 animate-fadeInUp delay-200">
+              <p className="text-xl md:text-2xl text-white/90 mb-8 opacity-0 animate-fadeInUp delay-200"> {/* Adjusted text color for video bg */}
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
               </p>
               <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
                  <Button asChild variant="default" size="lg" className="transition-transform duration-300 hover:scale-105">
                   <Link href="/book">Book a Courier</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 transition-transform duration-300 hover:scale-105">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="border-primary text-primary bg-background/20 hover:bg-primary/20 transition-transform duration-300 hover:scale-105"
+                >{/* Adjusted outline button for video bg */}
                   <Link href="/calculator">Calculator</Link>
                 </Button>
               </div>
@@ -104,7 +115,7 @@ export default function Home() {
               <CardContent>
                 <p className="text-foreground/80 mb-4">{service.description}</p>
                 <Button variant="link" asChild className="text-primary hover:text-primary/80 transition-colors">
-                  <Link href={service.href}>Learn More</Link>
+                  <Link href={service.href as any}>Learn More</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -143,7 +154,7 @@ export default function Home() {
               </div>
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400 md:order-last order-first">
-              <Image src={usImage} alt="E-commerce Solutions" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team" placeholder="blur" />
+              <Image src="/us.png" alt="E-commerce Solutions" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team" />
             </div>
           </div>
         </div>
@@ -156,7 +167,7 @@ export default function Home() {
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
             <div className="opacity-0 animate-fadeInUp delay-200">
-              <Image src={aboutImage} alt="About FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" placeholder="blur" />
+              <Image src="/about.jpg" alt="About FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400 space-y-4">
               <div className="flex items-center space-x-3 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
@@ -195,7 +206,7 @@ export default function Home() {
               </p>
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400">
-              <Image src={visionImage} alt="Our Vision" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="future strategy" placeholder="blur" />
+              <Image src="/vision.png" alt="Our Vision" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="future strategy" />
             </div>
           </div>
         </div>
@@ -208,7 +219,7 @@ export default function Home() {
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
             <div className="opacity-0 animate-fadeInUp delay-200">
-              <Image src={missionImage} alt="Our Mission" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="team action" placeholder="blur" />
+              <Image src="/mission.png" alt="Our Mission" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="team action" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400 space-y-4">
                <div className="flex items-center space-x-3 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
@@ -239,3 +250,4 @@ export default function Home() {
     </div>
   );
 }
+
