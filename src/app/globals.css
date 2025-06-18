@@ -74,14 +74,6 @@
     filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.6)) drop-shadow(0 0 12px hsl(var(--primary) / 0.4));
   }
 
-  .text-outline-navy {
-    text-shadow: 
-      -1px -1px 0 hsl(var(--foreground)),  
-       1px -1px 0 hsl(var(--foreground)),
-      -1px  1px 0 hsl(var(--foreground)),
-       1px  1px 0 hsl(var(--foreground));
-  }
-
   .text-shadow-3d-navy {
     text-shadow:
       1px 1px 0px hsl(var(--accent)),
@@ -100,7 +92,22 @@
     animation-play-state: paused;
   }
   .marquee-item {
-    @apply mx-4 flex w-[576px] h-[384px] items-center justify-center rounded-lg transition-transform duration-300 hover:scale-105 relative overflow-hidden;
+    margin-left: 1rem; /* equivalent to mx-4 */
+    margin-right: 1rem; /* equivalent to mx-4 */
+    display: flex;
+    width: 576px; /* Explicit large width */
+    height: 384px; /* Explicit large height */
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem; /* equivalent to rounded-lg */
+    transition-property: transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); /* ease-in-out often */
+    transition-duration: 300ms;
+    position: relative;
+    overflow: hidden; /* if images are larger than item */
+  }
+  .marquee-item:hover {
+    transform: scale(1.05); /* equivalent to hover:scale-105 */
   }
 }
 

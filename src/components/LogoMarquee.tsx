@@ -41,4 +41,3 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = '40s' }) => {
 };
 
 export default LogoMarquee;
-
