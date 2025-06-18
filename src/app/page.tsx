@@ -47,7 +47,7 @@ export default function Home() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="border-primary text-primary bg-background/20 hover:bg-primary/20 transition-transform duration-300 hover:scale-105"
+                  className="border-primary text-white bg-background/20 hover:bg-primary/20 transition-transform duration-300 hover:scale-105"
                 ><Link href="/calculator">Calculator</Link></Button>
               </div>
             </div>
