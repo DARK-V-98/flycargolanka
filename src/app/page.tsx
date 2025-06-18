@@ -41,16 +41,15 @@ export default function Home() {
             </div>
 
             <div className="relative w-full h-auto aspect-video opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
-              <video 
-                autoPlay 
-                loop 
-                muted 
-                playsInline 
-                src="/hero.webm" 
+              <Image 
+                src="/hero.png" 
+                alt="Hero Image" 
+                width={600} 
+                height={338} 
                 className="w-full h-full object-cover"
-              >
-                Your browser does not support the video tag.
-              </video>
+                data-ai-hint="promotional banner"
+                priority
+              />
             </div>
           </div>
         </div>
