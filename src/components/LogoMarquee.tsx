@@ -29,9 +29,9 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = '40s' }) => {
             <Image
               src={logo.src}
               alt={logo.name}
-              fill
-              style={{ objectFit: 'contain' }} // Removed padding from here
-              sizes="112px" // Updated to reflect .marquee-item width (w-28)
+              width={112} // Corresponds to w-28 of marquee-item
+              height={64}  // Corresponds to h-16 of marquee-item
+              className="object-contain" // Ensures image scales within dimensions, maintaining aspect ratio
             />
           </div>
         ))}
