@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Keep if used directly, otherwise FormLabel
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,7 +60,7 @@ const LoginCard: React.FC<LoginCardProps> = ({
   return (
     <Card className="w-full shadow-2xl">
       <CardHeader className="text-center space-y-2">
-        <CardTitle className="text-3xl font-headline text-accent">Welcome Back!</CardTitle>
+        <CardTitle className="text-2xl sm:text-3xl font-headline text-accent">Welcome Back!</CardTitle>
         <CardDescription>Log in to access your FlyCargo services.</CardDescription>
       </CardHeader>
       <Form {...loginForm}>
@@ -187,7 +186,7 @@ const SignupCard: React.FC<SignupCardProps> = ({
   return (
     <Card className="w-full shadow-2xl">
       <CardHeader className="text-center space-y-2">
-        <CardTitle className="text-3xl font-headline text-accent">Create Your Account</CardTitle>
+        <CardTitle className="text-2xl sm:text-3xl font-headline text-accent">Create Your Account</CardTitle>
         <CardDescription>Join FlyCargo Lanka for seamless shipping.</CardDescription>
       </CardHeader>
         <Form {...signupForm}>
@@ -333,7 +332,7 @@ const ForgotPasswordCardComponent: React.FC<ForgotPasswordCardComponentProps> = 
     <div className="w-full max-w-md opacity-0 animate-fadeInUp">
       <Card className="shadow-2xl">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-headline text-accent">Reset Password</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-headline text-accent">Reset Password</CardTitle>
           <CardDescription>Enter your email to receive a password reset link.</CardDescription>
         </CardHeader>
         <Form {...forgotPasswordForm}>
@@ -531,6 +530,8 @@ export default function AuthPage() {
     </div>
   );
 }
+    
+
     
 
     
