@@ -21,7 +21,7 @@ export default function Home() {
             Welcome to FlyCargo
           </h1>
           <p className="text-xl md:text-2xl text-foreground/80 mb-8 max-w-3xl mx-auto opacity-0 animate-fadeInUp delay-200">
-            Your trusted partner for fast, reliable, and secure courier services. We connect you to the world, one package at a time.
+            Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
           </p>
           <div className="space-x-4 opacity-0 animate-fadeInUp delay-400">
             <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-300 hover:scale-105">
