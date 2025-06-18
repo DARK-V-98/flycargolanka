@@ -38,9 +38,9 @@ export default function Home() {
 
             <div className="relative w-full opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
               <Image 
-                src="/he.png" 
+                src="/her.png" 
                 alt="Hero Image" 
-                width={1200} 
+                width={800} 
                 height={800} 
                 className="w-full h-full object-cover"
                 data-ai-hint="promotional banner"
