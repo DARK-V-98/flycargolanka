@@ -11,7 +11,7 @@ export default function FlyCargoLogo({ hideText = false, showSpinner = true }: F
   return (
     <Link href="/" className="flex items-center space-x-2 text-3xl font-bold text-primary hover:text-primary/80 transition-colors font-headline">
       {/* Container for logo and spinner, sized to fit the spinner */}
-      <div className="relative w-12 h-12 flex items-center justify-center">
+      <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
         {showSpinner && (
           <>
             {/* Conic gradient spinner - fills its container (48px) */}
