@@ -128,7 +128,7 @@ export default function Home() {
               </div>
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400 md:order-last order-first"> {/* Image for Why Us */}
-              <Image src="/us.png" alt="E-commerce Solutions" width={600} height={400} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team" />
+              <Image src="/us.png" alt="E-commerce Solutions" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team" />
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
             <div className="opacity-0 animate-fadeInUp delay-200"> {/* Image for About Us */}
-              <Image src="https://placehold.co/600x400.png" alt="About FlyCargo Lanka" width={600} height={400} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" />
+              <Image src="/about.png" alt="About FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400"> {/* Text Content for About Us */}
               <div className="space-y-4">
@@ -176,7 +176,7 @@ export default function Home() {
               </div>
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400"> {/* Image for Vision */}
-              <Image src="/vision.png" alt="Our Vision" width={600} height={400} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="future strategy" />
+              <Image src="/vision.png" alt="Our Vision" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="future strategy" />
             </div>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function Home() {
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
             <div className="opacity-0 animate-fadeInUp delay-200"> {/* Image for Mission */}
-              <Image src="/mission.png" alt="Our Mission" width={600} height={400} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="team action" />
+              <Image src="/mission.png" alt="Our Mission" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="team action" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400"> {/* Text Content for Mission */}
               <div>
@@ -220,4 +220,3 @@ export default function Home() {
     </div>
   );
 }
-
