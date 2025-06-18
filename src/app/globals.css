@@ -92,6 +92,6 @@
     animation-play-state: paused;
   }
   .marquee-item {
-    @apply flex items-center justify-center mx-6 relative transition-transform duration-300 ease-in-out hover:scale-105;
+    @apply flex flex-shrink-0 items-center justify-center mx-6 relative transition-transform duration-300 ease-in-out hover:scale-105 h-24;
   }
 }
