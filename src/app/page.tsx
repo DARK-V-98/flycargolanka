@@ -27,8 +27,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
             
             <div className="md:text-left text-center space-y-6 order-1">
-              <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
-                <span className="whitespace-nowrap text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
+                <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
               </h1>
               <p className="text-xl md:text-2xl text-foreground/80 mb-8 opacity-0 animate-fadeInUp delay-200">
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
@@ -123,8 +123,8 @@ export default function Home() {
                 <div className="flex items-start space-x-4">
                   <ShoppingCart size={40} className="text-primary mt-1 shrink-0" />
                   <div>
-                    <h3 className="text-2xl font-semibold text-accent mb-2">Solutions for E-Commerce and Logistics</h3>
-                    <p className="text-lg text-foreground/80 leading-relaxed">
+                    <h3 className="text-2xl font-semibold text-accent mb-2 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>Solutions for E-Commerce and Logistics</h3>
+                    <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
                       Colombo mail is your e-commerce logistics specialist, connecting sellers to buyers across the globe.
                     </p>
                   </div>
@@ -134,8 +134,8 @@ export default function Home() {
                 <div className="flex items-start space-x-4">
                   <Globe size={40} className="text-primary mt-1 shrink-0" />
                   <div>
-                    <h3 className="text-2xl font-semibold text-accent mb-2">Online Fulfillment Platform</h3>
-                    <p className="text-lg text-foreground/80 leading-relaxed">
+                    <h3 className="text-2xl font-semibold text-accent mb-2 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>Online Fulfillment Platform</h3>
+                    <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
                       We provide an online platform for local and international fulfillment for eCommerce companies of all sizes. With access to global marketplaces and easy delivery fulfillment.
                     </p>
                   </div>
@@ -159,21 +159,19 @@ export default function Home() {
               <Image src={aboutImage} alt="About FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="company team" placeholder="blur" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400 space-y-4">
-              <div className="flex items-start space-x-4">
-                <Building2 size={32} className="text-primary mt-1 shrink-0" />
-                <div>
-                  <h3 className="text-2xl font-semibold text-accent mb-2">
-                    Empowering E-commerce
-                  </h3>
-                  <p className="text-lg text-foreground/80 leading-relaxed">
-                    At FlyCargo Lanka, we empower ecommerce businesses to soar beyond borders with fast, reliable, and affordable air cargo solutions.
-                  </p>
-                </div>
+              <div className="flex items-center space-x-3 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
+                <Building2 size={32} className="text-primary shrink-0" />
+                <h2 className="text-2xl font-semibold text-accent">
+                  About Us
+                </h2>
               </div>
-              <p className="text-lg text-foreground/80 leading-relaxed">
+              <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
+                At FlyCargo Lanka, we empower ecommerce businesses to soar beyond borders with fast, reliable, and affordable air cargo solutions.
+              </p>
+              <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.7s' }}>
                 We understand the unique needs of online sellers, which is why we offer free insurance for your shipments, ensuring peace of mind with every delivery. Our commitment to competitive rates means you can send parcels worldwide without breaking the bank.
               </p>
-              <p className="text-lg text-foreground/80 leading-relaxed">
+              <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.8s' }}>
                 Powered by innovative technology and a customer-first approach, we provide seamless logistics to help Sri Lankan ecommerce entrepreneurs thrive in the global marketplace. Trust FlyCargo Lanka to deliver your success, one parcel at a time.
               </p>
             </div>
@@ -188,15 +186,13 @@ export default function Home() {
           </div>
           <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
             <div className="opacity-0 animate-fadeInUp delay-200 space-y-4">
-              <div className="flex items-start space-x-4">
-                  <Eye size={32} className="text-primary mt-1 shrink-0" />
-                  <div>
-                    <h3 className="text-2xl font-semibold text-accent mb-2">Sri Lanka's Most Trusted Partner</h3>
-                    <p className="text-lg text-foreground/80 leading-relaxed">
-                      "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
-                    </p>
-                  </div>
+              <div className="flex items-center space-x-3 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
+                  <Eye size={32} className="text-primary shrink-0" />
+                  <h2 className="text-2xl font-semibold text-accent">Our Vision</h2>
               </div>
+              <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
+                "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
+              </p>
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400">
               <Image src={visionImage} alt="Our Vision" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="future strategy" placeholder="blur" />
@@ -215,15 +211,13 @@ export default function Home() {
               <Image src={missionImage} alt="Our Mission" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="team action" placeholder="blur" />
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400 space-y-4">
-               <div className="flex items-start space-x-4">
-                  <Target size={32} className="text-primary mt-1 shrink-0" />
-                  <div>
-                    <h3 className="text-2xl font-semibold text-accent mb-2">Customer-Centric Cargo Services</h3>
-                    <p className="text-lg text-foreground/80 leading-relaxed">
-                      "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
-                    </p>
-                  </div>
+               <div className="flex items-center space-x-3 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
+                  <Target size={32} className="text-primary shrink-0" />
+                  <h2 className="text-2xl font-semibold text-accent">Our Mission</h2>
               </div>
+              <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
+                "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
+              </p>
             </div>
           </div>
         </div>
