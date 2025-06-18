@@ -1,6 +1,7 @@
+
 import NavLink from './NavLink';
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 
@@ -33,6 +34,7 @@ export default function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <nav className="flex flex-col space-y-4 mt-8">
                   {navItems.map((item) => (
                     <NavLink key={item.href} href={item.href as any} className="text-xl text-center">
