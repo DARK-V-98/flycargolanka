@@ -177,7 +177,7 @@ export default function AuthPage() {
                 <Button type="submit" className="w-full py-3 text-base" size="lg">
                   <RefreshCcw className="mr-2 h-5 w-5" /> Send Reset Link
                 </Button>
-                <Button variant="link" onClick={() => setShowForgotPassword(false)} className="text-sm">
+                <Button variant="link" type="button" onClick={() => setShowForgotPassword(false)} className="text-sm">
                   Back to Login
                 </Button>
               </CardFooter>
@@ -238,7 +238,7 @@ export default function AuthPage() {
                       </FormItem>
                     )}
                   />
-                   <Button variant="link" onClick={() => setShowForgotPassword(true)} className="px-0 text-sm text-primary hover:text-primary/80">
+                   <Button type="button" variant="link" onClick={() => setShowForgotPassword(true)} className="px-0 text-sm text-primary hover:text-primary/80">
                         Forgot Password?
                     </Button>
                 </CardContent>
@@ -246,7 +246,7 @@ export default function AuthPage() {
                   <Button type="submit" className="w-full py-3 text-base" size="lg">
                     <LogIn className="mr-2 h-5 w-5"/> Login
                   </Button>
-                  <Button variant="outline" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
+                  <Button variant="outline" type="button" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
                      <Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" />
                     Sign in with Google
                   </Button>
@@ -323,7 +323,7 @@ export default function AuthPage() {
                   <Button type="submit" className="w-full py-3 text-base" size="lg">
                     <UserPlus className="mr-2 h-5 w-5"/> Sign Up
                   </Button>
-                   <Button variant="outline" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
+                   <Button variant="outline" type="button" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
                      <Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" />
                     Sign up with Google
                   </Button>
