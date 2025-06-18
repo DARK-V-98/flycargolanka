@@ -5,7 +5,7 @@ import Footer from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'FlyCargo Web',
+  title: 'FlyCargo Lanka',
   description: 'Courier services by FlyCargo Lanka',
 };
 

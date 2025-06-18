@@ -7,11 +7,11 @@ export default function Footer() {
       <div className="container mx-auto px-4 text-center">
         <div className="flex justify-center items-center mb-4">
           <Link href="/" className="flex items-center space-x-2">
-            <Image src="/fg.png" alt="FlyCargo Logo" width={32} height={32} className="h-8 w-auto" />
-            <span className="text-xl font-bold">FlyCargo</span>
+            <Image src="/fg.png" alt="FlyCargo Lanka Logo" width={32} height={32} className="h-8 w-auto" />
+            <span className="text-xl font-bold">FlyCargo Lanka</span>
           </Link>
         </div>
-        <p>&copy; {new Date().getFullYear()} FlyCargo Web. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} FlyCargo Lanka. All rights reserved.</p>
         <p className="text-sm mt-1">Powered by Fly Cargo Lanka</p>
       </div>
     </footer>

@@ -21,13 +21,13 @@ export default function Home() {
             
             <div className="md:text-left text-center space-y-6 order-1">
               <h1 className="text-5xl md:text-6xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp text-glow-primary">
-                Welcome to FlyCargo
+                Welcome to FlyCargo Lanka
               </h1>
               <p className="text-xl md:text-2xl text-foreground/80 mb-8 opacity-0 animate-fadeInUp delay-200">
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
               </p>
               <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
-                <Button asChild variant="default" size="lg" className="transition-transform duration-300 hover:scale-105">
+                 <Button asChild variant="default" size="lg" className="transition-transform duration-300 hover:scale-105">
                   <Link href="/book">Book a Courier</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 transition-transform duration-300 hover:scale-105">
@@ -39,7 +39,7 @@ export default function Home() {
             <div className="relative w-full opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
               <Image 
                 src="/her.png" 
-                alt="Hero Image" 
+                alt="Hero Image FlyCargo Lanka" 
                 width={800} 
                 height={800} 
                 className="w-full h-full object-cover"
@@ -53,7 +53,7 @@ export default function Home() {
 
       <section className="overflow-hidden">
         <div className="opacity-0 animate-fadeInUp">
-          <PageHeader title="Why Choose FlyCargo?" description="Experience the difference with our commitment to excellence." />
+          <PageHeader title="Why Choose FlyCargo Lanka?" description="Experience the difference with our commitment to excellence." />
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-200 glass-pane">
@@ -136,7 +136,7 @@ export default function Home() {
             Ready to Ship?
           </h2>
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-0 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
-            Get started today with FlyCargo. We make shipping simple and efficient.
+            Get started today with FlyCargo Lanka. We make shipping simple and efficient.
           </p>
           <Button asChild size="lg" className="bg-background hover:bg-background/90 text-foreground transition-transform duration-300 hover:scale-105 opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
             <Link href="/book">Book Your Shipment Now</Link>

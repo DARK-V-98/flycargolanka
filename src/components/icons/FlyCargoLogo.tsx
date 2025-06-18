@@ -22,14 +22,14 @@ export default function FlyCargoLogo() {
         {/* Logo image - 40px diameter, centered and on top */}
         <Image
           src="/fg.png"
-          alt="FlyCargo Logo"
+          alt="FlyCargo Lanka Logo"
           width={80}
           height={80}
           className="object-contain w-10 h-10 relative z-10"
           priority
         />
       </div>
-      <span className="text-glow-primary">FlyCargo</span>
+      <span className="text-glow-primary">FlyCargo Lanka</span>
     </Link>
   );
 }
