@@ -38,7 +38,7 @@ export default function Home() {
                   <Link href="/book">Book a Courier</Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 transition-transform duration-300 hover:scale-105">
-                  <Link href="/calculator">Get a Quote</Link>
+                  <Link href="/calculator">Calculator</Link>
                 </Button>
               </div>
             </div>
