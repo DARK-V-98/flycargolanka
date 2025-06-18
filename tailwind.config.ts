@@ -88,10 +88,25 @@ export default {
             height: '0',
           },
         },
+        'fadeInUp': {
+          from: { opacity: '0', transform: 'translateY(20px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fadeInScaleUp': {
+          from: { opacity: '0', transform: 'scale(0.95)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
+        'spin': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'fadeInUp': 'fadeInUp 0.6s ease-out forwards',
+        'fadeInScaleUp': 'fadeInScaleUp 0.5s ease-out forwards',
+        'spin-logo': 'spin 8s linear infinite',
       },
     },
   },
