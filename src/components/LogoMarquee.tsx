@@ -30,8 +30,8 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = '40s' }) => {
               src={logo.src}
               alt={logo.name}
               fill
-              style={{ objectFit: 'contain', padding: '0.5rem' }} // padding to ensure logo doesn't touch edges
-              sizes="100px" // Provide a hint for image optimization
+              style={{ objectFit: 'contain' }} // Removed padding from here
+              sizes="112px" // Updated to reflect .marquee-item width (w-28)
             />
           </div>
         ))}
