@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -12,7 +13,12 @@ type NavLinkProps<T extends string> = {
   activeClassName?: string;
 };
 
-export default function NavLink<T extends string>({ href, children, className, activeClassName = 'text-primary font-bold border-b-2 border-primary' }: NavLinkProps<T>) {
+export default function NavLink<T extends string>({
+  href,
+  children,
+  className,
+  activeClassName = "bg-primary/30 backdrop-blur-md text-primary font-semibold border-primary",
+}: NavLinkProps<T>) {
   const pathname = usePathname();
   const isActive = pathname === href.toString();
 
@@ -20,9 +26,11 @@ export default function NavLink<T extends string>({ href, children, className, a
     <Link
       href={href}
       className={cn(
-        "text-foreground hover:text-primary transition-colors py-2",
-        className,
-        isActive && activeClassName
+        "inline-block px-4 py-2 rounded-lg border transition-all duration-300 ease-in-out", // Base structure: padding, rounded, border, transition
+        className, // Allows passing additional classes like text-lg
+        isActive
+          ? activeClassName // Active state styles
+          : "bg-card/50 backdrop-blur-md border-transparent text-foreground hover:text-primary hover:bg-card/60 hover:border-primary/70" // Default and hover styles
       )}
       aria-current={isActive ? "page" : undefined}
     >
