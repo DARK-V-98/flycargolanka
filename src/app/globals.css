@@ -52,64 +52,15 @@
     --sidebar-ring: 45 79% 51%; /* Gold */
   }
 
-  .dark {
-    /* FlyCargo Dark Theme (Original "Neon Gold" theme) */
-    --background: 0 0% 5%; /* Very Dark Grey / Near Black */
-    --foreground: 0 0% 90%; /* Light Grey / Off-white for text */
-
-    --card: 0 0% 10%; /* Slightly lighter dark grey for cards */
-    --card-foreground: 0 0% 90%; /* Light text in cards */
-
-    --popover: 0 0% 10%; /* Dark popover */
-    --popover-foreground: 0 0% 90%; /* Light text in popovers */
-
-    --primary: 45 90% 58%; /* Neon Gold */
-    --primary-foreground: 0 0% 10%; /* Very Dark Grey for text on gold */
-
-    --secondary: 0 0% 15%; /* Medium-dark grey for secondary elements */
-    --secondary-foreground: 0 0% 80%; /* Lighter text for secondary */
-
-    --muted: 0 0% 12%; /* Muted dark grey */
-    --muted-foreground: 0 0% 70%; /* Muted text */
-
-    --accent: 45 90% 58%; /* Neon Gold (same as primary for dark theme) */
-    --accent-foreground: 0 0% 10%; /* Very Dark Grey for text on gold accent */
-
-    --destructive: 0 70% 60%; /* Vibrant Red for destructive actions */
-    --destructive-foreground: 0 0% 100%; /* White text on red */
-
-    --border: 0 0% 20%; /* Subtle dark grey border */
-    --input: 0 0% 10%; /* Dark input field background (same as card) */
-    --ring: 45 90% 58%; /* Neon Gold for focus rings (same as primary) */
-
-    --chart-1: 45 90% 58%;  /* Neon Gold */
-    --chart-2: 45 90% 65%; /* Lighter Gold */
-    --chart-3: 45 85% 50%;  /* Darker Neon Gold */
-    --chart-4: 45 80% 45%; /* Another shade of gold */
-    --chart-5: 40 95% 65%;  /* Lighter Neon Gold (slightly different hue) */
-    
-    /* Sidebar dark theme adjustments */
-    --sidebar-background: 0 0% 3%; 
-    --sidebar-foreground: 0 0% 90%; 
-    --sidebar-primary: 45 90% 58%; 
-    --sidebar-primary-foreground: 0 0% 10%; 
-    --sidebar-accent: 45 90% 58%; 
-    --sidebar-accent-foreground: 0 0% 10%; 
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 45 90% 58%;
-  }
-
   * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
-    transition-colors duration-300 ease-in-out; /* Add transition for theme change */
   }
 }
 
 @layer utilities {
-  /* Keyframes and animation classes (fadeInUp, fadeInScaleUp, spin, animate-*) are now defined in tailwind.config.ts */
   /* Tailwind will generate the necessary utility classes (e.g., animate-fadeInUp) */
 
   .delay-100 { animation-delay: 0.1s; }
@@ -126,9 +77,5 @@
   .glass-pane {
     /* Light theme glass pane */
     @apply bg-[hsl(var(--card)/0.5)] backdrop-blur-md;
-  }
-  .dark .glass-pane {
-    /* Dark theme glass pane */
-    @apply bg-[hsl(0_0%_100%_/_0.05)] backdrop-blur-md;
   }
 }

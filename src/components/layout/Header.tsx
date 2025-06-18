@@ -3,7 +3,6 @@ import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { ThemeToggleButton } from '@/components/ThemeToggleButton';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -25,7 +24,6 @@ export default function Header() {
               </NavLink>
             ))}
           </nav>
-          <ThemeToggleButton />
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
