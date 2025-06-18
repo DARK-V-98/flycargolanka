@@ -97,9 +97,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // onAuthStateChanged will handle profile creation
       router.push('/');
       return userCredential.user;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing up with email:", error);
-      throw error; // Rethrow to be caught by the form
+      if (error.code === 'auth/email-already-in-use') {
+        throw new Error("This email address is already registered. Please log in or use a different email.");
+      }
+      throw error; // Rethrow other errors to be caught by the form
     }
   };
   
@@ -109,9 +112,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // onAuthStateChanged will update user state
       router.push('/');
       return userCredential.user;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing in with email:", error);
-      throw error; // Rethrow to be caught by the form
+       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        throw new Error("Invalid email or password. Please try again.");
+      }
+      throw error; // Rethrow other errors to be caught by the form
     }
   };
 
@@ -144,5 +150,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
-    
