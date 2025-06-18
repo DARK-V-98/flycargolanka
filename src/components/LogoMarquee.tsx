@@ -29,8 +29,8 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = '40s' }) => {
             <Image
               src={logo.src}
               alt={logo.name}
-              width={400} 
-              height={250} 
+              width={160} // Bounding width
+              height={48}  // Target height
               className="object-contain"
             />
           </div>
