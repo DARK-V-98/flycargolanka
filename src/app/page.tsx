@@ -1,4 +1,5 @@
 
+
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
@@ -119,9 +120,15 @@ export default function Home() {
             <p className="text-lg md:text-xl mb-4 opacity-0 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
               We understand the unique needs of online sellers, which is why we offer free insurance for your shipments, ensuring peace of mind with every delivery. Our commitment to competitive rates means you can send parcels worldwide without breaking the bank.
             </p>
-            <p className="text-lg md:text-xl opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
+            <p className="text-lg md:text-xl mb-8 opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
               Powered by innovative technology and a customer-first approach, we provide seamless logistics to help Sri Lankan ecommerce entrepreneurs thrive in the global marketplace. Trust FlyCargo Lanka to deliver your success, one parcel at a time.
             </p>
+            <div className="opacity-0 animate-fadeInUp" style={{animationDelay: '0.4s'}}>
+              <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-3">Our Vision</h3>
+              <p className="text-lg md:text-xl">
+                "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
+              </p>
+            </div>
           </div>
         </div>
       </section>
