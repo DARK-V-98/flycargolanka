@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch } from "lucide-react";
+import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog } from "lucide-react"; // Added UserCog
 import { useAuth } from '@/contexts/AuthContext';
 import type { Route } from 'next';
 
@@ -68,7 +68,7 @@ export default function Header() {
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={userProfile?.photoURL || undefined} alt={userProfile?.displayName || user.email || 'User'} />
                     <AvatarFallback>
-                      {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : <UserCircle />}
+                      {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : (user.email ? user.email.charAt(0).toUpperCase() : <UserCircle />)}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -76,11 +76,18 @@ export default function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{userProfile?.displayName || user.email}</p>
+                    <p className="text-sm font-medium leading-none">{userProfile?.displayName || user.email?.split('@')[0]}</p>
                     {user.email && <p className="text-xs leading-none text-muted-foreground">{user.email}</p>}
                     {role && <p className="text-xs leading-none text-primary capitalize pt-1">{role}</p>}
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <UserCog className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />

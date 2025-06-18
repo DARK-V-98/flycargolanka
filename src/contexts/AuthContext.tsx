@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,7 @@ interface UserProfile {
   photoURL: string | null;
   role: UserRole;
   createdAt?: any;
+  // Add other profile fields as needed
 }
 
 interface AuthContextType {
@@ -29,6 +30,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
   sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserDisplayName: (newName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,7 +46,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true); // Set loading to true at the start of auth state change
+      setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
         const userDocRef = doc(db, 'users', firebaseUser.uid);
@@ -53,47 +55,54 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (userDocSnap.exists()) {
           const profileData = userDocSnap.data() as UserProfile;
           const updates: Partial<UserProfile> = {};
-          let needsUpdate = false;
+          let needsFirestoreUpdate = false;
 
-          // Sync displayName
+          // Sync displayName from Auth to Firestore if different or Firestore is null
           if (firebaseUser.displayName !== profileData.displayName) {
             updates.displayName = firebaseUser.displayName;
-            needsUpdate = true;
+            needsFirestoreUpdate = true;
           }
-          // Sync photoURL
+          // Sync photoURL from Auth to Firestore if different or Firestore is null
           if (firebaseUser.photoURL !== profileData.photoURL) {
             updates.photoURL = firebaseUser.photoURL;
-            needsUpdate = true;
+            needsFirestoreUpdate = true;
           }
-          // Sync email
+          // Sync email from Auth to Firestore if different (should rarely happen but good to check)
           if (firebaseUser.email && firebaseUser.email !== profileData.email) {
             updates.email = firebaseUser.email;
-            needsUpdate = true;
+            needsFirestoreUpdate = true;
           }
 
-          if (needsUpdate) {
+          const currentProfile = {
+            ...profileData,
+            // Ensure local state reflects Firebase Auth first, then apply Firestore updates
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            email: firebaseUser.email,
+          };
+          
+          if (needsFirestoreUpdate) {
             try {
               await updateDoc(userDocRef, updates);
-              const updatedProfile = { ...profileData, ...updates };
-              setUserProfile(updatedProfile);
-              setRole(updatedProfile.role);
+              setUserProfile({ ...currentProfile, ...updates }); // Reflect Firestore updates
+              setRole(currentProfile.role); // Role comes from Firestore
             } catch (error) {
               console.error("Error updating user profile in Firestore:", error);
-              setUserProfile(profileData); // Fallback to existing data on error
-              setRole(profileData.role);
+              setUserProfile(currentProfile); // Fallback to current (Auth-synced) data
+              setRole(currentProfile.role);
             }
           } else {
-            setUserProfile(profileData);
-            setRole(profileData.role);
+            setUserProfile(currentProfile);
+            setRole(currentProfile.role);
           }
         } else {
           // New user, create profile in Firestore
           const determinedRole: UserRole = firebaseUser.email === DEVELOPER_EMAIL ? 'developer' : 'user';
           const newUserProfile: UserProfile = {
             uid: firebaseUser.uid,
-            email: firebaseUser.email, // From firebaseUser, should be present
-            displayName: firebaseUser.displayName, // From firebaseUser, could be null
-            photoURL: firebaseUser.photoURL,       // From firebaseUser, could be null
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
             role: determinedRole,
             createdAt: serverTimestamp(),
           };
@@ -103,13 +112,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setRole(determinedRole);
           } catch (error) {
              console.error("Error creating new user profile in Firestore:", error);
-             // Set profile to a minimal state or null if creation fails
-             setUserProfile({
+             setUserProfile({ // Minimal profile on error
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName,
                 photoURL: firebaseUser.photoURL,
-                role: determinedRole // Or a default 'user' role
+                role: determinedRole
              });
              setRole(determinedRole);
           }
@@ -129,7 +137,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // onAuthStateChanged will handle profile creation/update & navigation
       router.push('/');
     } catch (error) {
       console.error("Error signing in with Google:", error);
@@ -140,7 +147,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUpWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will handle profile creation & navigation
+      // onAuthStateChanged will handle profile creation. We can also update the profile immediately here.
+      // For new email sign-ups, displayName and photoURL will be null initially from Firebase Auth.
+      // We can set a default displayName if desired, e.g., based on email.
+      // For now, it will be null, and the user can update it on the profile page.
       router.push('/');
       return userCredential.user;
     } catch (error: any) {
@@ -148,14 +158,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error.code === 'auth/email-already-in-use') {
         throw new Error("This email address is already registered. Please log in or use a different email.");
       }
-      throw error; // Re-throw other errors
+      throw error;
     }
   };
 
   const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will update user state & navigation
       router.push('/');
       return userCredential.user;
     } catch (error: any) {
@@ -163,7 +172,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         throw new Error("Invalid email or password. Please try again.");
       }
-      throw error; // Re-throw other errors
+      throw error;
     }
   };
 
@@ -176,15 +185,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-
   const logout = async () => {
     await firebaseSignOut(auth);
-    // onAuthStateChanged will clear user state
     router.push('/');
   };
 
+  const updateUserDisplayName = async (newName: string) => {
+    if (!user) {
+      throw new Error("You must be logged in to update your profile.");
+    }
+    try {
+      // Update Firebase Auth profile
+      await updateProfile(user, { displayName: newName });
+
+      // Update Firestore profile
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, { displayName: newName });
+
+      // Update local state
+      setUserProfile(prevProfile => prevProfile ? { ...prevProfile, displayName: newName } : null);
+      // Also update the user object itself if necessary for immediate reflection, though onAuthStateChanged might handle this.
+      // For direct update of user:
+      // setUser(prevUser => prevUser ? { ...prevUser, displayName: newName } as FirebaseUser : null);
+
+    } catch (error) {
+      console.error("Error updating display name:", error);
+      throw new Error("Failed to update display name.");
+    }
+  };
+
+
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, role, signInWithGoogle, signUpWithEmail, signInWithEmail, sendPasswordReset, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, role, signInWithGoogle, signUpWithEmail, signInWithEmail, sendPasswordReset, logout, updateUserDisplayName }}>
       {children}
     </AuthContext.Provider>
   );
@@ -197,4 +229,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
