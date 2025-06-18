@@ -26,10 +26,23 @@ export default function Home() {
               <p className="text-xl md:text-2xl text-foreground/80 mb-8 opacity-0 animate-fadeInUp delay-200">
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
               </p>
-              <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start opacity-0 animate-fadeInUp delay-400">
-                <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground transition-transform duration-300 hover:scale-105">
-                  <Link href="/book">Book a Courier</Link>
-                </Button>
+              <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
+                <Link 
+                  href="/book" 
+                  className="group relative block w-48 h-auto rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 cursor-pointer border-2 border-primary hover:border-primary/80"
+                  aria-label="Book a courier - video preview"
+                >
+                  <video
+                    src="/courier.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    width="192"
+                    height="108"
+                    className="w-full h-full object-cover"
+                  />
+                </Link>
                 <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary/10 transition-transform duration-300 hover:scale-105">
                   <Link href="/calculator">Get a Quote</Link>
                 </Button>
