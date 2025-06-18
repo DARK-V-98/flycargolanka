@@ -38,7 +38,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Column for the logo */}
             <div className="relative w-full h-full flex items-center justify-center opacity-0 animate-fadeInUp delay-500 order-3 mt-8 md:mt-0 py-12">
               <div className="transform scale-[5]">
                 <FlyCargoLogo hideText showSpinner={false} />
@@ -123,12 +122,32 @@ export default function Home() {
             <p className="text-lg md:text-xl mb-8 opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
               Powered by innovative technology and a customer-first approach, we provide seamless logistics to help Sri Lankan ecommerce entrepreneurs thrive in the global marketplace. Trust FlyCargo Lanka to deliver your success, one parcel at a time.
             </p>
-            <div className="opacity-0 animate-fadeInUp" style={{animationDelay: '0.4s'}}>
-              <h3 className="text-2xl md:text-3xl font-bold font-headline text-primary mb-3">Our Vision</h3>
-              <p className="text-lg md:text-xl">
-                "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
-              </p>
-            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp">
+              Our Vision
+            </h2>
+            <p className="text-lg md:text-xl opacity-0 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
+              "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp">
+              Our Mission
+            </h2>
+            <p className="text-lg md:text-xl opacity-0 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
+              "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
+            </p>
           </div>
         </div>
       </section>
