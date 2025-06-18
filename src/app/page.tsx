@@ -170,15 +170,7 @@ export default function Home() {
         </div>
       </section>
       
-      {/* Trusted By Global Marketplaces Section */}
-      <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.6s'}}>
-        <div className="container mx-auto px-4">
-          <div className="opacity-0 animate-fadeInUp">
-            <PageHeader title="Trusted By Global Marketplaces" description="Powering e-commerce sellers on platforms worldwide." />
-          </div>
-          <LogoMarquee logos={partnerLogos} />
-        </div>
-      </section>
+      {/* Trusted By Global Marketplaces Section - REMOVED */}
 
       <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground rounded-xl shadow-lg overflow-hidden opacity-0 animate-fadeInUp" style={{animationDelay: '0.7s'}}>
         <div className="container mx-auto px-4">
