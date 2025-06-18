@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import PageHeader from '@/components/PageHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { AlertTriangle, LogIn, UserPlus, Mail, Lock, RefreshCcw } from 'lucide-react';
@@ -97,8 +96,8 @@ export default function AuthPage() {
         description: "If an account exists for this email, a password reset link has been sent.",
         variant: "default",
       });
-      setShowForgotPassword(false); // Hide the modal/form
-      loginForm.reset(); // Optionally reset login form if email was prefilled
+      setShowForgotPassword(false); 
+      loginForm.reset(); 
     } catch (error: any) {
       toast({
         title: "Password Reset Failed",
@@ -124,11 +123,12 @@ export default function AuthPage() {
     }
   };
   
-  const onFormError = (errors: any) => {
+  const onFormError = (errors: any, formType: 'login' | 'signup' | 'forgotPassword') => {
     const firstErrorKey = Object.keys(errors)[0];
+     const title = formType === 'login' ? "Login Error" : formType === 'signup' ? "Signup Error" : "Password Reset Error";
     if (!firstErrorKey) {
       toast({
-        title: "Form Error",
+        title: title,
         description: "An unknown error occurred. Please check the form.",
         variant: "destructive",
         action: <AlertTriangle className="text-yellow-500" />
@@ -138,34 +138,141 @@ export default function AuthPage() {
     const firstError = errors[firstErrorKey];
     const errorMessage = (firstError as any)?.message || "Please check the form for errors.";
      toast({
-        title: "Form Error",
+        title: title,
         description: errorMessage,
         variant: "destructive",
         action: <AlertTriangle className="text-yellow-500" />
       });
   };
 
-  if (showForgotPassword) {
-    return (
-      <div className="opacity-0 animate-fadeInUp flex flex-col items-center justify-center min-h-[calc(100vh-20rem)] py-12">
-        <Card className="w-full max-w-md shadow-2xl">
-          <CardHeader>
-            <CardTitle className="text-2xl font-headline text-accent">Reset Password</CardTitle>
-            <CardDescription>Enter your email to receive a password reset link.</CardDescription>
+  const AuthFlipCard = () => (
+    <div className="w-full max-w-md opacity-0 animate-fadeInUp">
+      <ReactCardFlip isFlipped={isFlipped} flipDirection="horizontal" containerStyle={{width: '100%'}}>
+        {/* LOGIN CARD (FRONT) */}
+        <Card className="w-full shadow-2xl">
+          <CardHeader className="text-center space-y-2">
+            <CardTitle className="text-3xl font-headline text-accent">Welcome Back!</CardTitle>
+            <CardDescription>Log in to access your FlyCargo services.</CardDescription>
           </CardHeader>
-          <Form {...forgotPasswordForm}>
-            <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword, onFormError)}>
+          <Form {...loginForm}>
+            <form onSubmit={loginForm.handleSubmit(handleLogin, (errors) => onFormError(errors, 'login'))}>
               <CardContent className="space-y-6">
                 <FormField
-                  control={forgotPasswordForm.control}
+                  control={loginForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">Email Address</FormLabel>
                       <FormControl>
-                        <div className="relative">
+                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                          <Input type="email" placeholder="you@example.com" {...field} className="pl-10 text-base py-3" />
+                          <Input type="email" placeholder="you@example.com" {...field} className="pl-10 text-base py-3"/>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={loginForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                          <Input type="password" placeholder="••••••••" {...field} className="pl-10 text-base py-3"/>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <Button type="button" variant="link" onClick={() => setShowForgotPassword(true)} className="px-0 text-sm text-primary hover:text-primary/80">
+                      Forgot Password?
+                  </Button>
+              </CardContent>
+              <CardFooter className="flex flex-col gap-4">
+                <Button type="submit" className="w-full py-3 text-base" size="lg">
+                  <LogIn className="mr-2 h-5 w-5"/> Login
+                </Button>
+                <div className="relative w-full my-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+                <Button variant="outline" type="button" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
+                   <Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" />
+                  Sign in with Google
+                </Button>
+                <p className="text-sm text-muted-foreground pt-2">
+                  Don't have an account?{' '}
+                  <Button variant="link" type="button" onClick={() => setIsFlipped(prev => !prev)} className="text-primary hover:text-primary/80 px-1">
+                    Sign Up <UserPlus className="ml-1 h-4 w-4" />
+                  </Button>
+                </p>
+              </CardFooter>
+            </form>
+          </Form>
+        </Card>
+
+        {/* SIGNUP CARD (BACK) */}
+        <Card className="w-full shadow-2xl">
+          <CardHeader className="text-center space-y-2">
+            <CardTitle className="text-3xl font-headline text-accent">Create Your Account</CardTitle>
+            <CardDescription>Join FlyCargo Lanka for seamless shipping.</CardDescription>
+          </CardHeader>
+           <Form {...signupForm}>
+            <form onSubmit={signupForm.handleSubmit(handleSignup, (errors) => onFormError(errors, 'signup'))}>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={signupForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Email Address</FormLabel>
+                       <FormControl>
+                         <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                          <Input type="email" placeholder="you@example.com" {...field} className="pl-10 text-base py-3"/>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={signupForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                          <Input type="password" placeholder="Create a strong password" {...field} className="pl-10 text-base py-3"/>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={signupForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Confirm Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                          <Input type="password" placeholder="Confirm your password" {...field} className="pl-10 text-base py-3"/>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -175,172 +282,80 @@ export default function AuthPage() {
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
                 <Button type="submit" className="w-full py-3 text-base" size="lg">
-                  <RefreshCcw className="mr-2 h-5 w-5" /> Send Reset Link
+                  <UserPlus className="mr-2 h-5 w-5"/> Sign Up
                 </Button>
-                <Button variant="link" type="button" onClick={() => setShowForgotPassword(false)} className="text-sm">
-                  Back to Login
+                 <div className="relative w-full my-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+                 <Button variant="outline" type="button" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
+                   <Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" />
+                  Sign up with Google
                 </Button>
+                <p className="text-sm text-muted-foreground pt-2">
+                  Already have an account?{' '}
+                  <Button variant="link" type="button" onClick={() => setIsFlipped(prev => !prev)} className="text-primary hover:text-primary/80 px-1">
+                    Login <LogIn className="ml-1 h-4 w-4" />
+                  </Button>
+                </p>
               </CardFooter>
             </form>
           </Form>
         </Card>
-      </div>
-    );
-  }
+      </ReactCardFlip>
+    </div>
+  );
 
+  const ForgotPasswordCard = () => (
+     <div className="w-full max-w-md opacity-0 animate-fadeInUp">
+      <Card className="shadow-2xl">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-2xl font-headline text-accent">Reset Password</CardTitle>
+          <CardDescription>Enter your email to receive a password reset link.</CardDescription>
+        </CardHeader>
+        <Form {...forgotPasswordForm}>
+          <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword, (errors) => onFormError(errors, 'forgotPassword'))}>
+            <CardContent className="space-y-6">
+              <FormField
+                control={forgotPasswordForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Email Address</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input type="email" placeholder="you@example.com" {...field} className="pl-10 text-base py-3" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button type="submit" className="w-full py-3 text-base" size="lg">
+                <RefreshCcw className="mr-2 h-5 w-5" /> Send Reset Link
+              </Button>
+              <Button variant="link" type="button" onClick={() => setShowForgotPassword(false)} className="text-sm">
+                Back to Login
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+    </div>
+  );
 
   return (
-    <div className="opacity-0 animate-fadeInUp">
-      <PageHeader
-        title={isFlipped ? "Create Your Account" : "Welcome Back!"}
-        description={isFlipped ? "Join FlyCargo Lanka for seamless shipping." : "Log in to access your FlyCargo services."}
-      />
-       <div className="flex justify-center items-start min-h-[calc(100vh-25rem)]">
-        <ReactCardFlip isFlipped={isFlipped} flipDirection="horizontal" containerStyle={{width: '100%', maxWidth: '450px'}}>
-          {/* LOGIN CARD (FRONT) */}
-          <Card className="w-full shadow-2xl">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl font-headline text-accent">Login</CardTitle>
-              <CardDescription>Access your account or sign in with Google.</CardDescription>
-            </CardHeader>
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(handleLogin, onFormError)}>
-                <CardContent className="space-y-6">
-                  <FormField
-                    control={loginForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base">Email Address</FormLabel>
-                        <FormControl>
-                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input type="email" placeholder="you@example.com" {...field} className="pl-10 text-base py-3"/>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={loginForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base">Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input type="password" placeholder="••••••••" {...field} className="pl-10 text-base py-3"/>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <Button type="button" variant="link" onClick={() => setShowForgotPassword(true)} className="px-0 text-sm text-primary hover:text-primary/80">
-                        Forgot Password?
-                    </Button>
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                  <Button type="submit" className="w-full py-3 text-base" size="lg">
-                    <LogIn className="mr-2 h-5 w-5"/> Login
-                  </Button>
-                  <Button variant="outline" type="button" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
-                     <Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" />
-                    Sign in with Google
-                  </Button>
-                  <p className="text-sm text-muted-foreground">
-                    Don't have an account?{' '}
-                    <Button variant="link" type="button" onClick={() => setIsFlipped(prev => !prev)} className="text-primary hover:text-primary/80 px-1">
-                      Sign Up <UserPlus className="ml-1 h-4 w-4" />
-                    </Button>
-                  </p>
-                </CardFooter>
-              </form>
-            </Form>
-          </Card>
-
-          {/* SIGNUP CARD (BACK) */}
-          <Card className="w-full shadow-2xl">
-            <CardHeader className="text-center">
-              <CardTitle className="text-3xl font-headline text-accent">Sign Up</CardTitle>
-              <CardDescription>Create an account to get started with FlyCargo Lanka.</CardDescription>
-            </CardHeader>
-             <Form {...signupForm}>
-              <form onSubmit={signupForm.handleSubmit(handleSignup, onFormError)}>
-                <CardContent className="space-y-6">
-                  <FormField
-                    control={signupForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base">Email Address</FormLabel>
-                         <FormControl>
-                           <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input type="email" placeholder="you@example.com" {...field} className="pl-10 text-base py-3"/>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signupForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base">Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input type="password" placeholder="Create a strong password" {...field} className="pl-10 text-base py-3"/>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signupForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-base">Confirm Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                            <Input type="password" placeholder="Confirm your password" {...field} className="pl-10 text-base py-3"/>
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-                <CardFooter className="flex flex-col gap-4">
-                  <Button type="submit" className="w-full py-3 text-base" size="lg">
-                    <UserPlus className="mr-2 h-5 w-5"/> Sign Up
-                  </Button>
-                   <Button variant="outline" type="button" onClick={handleGoogleSignIn} className="w-full py-3 text-base" size="lg">
-                     <Image src="/google-logo.svg" alt="Google" width={20} height={20} className="mr-2" />
-                    Sign up with Google
-                  </Button>
-                  <p className="text-sm text-muted-foreground">
-                    Already have an account?{' '}
-                    <Button variant="link" type="button" onClick={() => setIsFlipped(prev => !prev)} className="text-primary hover:text-primary/80 px-1">
-                      Login <LogIn className="ml-1 h-4 w-4" />
-                    </Button>
-                  </p>
-                </CardFooter>
-              </form>
-            </Form>
-          </Card>
-        </ReactCardFlip>
-      </div>
+    <div className="flex flex-col items-center justify-center flex-grow w-full py-8 md:py-12 px-4">
+       {showForgotPassword ? <ForgotPasswordCard /> : <AuthFlipCard />}
     </div>
   );
 }
-
-    
