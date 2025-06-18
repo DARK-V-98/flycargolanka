@@ -100,8 +100,7 @@
     animation-play-state: paused;
   }
   .marquee-item {
-    @apply mx-6 flex h-16 min-w-[8rem] items-center justify-center rounded-md border border-border/50 bg-card p-4 text-center shadow-sm transition-transform duration-300 hover:scale-105 hover:shadow-lg;
-    /* Using text as logo placeholder */
-    @apply text-lg font-semibold text-muted-foreground;
+    @apply mx-4 flex h-16 w-28 items-center justify-center rounded-lg border border-border/30 bg-card shadow-md transition-transform duration-300 hover:scale-105 hover:shadow-lg relative overflow-hidden;
+    /* Removed text-specific styling, padding moved to Image component via style prop */
   }
 }

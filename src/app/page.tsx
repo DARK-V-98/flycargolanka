@@ -17,8 +17,16 @@ const services = [
 
 export default function Home() {
   const partnerLogos = [
-    "Amazon", "eBay", "Etsy", "Wish", "Bonanza", "Walmart", "AliExpress", "Shopify", "Lazada", "Flipkart", "Taobao", "Rakuten"
+    { name: "AliExpress", src: "/logos/ali.webp" },
+    { name: "Walmart", src: "/logos/wall.webp" },
+    { name: "Amazon", src: "/logos/amazon.svg" },
+    { name: "Bonanza", src: "/logos/bonanza.jpg" },
+    { name: "eBay", src: "/logos/ebay.svg" },
+    { name: "Etsy", src: "/logos/etsy.svg" },
+    { name: "Payoneer", src: "/logos/Payoneer.webp" },
+    { name: "Wish", src: "/logos/Wish.svg" },
   ];
+
   return (
     <div className="space-y-16">
       <section className="py-12 md:py-20 rounded-xl shadow-lg overflow-hidden relative">
@@ -31,6 +39,8 @@ export default function Home() {
           src="/bg.mp4"
           type="video/mp4"
         />
+        
+        {/* Removed overlay: <div className="absolute inset-0 w-full h-full bg-black/30 z-10"></div> */}
         
         <div className="container mx-auto px-4 relative z-20"> {/* Content on top */}
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
