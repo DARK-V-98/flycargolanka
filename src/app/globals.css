@@ -100,6 +100,7 @@
     animation-play-state: paused;
   }
   .marquee-item {
-    @apply mx-4 flex h-32 w-48 items-center justify-center rounded-lg transition-transform duration-300 hover:scale-105 relative overflow-hidden;
+    @apply mx-4 flex w-[576px] h-[384px] items-center justify-center rounded-lg transition-transform duration-300 hover:scale-105 relative overflow-hidden;
   }
 }
+
