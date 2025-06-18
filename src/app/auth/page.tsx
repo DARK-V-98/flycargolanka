@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import PageHeader from '@/components/PageHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, LogIn, UserPlus, Mail, Lock, ExternalLink, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, LogIn, UserPlus, Mail, Lock, RefreshCcw } from 'lucide-react';
 import Image from 'next/image';
 
 const loginSchema = z.object({
@@ -125,7 +125,17 @@ export default function AuthPage() {
   };
   
   const onFormError = (errors: any) => {
-    const firstError = Object.values(errors)[0];
+    const firstErrorKey = Object.keys(errors)[0];
+    if (!firstErrorKey) {
+      toast({
+        title: "Form Error",
+        description: "An unknown error occurred. Please check the form.",
+        variant: "destructive",
+        action: <AlertTriangle className="text-yellow-500" />
+      });
+      return;
+    }
+    const firstError = errors[firstErrorKey];
     const errorMessage = (firstError as any)?.message || "Please check the form for errors.";
      toast({
         title: "Form Error",
@@ -332,3 +342,5 @@ export default function AuthPage() {
     </div>
   );
 }
+
+    
