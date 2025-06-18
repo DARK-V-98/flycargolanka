@@ -53,9 +53,9 @@ const TypingEffect: React.FC<TypingEffectProps> = ({
     return () => clearTimeout(typingTimeout);
   }, [displayedText, isDeleting, text, typingSpeed, deletingSpeed, pauseDuration, loopNum]);
 
-  // Add a blinking cursor effect
+  // Add a blinking cursor effect and ensure stable height
   return (
-    <span className="relative">
+    <span className="relative inline-block min-h-[1.2em]">
       {displayedText}
       <span className="animate-ping absolute -right-1 top-0.5 h-full w-0.5 bg-primary opacity-75"></span>
       <span className="absolute -right-1 top-0.5 h-full w-0.5 bg-primary"></span>

@@ -107,7 +107,29 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 md:py-20 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane">
+      <section className="py-12 md:py-16">
+        <div className="container mx-auto px-4">
+          <div className="opacity-0 animate-fadeInUp">
+            <PageHeader title="Why Us?" />
+          </div>
+          <div className="grid md:grid-cols-2 gap-8 items-start mt-8">
+            <div className="space-y-4 opacity-0 animate-fadeInUp delay-200">
+              <h3 className="text-2xl font-headline text-accent font-semibold mb-3">Solutions for E-Commerce and Logistics</h3>
+              <p className="text-foreground/80 text-lg leading-relaxed">
+                Colombo mail is your e-commerce logistics specialist, connecting sellers to buyers across the globe.
+              </p>
+            </div>
+            <div className="space-y-4 opacity-0 animate-fadeInUp delay-300">
+              <h3 className="text-2xl font-headline text-accent font-semibold mb-3">Online Fulfillment Platform</h3>
+              <p className="text-foreground/80 text-lg leading-relaxed">
+                We provide an online platform for local and international fulfillment for eCommerce companies of all sizes. With access to global marketplaces and easy delivery fulfillment.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp">
