@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target } from 'lucide-react';
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import Image from 'next/image';
+import LogoMarquee from '@/components/LogoMarquee';
 
 
 const services = [
@@ -15,6 +16,9 @@ const services = [
 ];
 
 export default function Home() {
+  const partnerLogos = [
+    "Amazon", "eBay", "Etsy", "Wish", "Bonanza", "Walmart", "AliExpress", "Shopify", "Lazada", "Flipkart", "Taobao", "Rakuten"
+  ];
   return (
     <div className="space-y-16">
       <section className="py-12 md:py-20 rounded-xl shadow-lg overflow-hidden relative">
@@ -27,7 +31,6 @@ export default function Home() {
           src="/bg.mp4"
           type="video/mp4"
         />
-        {/* The overlay div that was here has been removed */}
         
         <div className="container mx-auto px-4 relative z-20"> {/* Content on top */}
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
@@ -36,7 +39,7 @@ export default function Home() {
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-[hsl(var(--chart-1))] mb-6 opacity-0 animate-fadeInUp text-glow-primary text-shadow-3d-navy">
                 <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
               </h1>
-              <p className="text-xl md:text-2xl text-white/90 mb-8 opacity-0 animate-fadeInUp delay-200"> {/* Adjusted text color for video bg */}
+              <p className="text-xl md:text-2xl text-white/90 mb-8 opacity-0 animate-fadeInUp delay-200">
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
               </p>
               <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
@@ -121,7 +124,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 md:py-16 opacity-0 animate-fadeInUp">
+      <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.5s'}}>
         <div className="container mx-auto px-4">
           <div className="opacity-0 animate-fadeInUp">
             <PageHeader title="Why Us?" description="Key advantages of partnering with FlyCargo Lanka."/>
@@ -157,6 +160,16 @@ export default function Home() {
           </div>
         </div>
       </section>
+      
+      {/* Trusted By Global Marketplaces Section */}
+      <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.6s'}}>
+        <div className="container mx-auto px-4">
+          <div className="opacity-0 animate-fadeInUp">
+            <PageHeader title="Trusted By Global Marketplaces" description="Powering e-commerce sellers on platforms worldwide." />
+          </div>
+          <LogoMarquee logos={partnerLogos} />
+        </div>
+      </section>
 
       <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground rounded-xl shadow-lg overflow-hidden opacity-0 animate-fadeInUp" style={{animationDelay: '0.7s'}}>
         <div className="container mx-auto px-4">
@@ -174,6 +187,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
-

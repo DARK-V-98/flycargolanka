@@ -100,6 +100,10 @@ export default {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(360deg)' },
         },
+        'marquee': {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -107,6 +111,7 @@ export default {
         'fadeInUp': 'fadeInUp 0.6s ease-out forwards',
         'fadeInScaleUp': 'fadeInScaleUp 0.5s ease-out forwards',
         'spin-logo': 'spin 8s linear infinite',
+        'marquee': 'marquee 40s linear infinite',
       },
     },
   },
