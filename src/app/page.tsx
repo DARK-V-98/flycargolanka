@@ -109,70 +109,82 @@ export default function Home() {
 
       <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
-          <div className="opacity-0 animate-fadeInUp">
-            <PageHeader title="Why Us?" />
-          </div>
-          <div className="grid md:grid-cols-2 gap-8 items-start mt-8">
-            <div className="space-y-4 opacity-0 animate-fadeInUp delay-200">
-              <h3 className="text-2xl font-headline text-accent font-semibold mb-3">Solutions for E-Commerce and Logistics</h3>
-              <p className="text-foreground/80 text-lg leading-relaxed">
-                Colombo mail is your e-commerce logistics specialist, connecting sellers to buyers across the globe.
-              </p>
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+            
+            {/* Left Column: Why Us? */}
+            <div className="space-y-8">
+              <div className="opacity-0 animate-fadeInUp">
+                <PageHeader title="Why Us?" description="Key advantages of partnering with FlyCargo Lanka."/>
+              </div>
+
+              <Card className="shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-200 glass-pane">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-headline text-accent">Solutions for E-Commerce and Logistics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-foreground/80 text-lg leading-relaxed">
+                    Colombo mail is your e-commerce logistics specialist, connecting sellers to buyers across the globe.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-300 glass-pane">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-headline text-accent">Online Fulfillment Platform</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-foreground/80 text-lg leading-relaxed">
+                    We provide an online platform for local and international fulfillment for eCommerce companies of all sizes. With access to global marketplaces and easy delivery fulfillment.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
-            <div className="space-y-4 opacity-0 animate-fadeInUp delay-300">
-              <h3 className="text-2xl font-headline text-accent font-semibold mb-3">Online Fulfillment Platform</h3>
-              <p className="text-foreground/80 text-lg leading-relaxed">
-                We provide an online platform for local and international fulfillment for eCommerce companies of all sizes. With access to global marketplaces and easy delivery fulfillment.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="py-12 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp">
-              About FlyCargo Lanka
-            </h2>
-            <p className="text-lg md:text-xl mb-4 opacity-0 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
-              At FlyCargo Lanka, we empower ecommerce businesses to soar beyond borders with fast, reliable, and affordable air cargo solutions.
-            </p>
-            <p className="text-lg md:text-xl mb-4 opacity-0 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
-              We understand the unique needs of online sellers, which is why we offer free insurance for your shipments, ensuring peace of mind with every delivery. Our commitment to competitive rates means you can send parcels worldwide without breaking the bank.
-            </p>
-            <p className="text-lg md:text-xl mb-8 opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
-              Powered by innovative technology and a customer-first approach, we provide seamless logistics to help Sri Lankan ecommerce entrepreneurs thrive in the global marketplace. Trust FlyCargo Lanka to deliver your success, one parcel at a time.
-            </p>
-          </div>
-        </div>
-      </section>
+            {/* Right Column: About, Vision, Mission */}
+            <div className="space-y-8">
+              <section className="p-6 md:p-8 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane opacity-0 animate-fadeInUp delay-400">
+                <div className="text-center"> 
+                  <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6">
+                    About FlyCargo Lanka
+                  </h2>
+                  <p className="text-lg md:text-xl mb-4">
+                    At FlyCargo Lanka, we empower ecommerce businesses to soar beyond borders with fast, reliable, and affordable air cargo solutions.
+                  </p>
+                  <p className="text-lg md:text-xl mb-4">
+                    We understand the unique needs of online sellers, which is why we offer free insurance for your shipments, ensuring peace of mind with every delivery. Our commitment to competitive rates means you can send parcels worldwide without breaking the bank.
+                  </p>
+                  <p className="text-lg md:text-xl">
+                    Powered by innovative technology and a customer-first approach, we provide seamless logistics to help Sri Lankan ecommerce entrepreneurs thrive in the global marketplace. Trust FlyCargo Lanka to deliver your success, one parcel at a time.
+                  </p>
+                </div>
+              </section>
 
-      <section className="py-12 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp">
-              Our Vision
-            </h2>
-            <p className="text-lg md:text-xl opacity-0 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
-              "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
-            </p>
-          </div>
-        </div>
-      </section>
+              <section className="p-6 md:p-8 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane opacity-0 animate-fadeInUp delay-500">
+                <div className="text-center">
+                  <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6">
+                    Our Vision
+                  </h2>
+                  <p className="text-lg md:text-xl">
+                    "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
+                  </p>
+                </div>
+              </section>
 
-      <section className="py-12 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6 opacity-0 animate-fadeInUp">
-              Our Mission
-            </h2>
-            <p className="text-lg md:text-xl opacity-0 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
-              "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
-            </p>
-          </div>
-        </div>
-      </section>
+              <section className="p-6 md:p-8 text-primary-foreground rounded-xl shadow-lg overflow-hidden glass-pane opacity-0 animate-fadeInUp delay-600">
+                <div className="text-center">
+                  <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary mb-6">
+                    Our Mission
+                  </h2>
+                  <p className="text-lg md:text-xl">
+                    "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
+                  </p>
+                </div>
+              </section>
+            </div> {/* End Right Column */}
+          </div> {/* End Grid */}
+        </div> {/* End Container */}
+      </section> {/* End Main Wrapper Section for Why Us / About etc. */}
+
 
       <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground rounded-xl shadow-lg overflow-hidden">
         <div className="container mx-auto px-4">
