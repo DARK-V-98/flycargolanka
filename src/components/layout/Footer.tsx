@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -16,7 +17,7 @@ export default function Footer() {
           
           <div className="mt-4"> {/* Copyright and Powered by */}
             <p className="text-base">&copy; {new Date().getFullYear()} FlyCargo Lanka. All rights reserved.</p>
-            <p className="text-sm mt-2 opacity-80">Powered by Fly Cargo Lanka</p>
+            <p className="text-sm mt-2 opacity-80">Powered by esystemlk</p>
           </div>
         </div>
 
