@@ -40,12 +40,12 @@ export default function Home() {
               <div className="h-3/4 w-16 glass-pane rounded-lg"></div>
             </div>
 
-            <div className="relative w-full h-auto aspect-square opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
+            <div className="relative w-full h-auto opacity-0 animate-fadeInUp delay-500 rounded-lg overflow-hidden shadow-lg order-3 mt-8 md:mt-0">
               <Image 
-                src="/hero.png" 
+                src="/he.png" 
                 alt="Hero Image" 
                 width={600} 
-                height={600} 
+                height={400} 
                 className="w-full h-full object-cover"
                 data-ai-hint="promotional banner"
                 priority
