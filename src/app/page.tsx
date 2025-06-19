@@ -18,9 +18,9 @@ const services = [
 export default function Home() {
   const partnerLogos = [
     { name: "AliExpress", src: "/ali.webp" },
-    { name: "Walmart", src: "/wall.webp", removeBg: true },
+    { name: "Walmart", src: "/wall.png", removeBg: true },
     { name: "Amazon", src: "/amazon.svg" },
-    { name: "Bonanza", src: "/bonanza.jpg", removeBg: true },
+    { name: "Bonanza", src: "/bonanza.png", removeBg: true },
     { name: "eBay", src: "/ebay.svg" },
     { name: "Etsy", src: "/Etsy.svg" },
     { name: "Payoneer", src: "/Payoneer.webp" },
