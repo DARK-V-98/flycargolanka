@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2, UsersCog, Mail, ShieldAlert, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, UserCog, Mail, ShieldAlert, Loader2 } from 'lucide-react'; // Changed UsersCog to UserCog
 import { useAuth, type UserRole } from '@/contexts/AuthContext'; // Import UserRole type
 import { useState } from 'react';
 
@@ -99,7 +99,7 @@ export default function ManageRolesPage() {
       <Card className="shadow-xl border-border/50 max-w-lg mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-headline text-accent">
-            <UsersCog className="mr-3 h-7 w-7 text-primary" /> Manage User Roles
+            <UserCog className="mr-3 h-7 w-7 text-primary" /> Manage User Roles 
           </CardTitle>
           <CardDescription>Assign or update roles for users by their email address.</CardDescription>
         </CardHeader>
