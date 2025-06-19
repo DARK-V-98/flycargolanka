@@ -23,7 +23,7 @@ export default function Home() {
     { name: "Bonanza", src: "/bonanza.png", removeBg: true },
     { name: "eBay", src: "/ebay.svg" },
     { name: "Etsy", src: "/Etsy.svg" },
-    { name: "Payoneer", src: "/Payoneer.webp" },
+    { name: "Payoneer", src: "/payoneer.png" },
     { name: "Wish", src: "/Wish.svg" },
   ];
 
