@@ -7,6 +7,7 @@ import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignO
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { FirebaseError } from 'firebase/app'; // Import FirebaseError
 
 type UserRole = 'user' | 'admin' | 'developer';
 
@@ -153,11 +154,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // For now, it will be null, and the user can update it on the profile page.
       router.push('/');
       return userCredential.user;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error signing up with email:", error);
-      if (error.code === 'auth/email-already-in-use') {
+      if (error instanceof FirebaseError && error.code === 'auth/email-already-in-use') {
         throw new Error("This email address is already registered. Please log in or use a different email.");
       }
+      // For other errors, or if it's not a FirebaseError with the specific code, re-throw the original error.
+      // This helps in debugging if the error structure is unexpected.
       throw error;
     }
   };
@@ -229,3 +232,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
