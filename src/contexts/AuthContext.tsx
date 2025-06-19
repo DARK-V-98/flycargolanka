@@ -56,66 +56,70 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const normalizedUserEmail = firebaseUser.email ? firebaseUser.email.toLowerCase() : null;
 
         if (userDocSnap.exists()) {
-          const profileData = userDocSnap.data() as UserProfile;
-          let effectiveRole = profileData.role;
+          const profileDataFromFirestore = userDocSnap.data() as UserProfile;
+          let effectiveRole = profileDataFromFirestore.role; // Start with Firestore role
 
+          // Developer override: if email matches, role IS 'developer'
           if (normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL) {
             effectiveRole = 'developer';
           }
 
-          const updates: Partial<UserProfile> = {};
+          const firestoreUpdates: Partial<UserProfile> = {};
           let needsFirestoreUpdate = false;
 
-          if (firebaseUser.displayName !== profileData.displayName) {
-            updates.displayName = firebaseUser.displayName;
+          // Sync displayName from auth to Firestore if different
+          if (firebaseUser.displayName !== profileDataFromFirestore.displayName) {
+            firestoreUpdates.displayName = firebaseUser.displayName;
             needsFirestoreUpdate = true;
           }
-          if (firebaseUser.photoURL !== profileData.photoURL) {
-            updates.photoURL = firebaseUser.photoURL;
+          // Sync photoURL from auth to Firestore if different
+          if (firebaseUser.photoURL !== profileDataFromFirestore.photoURL) {
+            firestoreUpdates.photoURL = firebaseUser.photoURL;
             needsFirestoreUpdate = true;
           }
-          // Ensure Firestore email matches auth email (normalized for comparison)
-          const firestoreEmailNormalized = profileData.email ? profileData.email.toLowerCase() : null;
-          if (normalizedUserEmail && normalizedUserEmail !== firestoreEmailNormalized) {
-            updates.email = firebaseUser.email; // Store original cased email from auth
-            needsFirestoreUpdate = true;
+          // Sync email from auth to Firestore if different
+          // Store original cased email from auth
+          if (firebaseUser.email !== profileDataFromFirestore.email) {
+             firestoreUpdates.email = firebaseUser.email; // Use actual email from auth
+             needsFirestoreUpdate = true;
           }
           
-          if (profileData.role !== effectiveRole) {
-            updates.role = effectiveRole;
+          // Sync determined effectiveRole to Firestore if different
+          if (profileDataFromFirestore.role !== effectiveRole) {
+            firestoreUpdates.role = effectiveRole;
             needsFirestoreUpdate = true;
           }
 
-          const currentProfile: UserProfile = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email, // Store original cased email
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-            role: effectiveRole,
-            createdAt: profileData.createdAt || serverTimestamp(),
-          };
-          
           if (needsFirestoreUpdate) {
             try {
-              await updateDoc(userDocRef, updates);
-              setUserProfile({ ...currentProfile, ...updates }); 
+              await updateDoc(userDocRef, firestoreUpdates);
             } catch (error) {
               console.error("Error updating user profile in Firestore:", error);
-              setUserProfile(currentProfile); 
+              // Continue with local state update even if Firestore fails, using best available info
             }
-          } else {
-            setUserProfile(currentProfile);
           }
+          
+          // Profile to set in React state (reflects auth info + effectiveRole)
+          const updatedUserProfile: UserProfile = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email, // from auth
+            displayName: firebaseUser.displayName, // from auth
+            photoURL: firebaseUser.photoURL, // from auth
+            role: effectiveRole, // the determined role
+            createdAt: profileDataFromFirestore.createdAt || serverTimestamp(),
+          };
+          setUserProfile(updatedUserProfile);
           setRole(effectiveRole);
+
         } else {
-          // New user, create profile in Firestore
-          const determinedRole: UserRole = normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL ? 'developer' : 'user';
+          // New user: create profile in Firestore
+          const determinedRoleForNewUser: UserRole = normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL ? 'developer' : 'user';
           const newUserProfile: UserProfile = {
             uid: firebaseUser.uid,
-            email: firebaseUser.email, // Store original cased email
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-            role: determinedRole,
+            email: firebaseUser.email, // from auth
+            displayName: firebaseUser.displayName, // from auth
+            photoURL: firebaseUser.photoURL, // from auth
+            role: determinedRoleForNewUser,
             createdAt: serverTimestamp(),
           };
           try {
@@ -123,15 +127,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUserProfile(newUserProfile);
           } catch (error) {
              console.error("Error creating new user profile in Firestore:", error);
+             // Fallback profile data for local state if Firestore setDoc fails
              setUserProfile({ 
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName,
                 photoURL: firebaseUser.photoURL,
-                role: determinedRole
+                role: determinedRoleForNewUser 
              });
           }
-          setRole(determinedRole);
+          setRole(determinedRoleForNewUser);
         }
       } else {
         setUser(null);
@@ -227,17 +232,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const usersRef = collection(db, "users");
     const normalizedTargetUserEmail = targetUserEmail.toLowerCase();
-    const q = query(usersRef, where("email", "==", targetUserEmail)); // Firestore queries are case-sensitive, so targetUserEmail must match stored case
+    // Firestore queries are case-sensitive. For robust email matching, consider storing emails in a consistent case (e.g., lowercase).
+    // For this implementation, we'll query for the exact email first, then attempt a case-insensitive scan if needed.
+    const q = query(usersRef, where("email", "==", targetUserEmail)); 
     
     try {
+      let userToUpdateRef: any;
+      let userToUpdateData: any;
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        // Attempt case-insensitive search if direct match fails, though Firestore doesn't support it directly efficiently.
-        // This is a fallback, ideally emails are stored consistently.
+
+      if (!querySnapshot.empty) {
+        // Found user(s) with case-sensitive email match
+        const matchedDoc = querySnapshot.docs[0]; // Assuming email is unique
+        userToUpdateRef = matchedDoc.ref;
+        userToUpdateData = matchedDoc.data();
+      } else {
+        // Fallback: Case-insensitive search if direct match fails
+        // This can be less performant on large datasets.
         const allUsersSnapshot = await getDocs(usersRef);
         let foundUserDoc: typeof querySnapshot.docs[0] | undefined;
         allUsersSnapshot.forEach(doc => {
-            if(doc.data().email && doc.data().email.toLowerCase() === normalizedTargetUserEmail) {
+            const docEmail = doc.data().email;
+            if(docEmail && typeof docEmail === 'string' && docEmail.toLowerCase() === normalizedTargetUserEmail) {
                 foundUserDoc = doc;
             }
         });
@@ -245,38 +261,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!foundUserDoc) {
             throw new Error(`User with email ${targetUserEmail} not found.`);
         }
-        // If found via case-insensitive search, use this document
-        const batch = writeBatch(db);
-        const userToUpdateRef = foundUserDoc.ref;
-        const userToUpdateData = foundUserDoc.data();
-
-        if (userToUpdateRef.id === user.uid) {
-            throw new Error("Cannot change your own role through this interface.");
-        }
-        if (userToUpdateData.email?.toLowerCase() === NORMALIZED_DEVELOPER_EMAIL && newRole !== 'developer') {
-            throw new Error(`Cannot change the role of the primary developer account (${DEVELOPER_EMAIL}) to ${newRole}.`);
-        }
-        batch.update(userToUpdateRef, { role: newRole });
-        await batch.commit();
-
-      } else {
-        // Original logic if direct case-sensitive match found
-        const batch = writeBatch(db);
-        querySnapshot.forEach(userDoc => {
-            if (userDoc.id === user.uid) {
-                throw new Error("Cannot change your own role through this interface.");
-            }
-            if (userDoc.data().email?.toLowerCase() === NORMALIZED_DEVELOPER_EMAIL && newRole !== 'developer') {
-                throw new Error(`Cannot change the role of the primary developer account (${DEVELOPER_EMAIL}) to ${newRole}.`);
-            }
-            batch.update(userDoc.ref, { role: newRole });
-        });
-        await batch.commit();
+        userToUpdateRef = foundUserDoc.ref;
+        userToUpdateData = foundUserDoc.data();
       }
+
+      // Perform checks on the identified user
+      if (userToUpdateRef.id === user.uid) {
+          throw new Error("Cannot change your own role through this interface.");
+      }
+      // Check if the user being updated is the primary developer
+      const targetEmailInFirestore = userToUpdateData.email;
+      if (targetEmailInFirestore && typeof targetEmailInFirestore === 'string' && 
+          targetEmailInFirestore.toLowerCase() === NORMALIZED_DEVELOPER_EMAIL && newRole !== 'developer') {
+          throw new Error(`Cannot change the role of the primary developer account (${DEVELOPER_EMAIL}) to ${newRole}.`);
+      }
+      
+      // Proceed with update
+      await updateDoc(userToUpdateRef, { role: newRole });
       
     } catch (error: any) {
       console.error("Error updating user role by email:", error);
-      throw error;
+      throw error; // Re-throw to be caught by the calling component
     }
   };
 
@@ -296,3 +301,5 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
+
+    
