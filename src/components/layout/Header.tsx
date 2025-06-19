@@ -46,7 +46,9 @@ export default function Header() {
   return (
     <header className="bg-background/80 backdrop-blur-md sticky top-0 z-50 shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <FlyCargoLogo />
+        <Link href="/">
+          <FlyCargoLogo />
+        </Link>
         <div className="flex items-center space-x-4">
           <nav className="hidden md:flex space-x-1 items-center">
             {navItemsToDisplay.map((item) => (
