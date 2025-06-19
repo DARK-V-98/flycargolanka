@@ -31,7 +31,8 @@ export default function Header() {
 
   const getNavItems = () => {
     let items = [...baseNavItems];
-    if (user) {
+    // Only add user-specific or role-specific items if auth is not loading and user is present
+    if (!loading && user) {
       items.push({ href: '/track-package' as Route, label: 'Track Package' });
       if (role === 'admin' || role === 'developer') {
         items.push({ href: '/admin/dashboard' as Route, label: 'Admin Dashboard' });
