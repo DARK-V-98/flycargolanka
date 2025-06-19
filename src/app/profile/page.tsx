@@ -14,8 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserCircle, Mail, User, Save, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { UserCircle, Mail, User, Save, AlertTriangle, CheckCircle2, LayoutDashboard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const profileSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters." }).max(50, { message: "Display name cannot exceed 50 characters." }),
@@ -24,7 +25,7 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
-  const { user, userProfile, loading, updateUserDisplayName } = useAuth();
+  const { user, userProfile, loading, role, updateUserDisplayName } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -113,6 +114,9 @@ export default function ProfilePage() {
           <CardDescription className="flex items-center text-muted-foreground">
             <Mail className="mr-2 h-4 w-4" /> {user.email}
           </CardDescription>
+           {role && (role === 'admin' || role === 'developer') && (
+            <p className="text-sm text-primary capitalize mt-1">{role}</p>
+          )}
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, onFormError)}>
@@ -139,10 +143,17 @@ export default function ProfilePage() {
                 </FormControl>
               </FormItem>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col space-y-4">
               <Button type="submit" className="w-full py-3 text-base" size="lg" disabled={form.formState.isSubmitting}>
                 <Save className="mr-2 h-5 w-5" /> {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
+              {(role === 'admin' || role === 'developer') && (
+                <Button asChild variant="outline" className="w-full py-3 text-base" size="lg">
+                  <Link href="/admin/dashboard">
+                    <LayoutDashboard className="mr-2 h-5 w-5" /> Go to Admin Dashboard
+                  </Link>
+                </Button>
+              )}
             </CardFooter>
           </form>
         </Form>
