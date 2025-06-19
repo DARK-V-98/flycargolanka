@@ -5,11 +5,11 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { FirebaseError } from 'firebase/app'; // Import FirebaseError
+import { FirebaseError } from 'firebase/app'; 
 
-type UserRole = 'user' | 'admin' | 'developer';
+export type UserRole = 'user' | 'admin' | 'developer';
 
 interface UserProfile {
   uid: string;
@@ -18,7 +18,6 @@ interface UserProfile {
   photoURL: string | null;
   role: UserRole;
   createdAt?: any;
-  // Add other profile fields as needed
 }
 
 interface AuthContextType {
@@ -32,6 +31,7 @@ interface AuthContextType {
   sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserDisplayName: (newName: string) => Promise<void>;
+  updateUserRoleByEmail: (targetUserEmail: string, newRole: UserRole) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,38 +58,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const updates: Partial<UserProfile> = {};
           let needsFirestoreUpdate = false;
 
-          // Sync displayName from Auth to Firestore if different or Firestore is null
           if (firebaseUser.displayName !== profileData.displayName) {
             updates.displayName = firebaseUser.displayName;
             needsFirestoreUpdate = true;
           }
-          // Sync photoURL from Auth to Firestore if different or Firestore is null
           if (firebaseUser.photoURL !== profileData.photoURL) {
             updates.photoURL = firebaseUser.photoURL;
             needsFirestoreUpdate = true;
           }
-          // Sync email from Auth to Firestore if different (should rarely happen but good to check)
           if (firebaseUser.email && firebaseUser.email !== profileData.email) {
             updates.email = firebaseUser.email;
             needsFirestoreUpdate = true;
           }
+          
+          // Special handling for developer role based on email
+          const determinedRoleBasedOnEmail = firebaseUser.email === DEVELOPER_EMAIL ? 'developer' : profileData.role;
+          if (profileData.role !== determinedRoleBasedOnEmail && firebaseUser.email === DEVELOPER_EMAIL) {
+             updates.role = 'developer';
+             needsFirestoreUpdate = true;
+          }
+
 
           const currentProfile = {
             ...profileData,
-            // Ensure local state reflects Firebase Auth first, then apply Firestore updates
             displayName: firebaseUser.displayName,
             photoURL: firebaseUser.photoURL,
             email: firebaseUser.email,
+            role: updates.role || profileData.role, // Use updated role if changed by developer email logic
           };
           
           if (needsFirestoreUpdate) {
             try {
               await updateDoc(userDocRef, updates);
-              setUserProfile({ ...currentProfile, ...updates }); // Reflect Firestore updates
-              setRole(currentProfile.role); // Role comes from Firestore
+              setUserProfile({ ...currentProfile, ...updates }); 
+              setRole(updates.role || currentProfile.role);
             } catch (error) {
               console.error("Error updating user profile in Firestore:", error);
-              setUserProfile(currentProfile); // Fallback to current (Auth-synced) data
+              setUserProfile(currentProfile); 
               setRole(currentProfile.role);
             }
           } else {
@@ -113,7 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setRole(determinedRole);
           } catch (error) {
              console.error("Error creating new user profile in Firestore:", error);
-             setUserProfile({ // Minimal profile on error
+             setUserProfile({ 
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName,
@@ -148,10 +153,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUpWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will handle profile creation. We can also update the profile immediately here.
-      // For new email sign-ups, displayName and photoURL will be null initially from Firebase Auth.
-      // We can set a default displayName if desired, e.g., based on email.
-      // For now, it will be null, and the user can update it on the profile page.
       router.push('/');
       return userCredential.user;
     } catch (error) {
@@ -159,8 +160,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error instanceof FirebaseError && error.code === 'auth/email-already-in-use') {
         throw new Error("This email address is already registered. Please log in or use a different email.");
       }
-      // For other errors, or if it's not a FirebaseError with the specific code, re-throw the original error.
-      // This helps in debugging if the error structure is unexpected.
       throw error;
     }
   };
@@ -198,28 +197,62 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       throw new Error("You must be logged in to update your profile.");
     }
     try {
-      // Update Firebase Auth profile
       await updateProfile(user, { displayName: newName });
-
-      // Update Firestore profile
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, { displayName: newName });
-
-      // Update local state
       setUserProfile(prevProfile => prevProfile ? { ...prevProfile, displayName: newName } : null);
-      // Also update the user object itself if necessary for immediate reflection, though onAuthStateChanged might handle this.
-      // For direct update of user:
-      // setUser(prevUser => prevUser ? { ...prevUser, displayName: newName } as FirebaseUser : null);
-
     } catch (error) {
       console.error("Error updating display name:", error);
       throw new Error("Failed to update display name.");
     }
   };
 
+  const updateUserRoleByEmail = async (targetUserEmail: string, newRole: UserRole) => {
+    if (!user || !role) {
+      throw new Error("Authentication details not loaded or user not logged in.");
+    }
+
+    if (role === 'user') {
+      throw new Error("Users do not have permission to change roles.");
+    }
+    
+    if (role === 'admin' && newRole === 'developer') {
+      throw new Error("Admins cannot assign developer role.");
+    }
+    
+    // Developer can assign any role. Admin can assign 'admin' or 'user'.
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("email", "==", targetUserEmail));
+    
+    try {
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) {
+        throw new Error(`User with email ${targetUserEmail} not found.`);
+      }
+      
+      const batch = writeBatch(db);
+      querySnapshot.forEach(userDoc => {
+        // Ensure not changing own role here again, primarily for developer not accidentally demoting self via UI
+        if (userDoc.id === user.uid) {
+            throw new Error("Cannot change your own role through this interface.");
+        }
+        // Prevent developer from changing the role of THE developer account (thimira.vishwa2003@gmail.com) to non-developer
+        if (userDoc.data().email === DEVELOPER_EMAIL && newRole !== 'developer') {
+            throw new Error(`Cannot change the role of the primary developer account (${DEVELOPER_EMAIL}) to ${newRole}.`);
+        }
+        batch.update(userDoc.ref, { role: newRole });
+      });
+      
+      await batch.commit();
+    } catch (error: any) {
+      console.error("Error updating user role by email:", error);
+      throw error; // Re-throw the error to be caught by the calling UI
+    }
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, role, signInWithGoogle, signUpWithEmail, signInWithEmail, sendPasswordReset, logout, updateUserDisplayName }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, role, signInWithGoogle, signUpWithEmail, signInWithEmail, sendPasswordReset, logout, updateUserDisplayName, updateUserRoleByEmail }}>
       {children}
     </AuthContext.Provider>
   );

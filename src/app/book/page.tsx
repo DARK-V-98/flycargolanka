@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm, type SubmitHandler } from 'react-hook-form';
@@ -11,7 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useState } from 'react';
 
 const bookingSchema = z.object({
   // Sender Details
@@ -26,7 +31,6 @@ const bookingSchema = z.object({
   receiverPhone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number."),
   receiverEmail: z.string().email("Invalid email address.").optional().or(z.literal('')),
 
-
   // Package Details
   packageDescription: z.string().min(5, "Package description is required."),
   packageWeight: z.coerce.number().positive("Weight must be a positive number."),
@@ -40,6 +44,8 @@ type BookingFormValues = z.infer<typeof bookingSchema>;
 
 export default function BookingPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -61,16 +67,36 @@ export default function BookingPage() {
     },
   });
 
-  const onSubmit: SubmitHandler<BookingFormValues> = (data) => {
-    console.log(data);
-    // In a real app, you would send this data to a server
-    toast({
-      title: "Booking Submitted!",
-      description: "Your courier booking has been received. We will contact you shortly.",
-      variant: "default",
-      action: <CheckCircle2 className="text-green-500" />,
-    });
-    form.reset(); // Reset form after successful submission
+  const onSubmit: SubmitHandler<BookingFormValues> = async (data) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const bookingData = {
+        ...data,
+        userId: user ? user.uid : null, // Store userId if user is logged in
+        status: 'Pending', // Default status
+        createdAt: serverTimestamp(),
+      };
+      await addDoc(collection(db, 'bookings'), bookingData);
+      
+      toast({
+        title: "Booking Submitted!",
+        description: "Your courier booking has been received. We will contact you shortly.",
+        variant: "default",
+        action: <CheckCircle2 className="text-green-500" />,
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error submitting booking:", error);
+      toast({
+        title: "Booking Submission Failed",
+        description: "There was an error submitting your booking. Please try again.",
+        variant: "destructive",
+        action: <AlertTriangle className="text-yellow-500" />,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInvalidSubmit = (errors: any) => {
@@ -236,11 +262,16 @@ export default function BookingPage() {
             </CardContent>
           </Card>
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg" size="lg">
-            Submit Booking
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg" size="lg" disabled={isSubmitting}>
+            {isSubmitting ? (
+                <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Submitting...</>
+              ) : (
+                "Submit Booking"
+            )}
           </Button>
         </form>
       </Form>
     </div>
   );
 }
+

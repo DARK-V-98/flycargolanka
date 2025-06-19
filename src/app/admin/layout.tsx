@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -26,17 +27,16 @@ import {
   SidebarInset,
   SidebarFooter as AdminSidebarFooterComponent,
   SidebarSeparator,
-  useSidebar, // Import useSidebar to access sidebar state
+  useSidebar,
 } from '@/components/ui/sidebar';
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
-import { LogOut, UserCog, LayoutDashboard, ChevronLeft, Menu as MenuIcon } from 'lucide-react'; // Using MenuIcon for SidebarTrigger
+import { LogOut, UserCog, LayoutDashboard, ChevronLeft, Menu as MenuIcon, Package, Users } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface AdminLayoutProps {
   children: ReactNode;
 }
 
-// A client component to get sidebar state for the logo
 function AdminSidebarHeader() {
   const { state: sidebarState } = useSidebar();
   return (
@@ -70,13 +70,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const adminNavItems = [
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    // { href: '/admin/users', label: 'Users', icon: Users },
+    { href: '/admin/orders', label: 'Orders', icon: Package },
+    { href: '/admin/manage-roles', label: 'Manage Roles', icon: Users },
     // { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="flex h-screen bg-muted/40 text-foreground"> {/* Use a slightly different bg for admin area distinction */}
+      <div className="flex h-screen bg-muted/40 text-foreground">
         <Sidebar collapsible="icon" className="border-r border-border/50 bg-card shadow-md">
           <AdminSidebarHeader />
           <SidebarContent>
@@ -114,9 +115,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <MenuIcon className="h-5 w-5"/>
               </SidebarTrigger>
                <SidebarTrigger className="text-foreground h-8 w-8 data-[state=open]:bg-muted data-[state=closed]:bg-card hover:bg-muted hidden md:flex">
-                 {/* Using PanelLeft (default) or could customize */}
-              </SidebarTrigger>
-              <h1 className="text-xl font-semibold text-accent hidden sm:block">Admin Dashboard</h1>
+               </SidebarTrigger>
+              <h1 className="text-xl font-semibold text-accent hidden sm:block">Admin Panel</h1>
             </div>
             <div className="flex items-center space-x-4">
               {user && (
@@ -165,3 +165,4 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     </SidebarProvider>
   );
 }
+
