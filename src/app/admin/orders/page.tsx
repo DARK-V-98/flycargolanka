@@ -205,8 +205,7 @@ export default function AdminOrdersPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-            <Table className="min-w-[900px]"> {/* Ensure table can scroll if content is too wide */}
-              <TableHeader>
+            <Table className="min-w-[900px]"><TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[120px] px-2 py-2 text-xs sm:text-sm">ID</TableHead>
                   <TableHead className="px-2 py-2 text-xs sm:text-sm">Sender</TableHead>
