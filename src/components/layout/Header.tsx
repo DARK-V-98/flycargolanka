@@ -14,15 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog, Info } from "lucide-react"; // Added UserCog, Info
+import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog, Info } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import type { Route } from 'next';
 
 
 const baseNavItems = [
   { href: '/', label: 'Home' },
-  { href: '/services', label: 'About Us' }, // Changed "Services" to "About Us"
-  { href: '/calculator', label: 'Calculator' },
+  { href: '/services', label: 'About Us' },
   { href: '/book', label: 'Book Courier' },
 ];
 
@@ -31,7 +30,6 @@ export default function Header() {
 
   const getNavItems = () => {
     let items = [...baseNavItems];
-    // Only add user-specific or role-specific items if auth is not loading and user is present
     if (!loading && user) {
       items.push({ href: '/track-package' as Route, label: 'Track Package' });
       if (role === 'admin' || role === 'developer') {

@@ -3,10 +3,11 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target } from 'lucide-react';
+import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target, Calculator } from 'lucide-react';
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
+import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
 
 
 const services = [
@@ -55,12 +56,7 @@ export default function Home() {
                  <Button asChild variant="default" size="lg" className="transition-transform duration-300 hover:scale-105">
                   <Link href="/book">Book a Courier</Link>
                 </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="border-primary text-white bg-background/20 hover:bg-primary/20 transition-transform duration-300 hover:scale-105"
-                ><Link href="/calculator">Calculator</Link></Button>
+                 {/* Calculator button removed from here */}
               </div>
             </div>
 
@@ -130,6 +126,19 @@ export default function Home() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+
+      {/* Shipping Calculator Section - Placeholder */}
+      <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.4s'}}>
+        <div className="container mx-auto px-4">
+          <div className="opacity-0 animate-fadeInUp">
+            <PageHeader 
+              title="Estimate Your Shipping Cost"
+              description="Select destination, weight, and delivery type to get an estimate."
+            />
+          </div>
+          <ShippingCalculatorForm />
         </div>
       </section>
 
