@@ -11,10 +11,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription as ShadCardDescription } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle } from 'lucide-react'; // Added more icons
+import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -129,6 +129,10 @@ export default function BookingPage() {
         userEmail: user ? user.email : null,
         status: 'Pending', 
         createdAt: serverTimestamp(),
+        packageDescription: `Shipment of ${data.shipmentType}`, // Example, adjust as needed
+        packageWeight: data.approxWeight, // Directly use approxWeight
+        senderName: data.senderFullName, // Map form fields to existing Booking interface
+        receiverName: data.receiverFullName, // Map form fields to existing Booking interface
       };
       await addDoc(collection(db, 'bookings'), bookingData);
       
