@@ -7,6 +7,7 @@ import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target, Cal
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
+import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
 
 
 const services = [
@@ -54,6 +55,9 @@ export default function Home() {
               <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
                  <Button asChild variant="default" size="lg" className="transition-transform duration-300 hover:scale-105">
                   <Link href="/book">Book a Courier & Estimate Cost</Link>
+                </Button>
+                 <Button asChild variant="secondary" size="lg" className="transition-transform duration-300 hover:scale-105">
+                  <Link href="/#shipping-calculator-section">Estimate Shipping Cost</Link>
                 </Button>
               </div>
             </div>
@@ -179,6 +183,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Standalone Shipping Calculator Section */}
+      <section id="shipping-calculator-section" className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.7s'}}>
+        <div className="container mx-auto px-4">
+           <div className="opacity-0 animate-fadeInUp">
+             <PageHeader 
+                title="Quick Shipping Cost Estimator"
+                description="Not ready to book? Get a quick cost estimate here."
+             />
+           </div>
+           <div className="mt-10">
+             <ShippingCalculatorForm />
+           </div>
+        </div>
+      </section>
+
+
       <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground rounded-xl shadow-lg overflow-hidden opacity-0 animate-fadeInUp" style={{animationDelay: '0.7s'}}>
         <div className="container mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp" style={{animationDelay: '0.8s'}}>
@@ -195,3 +215,4 @@ export default function Home() {
     </div>
   );
 }
+

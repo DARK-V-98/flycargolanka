@@ -31,14 +31,14 @@ const bookingSchema = z.object({
   serviceType: z.enum(['economy', 'express'], { required_error: "Please select a service type." }),
   locationType: z.enum(['pickup', 'dropoff_maharagama', 'dropoff_galle'], { required_error: "Please select a location type." }),
   
-  approxWeight: z.coerce.number().positive("Approximate weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."), // min changed to 0.01
+  approxWeight: z.coerce.number().positive("Approximate weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."),
   approxValue: z.coerce.number().positive("Approximate value of goods must be a positive number.").min(1, "Value must be at least 1 USD."),
 
   receiverFullName: z.string().min(2, "Receiver full name is required (as per passport).").max(100),
   receiverEmail: z.string().email("Invalid receiver email address.").max(100),
   receiverAddress: z.string().min(5, "Receiver address is required.").max(200),
   receiverDoorCode: z.string().max(50).optional().or(z.literal('')),
-  receiverCountry: z.string().min(1, "Receiver country is required."), // This will be country NAME
+  receiverCountry: z.string().min(1, "Receiver country is required."), 
   receiverZipCode: z.string().min(1, "Receiver ZIP/Postal code is required.").max(20),
   receiverCity: z.string().min(1, "Receiver city is required.").max(50),
   receiverContactNo: z.string().regex(phoneRegex, "Invalid receiver contact number (include country code)."),
@@ -96,7 +96,6 @@ export default function BookingPage() {
     },
   });
 
-  // Fetch countries for dropdown
   useEffect(() => {
     const fetchCountries = async () => {
       setLoadingCountries(true);
@@ -123,7 +122,6 @@ export default function BookingPage() {
     fetchCountries();
   }, [toast]);
 
-  // Auth and profile completion checks
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
@@ -142,7 +140,6 @@ export default function BookingPage() {
 
   const watchedReceiverCountryName = form.watch('receiverCountry');
 
-  // Fetch weights when receiverCountry changes
   useEffect(() => {
     const fetchWeights = async () => {
       if (!watchedReceiverCountryName) {
@@ -192,17 +189,16 @@ export default function BookingPage() {
   const watchedServiceType = form.watch('serviceType');
   const watchedApproxWeight = form.watch('approxWeight');
 
-  // Calculate cost when relevant fields change
   useEffect(() => {
     const calculateCost = () => {
       setCalculatedCost(null);
       setCalculationError(null);
 
       if (!watchedShipmentType || !watchedServiceType || !watchedReceiverCountryName || !watchedApproxWeight || availableWeights.length === 0) {
-        if (watchedReceiverCountryName && watchedApproxWeight && availableWeights.length === 0 && !loadingWeights) {
-             // Handled by fetchWeights error
-        } else if (watchedReceiverCountryName && watchedApproxWeight && availableWeights.length > 0) {
-            // Waiting for other selections
+        if (watchedReceiverCountryName && watchedApproxWeight && availableWeights.length === 0 && !loadingWeights && !loadingCountries) {
+            setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
+        } else if (watchedReceiverCountryName && watchedApproxWeight && availableCountries.length === 0 && !loadingCountries) {
+            setCalculationError("No destination countries configured for shipping.");
         }
         return;
       }
@@ -222,10 +218,9 @@ export default function BookingPage() {
         }
       }
       
-      // If weight is greater than the max band, use the max band.
       if(!selectedWeightBand && sortedWeights.length > 0) {
         selectedWeightBand = sortedWeights[sortedWeights.length - 1];
-         setCalculationError(`Entered weight exceeds max configured band. Using rate for ${selectedWeightBand.weightLabel}.`);
+         setCalculationError(`Weight exceeds max band. Using rate for ${selectedWeightBand.weightLabel}.`);
       }
 
 
@@ -238,7 +233,7 @@ export default function BookingPage() {
       let serviceAvailable = false;
       const currency = "LKR";
 
-      if (watchedShipmentType === 'parcel') { // 'parcel' matches 'non-document' in WeightRate
+      if (watchedShipmentType === 'parcel') {
         if (watchedServiceType === 'economy') {
           serviceAvailable = selectedWeightBand.isNdEconomyEnabled ?? false;
           price = selectedWeightBand.ndEconomyPrice;
@@ -257,11 +252,11 @@ export default function BookingPage() {
       }
 
       if (!serviceAvailable) {
-        setCalculatedCost(null); // Clear previous cost
-        setCalculationError(`The selected ${watchedServiceType} service for ${watchedShipmentType} is not available for this weight/destination.`);
+        setCalculatedCost(null);
+        setCalculationError(`Selected ${watchedServiceType} service for ${watchedShipmentType} is not available.`);
       } else if (price === null || price === undefined) {
-        setCalculatedCost(null); // Clear previous cost
-        setCalculationError(`Price not configured for ${watchedShipmentType} ${watchedServiceType} service at ${selectedWeightBand.weightLabel}.`);
+        setCalculatedCost(null);
+        setCalculationError(`Price not configured for ${watchedShipmentType} ${watchedServiceType} at ${selectedWeightBand.weightLabel}.`);
       } else {
         setCalculatedCost(`Estimated Cost: ${price.toLocaleString()} ${currency}`);
       }
@@ -284,9 +279,8 @@ export default function BookingPage() {
         userEmail: user.email,
         status: 'Pending' as 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled',
         createdAt: serverTimestamp(),
-        // For easier querying/display on admin orders page
         packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`,
-        packageWeight: data.approxWeight, // Ensure this is the number
+        packageWeight: data.approxWeight,
         senderName: data.senderFullName,
         receiverName: data.receiverFullName,
       };
@@ -306,7 +300,12 @@ export default function BookingPage() {
         form.setValue('senderFullName', userProfile.displayName || '');
         form.setValue('senderAddress', userProfile.address || '');
         form.setValue('senderContactNo', userProfile.phone || '');
+      } else if (userProfile) { // Pre-fill even if not complete, but allow editing
+        form.setValue('senderFullName', userProfile.displayName || '');
+        form.setValue('senderAddress', userProfile.address || '');
+        form.setValue('senderContactNo', userProfile.phone || '');
       }
+
 
     } catch (error) {
       console.error("Error submitting booking:", error);
@@ -436,17 +435,17 @@ export default function BookingPage() {
                   <FormMessage />
                 </FormItem>
               )} />
-                {(calculatedCost || calculationError || loadingWeights) && (
+                {(calculatedCost || calculationError || loadingWeights || loadingCountries) && (
                     <CardFooter className={`mt-4 p-4 rounded-md ${calculationError ? 'bg-destructive/10' : 'bg-primary/10'}`}>
                         <div className="text-center w-full">
-                        {loadingWeights ? (
+                        {loadingWeights || loadingCountries ? (
                             <div className="flex items-center justify-center text-muted-foreground">
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin"/> Loading rates...
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin"/> {(loadingCountries && !watchedReceiverCountryName) ? "Loading countries..." : "Loading rates..."}
                             </div>
                         ) : calculationError ? (
                             <p className="text-destructive flex items-center justify-center"><AlertTriangle className="mr-2 h-5 w-5"/> {calculationError}</p>
                         ) : calculatedCost ? (
-                            <h3 className="text-lg font-semibold text-accent">{calculatedCost}</h3>
+                            <h3 className="text-lg font-semibold text-accent flex items-center justify-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>{calculatedCost}</h3>
                         ) : null}
                         </div>
                     </CardFooter>
@@ -496,10 +495,10 @@ export default function BookingPage() {
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><User className="mr-2 h-5 w-5"/>Sender Details</h3>
                 <div className="space-y-4">
-                  <FormField control={form.control} name="senderFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} readOnly={!!userProfile?.displayName && !!userProfile.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
-                  <FormField control={form.control} name="senderAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Your Address" {...field} readOnly={!!userProfile?.address && !!userProfile.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="senderFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} readOnly={!!userProfile?.displayName && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="senderAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Your Address" {...field} readOnly={!!userProfile?.address && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="senderContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Your Contact No." {...field} readOnly={!!userProfile?.phone && !!userProfile.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="senderContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Your Contact No." {...field} readOnly={!!userProfile?.phone && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
                     <FormField control={form.control} name="senderWhatsAppNo" render={({ field }) => ( <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="Your WhatsApp No." {...field} /></FormControl><FormMessage /></FormItem> )} />
                   </div>
                 </div>
