@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Package, CalendarDays, User, MapPin, DollarSign, ShieldCheck, AlertCircle, Info, BookMarked, CreditCard, Download } from 'lucide-react';
+import { Loader2, Package, CalendarDays, User, MapPin, DollarSign, ShieldCheck, AlertCircle, Info, BookMarked, CreditCard, Printer } from 'lucide-react'; // Changed Download to Printer
 import { format } from 'date-fns';
 import { useReactToPrint } from 'react-to-print';
 import PrintableBookingForm from '@/components/PrintableBookingForm';
@@ -78,7 +78,7 @@ export default function MyBookingsPage() {
       }, 0);
       return () => clearTimeout(timerId); // Clean up the timeout if the component unmounts or dependencies change
     }
-  }, [selectedBookingForPrint, handlePrint]); // handlePrint is memoized by useReactToPrint
+  }, [selectedBookingForPrint, handlePrint]);
 
 
   useEffect(() => {
@@ -249,7 +249,7 @@ export default function MyBookingsPage() {
                   onClick={() => setSelectedBookingForPrint(booking)}
                   className="w-full sm:w-auto"
                 >
-                  <Download className="mr-2 h-4 w-4"/> Download Form
+                  <Printer className="mr-2 h-4 w-4"/> Print Form
                 </Button>
                 <Button 
                   size="sm" 
