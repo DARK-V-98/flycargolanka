@@ -442,8 +442,7 @@ export default function ManageRatesPage() {
                             <TableHead className="px-1.5 py-1 text-xs text-right sticky right-0 bg-card z-10 whitespace-nowrap">Actions</TableHead>
                         </TableRow>
                         </TableHeader>
-                        <TableBody>
-                        {currentWeights.map((wr) => (
+                        <TableBody>{currentWeights.map((wr) => (
                         <TableRow key={wr.id}>
                             <TableCell className="font-medium px-1.5 py-1 text-xs sticky left-0 bg-card z-0 whitespace-nowrap">{wr.weightLabel}</TableCell>
                             <TableCell className="px-1.5 py-1 text-xs text-center whitespace-nowrap">{wr.weightValue}</TableCell>
@@ -474,8 +473,7 @@ export default function ManageRatesPage() {
 
                             </TableCell>
                         </TableRow>
-                        ))}
-                        </TableBody>
+                        ))}</TableBody>
                     </Table>
                     </div>
                 )}
@@ -557,18 +555,19 @@ export default function ManageRatesPage() {
                         <TableRow key={country.id}>
                           <TableCell className="font-medium px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm">{country.name}</TableCell>
                           <TableCell className="text-right space-x-1 px-1.5 sm:px-2 py-1.5 sm:py-2">
-                            <Button variant="outline" size="sm" onClick={() => handleManageWeightsClick(country)} className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700 text-xs px-2">
+                            <Button variant="outline" size="sm" onClick={() => handleManageWeightsClick(country)} className="text-primary border-primary hover:bg-primary/10 hover:text-primary text-xs sm:text-sm px-2 sm:px-3">
                               <BookOpen className="mr-1 h-3 w-3"/> Manage Weights
                             </Button>
                             
                             <AlertDialog open={!!countryToDelete && countryToDelete.id === country.id} onOpenChange={(isOpen) => !isOpen && setCountryToDelete(null)}>
                                 <AlertDialogTrigger asChild>
-                                  <Button variant="destructive" size="sm" onClick={() => setCountryToDelete(country)} className="text-xs px-2">
+                                  <Button variant="destructive" size="sm" onClick={() => setCountryToDelete(country)} className="text-xs sm:text-sm px-2 sm:px-3">
                                     <Trash2 className="mr-1 h-3 w-3" /> Delete
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
-                                  <AlertDialogHeader> <AlertDialogTitle className="text-base sm:text-lg">Confirm Delete Country</AlertDialogTitle>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-base sm:text-lg">Confirm Delete Country</AlertDialogTitle>
                                     <AlertDialogDescription className="text-xs sm:text-sm">Are you sure you want to delete <strong>{countryToDelete?.name}</strong>? This also deletes all its weight rates. This is irreversible.</AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -593,3 +592,4 @@ export default function ManageRatesPage() {
     </div>
   );
 }
+
