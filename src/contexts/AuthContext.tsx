@@ -11,13 +11,18 @@ import { FirebaseError } from 'firebase/app';
 
 export type UserRole = 'user' | 'admin' | 'developer';
 
-interface UserProfile {
+export interface UserProfile {
   uid: string;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
   role: UserRole;
+  nic?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  isProfileComplete?: boolean;
   createdAt?: any;
+  updatedAt?: any;
 }
 
 interface AuthContextType {
@@ -32,6 +37,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUserDisplayName: (newName: string) => Promise<void>;
   updateUserRoleByEmail: (targetUserEmail: string, newRole: UserRole) => Promise<void>;
+  updateUserExtendedProfile: (data: { nic?: string | null; phone?: string | null; address?: string | null }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,11 +61,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const userDocSnap = await getDoc(userDocRef);
         const normalizedUserEmail = firebaseUser.email ? firebaseUser.email.toLowerCase() : null;
 
+        let profileDataFromAuth = {
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+            email: firebaseUser.email,
+        };
+
         if (userDocSnap.exists()) {
           const profileDataFromFirestore = userDocSnap.data() as UserProfile;
-          let effectiveRole = profileDataFromFirestore.role; // Start with Firestore role
+          let effectiveRole = profileDataFromFirestore.role;
 
-          // Developer override: if email matches, role IS 'developer'
           if (normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL) {
             effectiveRole = 'developer';
           }
@@ -67,74 +78,81 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const firestoreUpdates: Partial<UserProfile> = {};
           let needsFirestoreUpdate = false;
 
-          // Sync displayName from auth to Firestore if different
-          if (firebaseUser.displayName !== profileDataFromFirestore.displayName) {
-            firestoreUpdates.displayName = firebaseUser.displayName;
+          if (profileDataFromAuth.displayName !== profileDataFromFirestore.displayName) {
+            firestoreUpdates.displayName = profileDataFromAuth.displayName;
             needsFirestoreUpdate = true;
           }
-          // Sync photoURL from auth to Firestore if different
-          if (firebaseUser.photoURL !== profileDataFromFirestore.photoURL) {
-            firestoreUpdates.photoURL = firebaseUser.photoURL;
+          if (profileDataFromAuth.photoURL !== profileDataFromFirestore.photoURL) {
+            firestoreUpdates.photoURL = profileDataFromAuth.photoURL;
             needsFirestoreUpdate = true;
           }
-          // Sync email from auth to Firestore if different
-          // Store original cased email from auth
-          if (firebaseUser.email !== profileDataFromFirestore.email) {
-             firestoreUpdates.email = firebaseUser.email; // Use actual email from auth
+          if (profileDataFromAuth.email !== profileDataFromFirestore.email) {
+             firestoreUpdates.email = profileDataFromAuth.email;
              needsFirestoreUpdate = true;
           }
-          
-          // Sync determined effectiveRole to Firestore if different
           if (profileDataFromFirestore.role !== effectiveRole) {
             firestoreUpdates.role = effectiveRole;
             needsFirestoreUpdate = true;
           }
 
+          const currentNic = profileDataFromFirestore.nic || null;
+          const currentPhone = profileDataFromFirestore.phone || null;
+          const currentAddress = profileDataFromFirestore.address || null;
+          const isProfileComplete = !!(currentNic && currentNic.trim() !== '' &&
+                                     currentPhone && currentPhone.trim() !== '' &&
+                                     currentAddress && currentAddress.trim() !== '');
+
+          if (profileDataFromFirestore.isProfileComplete !== isProfileComplete) {
+            firestoreUpdates.isProfileComplete = isProfileComplete;
+            needsFirestoreUpdate = true;
+          }
+          
+          // Ensure new fields are at least initialized if not present in older documents
+          if (profileDataFromFirestore.nic === undefined) firestoreUpdates.nic = null;
+          if (profileDataFromFirestore.phone === undefined) firestoreUpdates.phone = null;
+          if (profileDataFromFirestore.address === undefined) firestoreUpdates.address = null;
+
+
           if (needsFirestoreUpdate) {
             try {
-              await updateDoc(userDocRef, firestoreUpdates);
+              await updateDoc(userDocRef, {...firestoreUpdates, updatedAt: serverTimestamp()});
             } catch (error) {
               console.error("Error updating user profile in Firestore:", error);
-              // Continue with local state update even if Firestore fails, using best available info
             }
           }
           
-          // Profile to set in React state (reflects auth info + effectiveRole)
-          const updatedUserProfile: UserProfile = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email, // from auth
-            displayName: firebaseUser.displayName, // from auth
-            photoURL: firebaseUser.photoURL, // from auth
-            role: effectiveRole, // the determined role
-            createdAt: profileDataFromFirestore.createdAt || serverTimestamp(),
+          const updatedUserProfileState: UserProfile = {
+            ...profileDataFromFirestore, // Base from Firestore
+            ...profileDataFromAuth,     // Override with fresh auth data
+            role: effectiveRole,        // Determined role
+            isProfileComplete,          // Calculated completeness
+            nic: currentNic,
+            phone: currentPhone,
+            address: currentAddress,
           };
-          setUserProfile(updatedUserProfile);
+          setUserProfile(updatedUserProfileState);
           setRole(effectiveRole);
 
         } else {
-          // New user: create profile in Firestore
+          // New user
           const determinedRoleForNewUser: UserRole = normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL ? 'developer' : 'user';
-          const newUserProfile: UserProfile = {
+          const newUserProfileData: UserProfile = {
             uid: firebaseUser.uid,
-            email: firebaseUser.email, // from auth
-            displayName: firebaseUser.displayName, // from auth
-            photoURL: firebaseUser.photoURL, // from auth
+            ...profileDataFromAuth,
             role: determinedRoleForNewUser,
+            nic: null,
+            phone: null,
+            address: null,
+            isProfileComplete: false, // New users are not complete by default
             createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
           };
           try {
-            await setDoc(userDocRef, newUserProfile);
-            setUserProfile(newUserProfile);
+            await setDoc(userDocRef, newUserProfileData);
+            setUserProfile(newUserProfileData);
           } catch (error) {
              console.error("Error creating new user profile in Firestore:", error);
-             // Fallback profile data for local state if Firestore setDoc fails
-             setUserProfile({ 
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                displayName: firebaseUser.displayName,
-                photoURL: firebaseUser.photoURL,
-                role: determinedRoleForNewUser 
-             });
+             setUserProfile({ ...newUserProfileData, createdAt: new Date(), updatedAt: new Date() }); // Fallback local state
           }
           setRole(determinedRoleForNewUser);
         }
@@ -209,11 +227,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await updateProfile(user, { displayName: newName });
       const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, { displayName: newName });
-      setUserProfile(prevProfile => prevProfile ? { ...prevProfile, displayName: newName } : null);
+      await updateDoc(userDocRef, { displayName: newName, updatedAt: serverTimestamp() });
+      setUserProfile(prevProfile => prevProfile ? { ...prevProfile, displayName: newName, updatedAt: new Date() } : null);
     } catch (error) {
       console.error("Error updating display name:", error);
       throw new Error("Failed to update display name.");
+    }
+  };
+  
+  const updateUserExtendedProfile = async (data: { nic?: string | null; phone?: string | null; address?: string | null }) => {
+    if (!user) {
+      throw new Error("You must be logged in to update your profile.");
+    }
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const updatesToFirestore: Partial<UserProfile> = { ...data, updatedAt: serverTimestamp() };
+
+      const currentNic = data.nic !== undefined ? data.nic : userProfile?.nic;
+      const currentPhone = data.phone !== undefined ? data.phone : userProfile?.phone;
+      const currentAddress = data.address !== undefined ? data.address : userProfile?.address;
+      
+      const isNowComplete = !!(currentNic && currentNic.trim() !== '' &&
+                               currentPhone && currentPhone.trim() !== '' &&
+                               currentAddress && currentAddress.trim() !== '');
+      
+      updatesToFirestore.isProfileComplete = isNowComplete;
+
+      await updateDoc(userDocRef, updatesToFirestore);
+      setUserProfile(prevProfile => {
+        if (!prevProfile) return null;
+        return {
+          ...prevProfile,
+          nic: data.nic !== undefined ? data.nic : prevProfile.nic,
+          phone: data.phone !== undefined ? data.phone : prevProfile.phone,
+          address: data.address !== undefined ? data.address : prevProfile.address,
+          isProfileComplete: isNowComplete,
+          updatedAt: new Date() 
+        };
+      });
+    } catch (error) {
+      console.error("Error updating extended profile:", error);
+      throw new Error("Failed to update profile details.");
     }
   };
 
@@ -232,8 +286,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const usersRef = collection(db, "users");
     const normalizedTargetUserEmail = targetUserEmail.toLowerCase();
-    // Firestore queries are case-sensitive. For robust email matching, consider storing emails in a consistent case (e.g., lowercase).
-    // For this implementation, we'll query for the exact email first, then attempt a case-insensitive scan if needed.
     const q = query(usersRef, where("email", "==", targetUserEmail)); 
     
     try {
@@ -242,13 +294,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        // Found user(s) with case-sensitive email match
-        const matchedDoc = querySnapshot.docs[0]; // Assuming email is unique
+        const matchedDoc = querySnapshot.docs[0];
         userToUpdateRef = matchedDoc.ref;
         userToUpdateData = matchedDoc.data();
       } else {
-        // Fallback: Case-insensitive search if direct match fails
-        // This can be less performant on large datasets.
         const allUsersSnapshot = await getDocs(usersRef);
         let foundUserDoc: typeof querySnapshot.docs[0] | undefined;
         allUsersSnapshot.forEach(doc => {
@@ -265,29 +314,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         userToUpdateData = foundUserDoc.data();
       }
 
-      // Perform checks on the identified user
       if (userToUpdateRef.id === user.uid) {
           throw new Error("Cannot change your own role through this interface.");
       }
-      // Check if the user being updated is the primary developer
       const targetEmailInFirestore = userToUpdateData.email;
       if (targetEmailInFirestore && typeof targetEmailInFirestore === 'string' && 
           targetEmailInFirestore.toLowerCase() === NORMALIZED_DEVELOPER_EMAIL && newRole !== 'developer') {
           throw new Error(`Cannot change the role of the primary developer account (${DEVELOPER_EMAIL}) to ${newRole}.`);
       }
       
-      // Proceed with update
-      await updateDoc(userToUpdateRef, { role: newRole });
+      await updateDoc(userToUpdateRef, { role: newRole, updatedAt: serverTimestamp() });
       
     } catch (error: any) {
       console.error("Error updating user role by email:", error);
-      throw error; // Re-throw to be caught by the calling component
+      throw error; 
     }
   };
 
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, role, signInWithGoogle, signUpWithEmail, signInWithEmail, sendPasswordReset, logout, updateUserDisplayName, updateUserRoleByEmail }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      userProfile, 
+      loading, 
+      role, 
+      signInWithGoogle, 
+      signUpWithEmail, 
+      signInWithEmail, 
+      sendPasswordReset, 
+      logout, 
+      updateUserDisplayName, 
+      updateUserRoleByEmail,
+      updateUserExtendedProfile 
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -300,6 +359,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
-
-    

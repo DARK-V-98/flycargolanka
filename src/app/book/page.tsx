@@ -16,13 +16,16 @@ import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const bookingSchema = z.object({
   // Sender Details
   senderName: z.string().min(2, "Sender name is required."),
   senderAddress: z.string().min(5, "Sender address is required."),
-  senderPhone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number."),
+  senderPhone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number."), // Consider using a more flexible regex if needed
   senderEmail: z.string().email("Invalid email address."),
 
   // Receiver Details
@@ -44,8 +47,10 @@ type BookingFormValues = z.infer<typeof bookingSchema>;
 
 export default function BookingPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userProfile, loading } = useAuth();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showProfileCompletionAlert, setShowProfileCompletionAlert] = useState(false);
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -67,14 +72,36 @@ export default function BookingPage() {
     },
   });
 
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        const currentPath = window.location.pathname + window.location.search;
+        router.push(`/auth?redirect=${encodeURIComponent(currentPath)}`);
+      } else if (userProfile && !userProfile.isProfileComplete) {
+        setShowProfileCompletionAlert(true);
+        // Pre-fill available details even if profile is incomplete
+        if (userProfile.displayName) form.setValue('senderName', userProfile.displayName, { shouldValidate: true });
+        if (userProfile.email) form.setValue('senderEmail', userProfile.email, { shouldValidate: true });
+      } else if (userProfile && userProfile.isProfileComplete) {
+        setShowProfileCompletionAlert(false);
+        // Pre-fill sender details from completed profile
+        if (userProfile.displayName) form.setValue('senderName', userProfile.displayName, { shouldValidate: true });
+        if (userProfile.address) form.setValue('senderAddress', userProfile.address, { shouldValidate: true });
+        if (userProfile.phone) form.setValue('senderPhone', userProfile.phone, { shouldValidate: true });
+        if (userProfile.email) form.setValue('senderEmail', userProfile.email, { shouldValidate: true });
+      }
+    }
+  }, [user, userProfile, loading, router, form]);
+
+
   const onSubmit: SubmitHandler<BookingFormValues> = async (data) => {
-    if (isSubmitting) return;
+    if (isSubmitting || showProfileCompletionAlert) return;
     setIsSubmitting(true);
     try {
       const bookingData = {
         ...data,
-        userId: user ? user.uid : null, // Store userId if user is logged in
-        status: 'Pending', // Default status
+        userId: user ? user.uid : null,
+        status: 'Pending', 
         createdAt: serverTimestamp(),
       };
       await addDoc(collection(db, 'bookings'), bookingData);
@@ -85,7 +112,18 @@ export default function BookingPage() {
         variant: "default",
         action: <CheckCircle2 className="text-green-500" />,
       });
-      form.reset();
+      form.reset(); // Reset form, pre-fill will re-apply if still relevant
+      // Re-trigger pre-fill based on current profile state after reset
+      if (userProfile && userProfile.isProfileComplete) {
+        if (userProfile.displayName) form.setValue('senderName', userProfile.displayName);
+        if (userProfile.address) form.setValue('senderAddress', userProfile.address);
+        if (userProfile.phone) form.setValue('senderPhone', userProfile.phone);
+        if (userProfile.email) form.setValue('senderEmail', userProfile.email);
+      } else if (userProfile) {
+         if (userProfile.displayName) form.setValue('senderName', userProfile.displayName);
+         if (userProfile.email) form.setValue('senderEmail', userProfile.email);
+      }
+
     } catch (error) {
       console.error("Error submitting booking:", error);
       toast({
@@ -109,12 +147,44 @@ export default function BookingPage() {
     });
   };
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading booking page...</p></div>;
+  }
+
+  if (!user && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center h-screen space-y-4 p-4">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4"/>
+        <h2 className="text-2xl font-semibold">Authentication Required</h2>
+        <p className="text-muted-foreground">Please log in to book a courier service.</p>
+        <Button asChild size="lg">
+          <Link href={`/auth?redirect=${encodeURIComponent("/book")}`}>Login / Sign Up</Link>
+        </Button>
+      </div>
+    );
+  }
+  
+
   return (
     <div className="opacity-0 animate-fadeInUp">
       <PageHeader
         title="Book Your Courier"
         description="Fill in the details below to schedule your shipment."
       />
+
+      {showProfileCompletionAlert && (
+        <Alert variant="destructive" className="mb-8 opacity-0 animate-fadeInUp">
+          <AlertTriangle className="h-5 w-5" />
+          <AlertTitle className="font-semibold">Action Required: Profile Incomplete</AlertTitle>
+          <AlertDescription className="mt-1">
+            To proceed with your booking, please complete your profile with your NIC, Phone Number, and Address.
+            <Button asChild variant="link" className="px-1 py-0 h-auto ml-1 text-destructive hover:text-destructive/80 font-semibold underline">
+              <Link href="/profile">Go to Profile Page</Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className="space-y-12 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
           <Card className="shadow-xl">
@@ -262,7 +332,7 @@ export default function BookingPage() {
             </CardContent>
           </Card>
 
-          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg" size="lg" disabled={isSubmitting}>
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 text-lg" size="lg" disabled={isSubmitting || showProfileCompletionAlert}>
             {isSubmitting ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Submitting...</>
               ) : (
@@ -274,4 +344,3 @@ export default function BookingPage() {
     </div>
   );
 }
-
