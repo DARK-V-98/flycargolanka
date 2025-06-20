@@ -1,48 +1,93 @@
 
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, type UserProfile } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs, type Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Package, CalendarDays, User, MapPin, DollarSign, ShieldCheck, AlertCircle, Info, BookMarked, CreditCard, Printer } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { useReactToPrint } from 'react-to-print';
-import PrintableBookingForm, { type Booking as PrintableBookingType } from '@/components/PrintableBookingForm';
+import { useToast } from '@/hooks/use-toast';
 
 
-interface Booking extends PrintableBookingType {
-  // This interface can extend PrintableBookingType if all fields match
-  // Or define its own fields if there are differences for display vs print
+interface Booking {
+  id: string;
+  userId: string;
+  userEmail: string | null;
+  shipmentType: 'parcel' | 'document';
+  serviceType: 'economy' | 'express';
+  locationType: 'pickup' | 'dropoff_maharagama' | 'dropoff_galle';
+  receiverCountry: string;
+  approxWeight: number;
+  approxValue: number;
+  receiverFullName: string;
+  receiverEmail: string;
+  receiverAddress: string;
+  receiverDoorCode?: string;
+  receiverZipCode: string;
+  receiverCity: string;
+  receiverContactNo: string;
+  receiverWhatsAppNo?: string;
+  senderFullName: string;
+  senderAddress: string;
+  senderContactNo: string;
+  senderWhatsAppNo?: string;
+  status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+  estimatedCostLKR?: number | null;
+  // Declarations are optional as they might not be on older bookings
+  declaration1?: boolean;
+  declaration2?: boolean;
 }
 
 export default function MyBookingsPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
-  
-  const printableComponentRef = useRef<HTMLDivElement>(null);
-  const [currentPrintBooking, setCurrentPrintBooking] = useState<PrintableBookingType | null>(null);
+  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  const handlePrint = useReactToPrint({
-    content: () => printableComponentRef.current,
-    documentTitle: currentPrintBooking ? `FlyCargo-Booking-${currentPrintBooking.id}` : "FlyCargo-Booking",
-    onAfterPrint: () => {
-      setCurrentPrintBooking(null); 
-    },
-    onPrintError: (errorLocation, error) => {
-      console.error(`Error during printing (${errorLocation}):`, error);
-      setCurrentPrintBooking(null);
-    },
-  });
+
+  const fetchUserBookings = useCallback(async () => {
+    if (!user) return;
+    setLoadingBookings(true);
+    try {
+      const bookingsCol = collection(db, 'bookings');
+      const q = query(bookingsCol, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const bookingsData = querySnapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      } as Booking));
+      setBookings(bookingsData);
+    } catch (error) {
+      console.error("Error fetching bookings: ", error);
+      toast({ title: "Error", description: "Could not fetch your bookings.", variant: "destructive" });
+    } finally {
+      setLoadingBookings(false);
+    }
+  }, [user, toast]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -52,26 +97,9 @@ export default function MyBookingsPage() {
 
   useEffect(() => {
     if (user) {
-      const fetchBookings = async () => {
-        setLoadingBookings(true);
-        try {
-          const bookingsCol = collection(db, 'bookings');
-          const q = query(bookingsCol, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
-          const querySnapshot = await getDocs(q);
-          const bookingsData = querySnapshot.docs.map(docSnap => ({
-            id: docSnap.id,
-            ...docSnap.data()
-          } as Booking));
-          setBookings(bookingsData);
-        } catch (error) {
-          console.error("Error fetching bookings: ", error);
-        } finally {
-          setLoadingBookings(false);
-        }
-      };
-      fetchBookings();
+      fetchUserBookings();
     }
-  }, [user]);
+  }, [user, fetchUserBookings]);
 
   const getStatusVariant = (status: Booking['status']) => {
     switch (status) {
@@ -99,8 +127,40 @@ export default function MyBookingsPage() {
     // router.push(`/payment?bookingId=${bookingId}`); // Example
   };
 
+  const handleConfirmCancelBooking = async () => {
+    if (!bookingToCancel) return;
+    setIsCancelling(true);
+    try {
+      const bookingDocRef = doc(db, 'bookings', bookingToCancel.id);
+      await updateDoc(bookingDocRef, {
+        status: 'Cancelled',
+        updatedAt: serverTimestamp()
+      });
+      toast({
+        title: "Booking Cancelled",
+        description: `Booking ID ${bookingToCancel.id} has been cancelled.`,
+        variant: "default"
+      });
+      setBookings(prevBookings =>
+        prevBookings.map(b =>
+          b.id === bookingToCancel.id ? { ...b, status: 'Cancelled', updatedAt: { seconds: Date.now()/1000, nanoseconds:0} as unknown as Timestamp } : b
+        )
+      );
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+      toast({
+        title: "Cancellation Failed",
+        description: "Could not cancel the booking. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCancelling(false);
+      setBookingToCancel(null);
+    }
+  };
 
-  if (authLoading || loadingBookings) {
+
+  if (authLoading || (loadingBookings && bookings.length === 0)) { // Show loader if auth loading or initial bookings fetch
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading your bookings...</p>
@@ -108,7 +168,7 @@ export default function MyBookingsPage() {
     );
   }
 
-  if (!user) {
+  if (!user && !authLoading) {
     return (
       <div className="flex flex-col items-center justify-center text-center h-screen space-y-4 p-4">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4"/>
@@ -160,7 +220,7 @@ export default function MyBookingsPage() {
       )}
 
 
-      {bookings.length === 0 ? (
+      {bookings.length === 0 && !loadingBookings ? (
         <Alert className="border-dashed">
           <BookMarked className="h-5 w-5"/>
           <AlertTitle>No Bookings Yet</AlertTitle>
@@ -188,6 +248,11 @@ export default function MyBookingsPage() {
                 <CardDescription className="text-xs text-muted-foreground mt-1 flex items-center">
                   <CalendarDays className="mr-1.5 h-3 w-3" /> Booked on: {booking.createdAt ? format(booking.createdAt.toDate(), 'PPp') : 'N/A'}
                 </CardDescription>
+                 {booking.updatedAt && booking.status === 'Cancelled' && (
+                    <CardDescription className="text-xs text-muted-foreground mt-1 flex items-center">
+                        <XCircle className="mr-1.5 h-3 w-3 text-destructive" /> Cancelled on: {format(booking.updatedAt.toDate(), 'PPp')}
+                    </CardDescription>
+                )}
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
@@ -199,36 +264,51 @@ export default function MyBookingsPage() {
                     <p><span className="font-semibold">Weight:</span> {booking.approxWeight} kg</p>
                     {booking.estimatedCostLKR !== undefined && booking.estimatedCostLKR !== null && (
                         <p className="md:col-span-2 font-semibold text-primary">
-                            <DollarSign className="inline-block mr-1 h-4 w-4" />
+                            <CreditCard className="inline-block mr-1 h-4 w-4" />
                             Estimated Cost: {booking.estimatedCostLKR.toLocaleString()} LKR
                         </p>
                     )}
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col sm:flex-row justify-end items-center gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => {
-                    setCurrentPrintBooking(booking);
-                    setTimeout(() => {
-                      if (printableComponentRef.current) {
-                        handlePrint();
-                      } else {
-                        console.error("Ref for printable content not ready.");
-                        setCurrentPrintBooking(null); 
-                      }
-                    }, 0);
-                  }}
-                  className="w-full sm:w-auto"
-                >
-                  <Printer className="mr-2 h-4 w-4"/> Print Form
-                </Button>
+                {booking.status === 'Pending' && (
+                   <AlertDialog open={!!bookingToCancel && bookingToCancel.id === booking.id} onOpenChange={(isOpen) => !isOpen && setBookingToCancel(null)}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => setBookingToCancel(booking)}
+                        className="w-full sm:w-auto"
+                      >
+                        <XCircle className="mr-2 h-4 w-4"/> Cancel Booking
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Cancellation</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to cancel booking ID: <strong>{bookingToCancel?.id}</strong>? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setBookingToCancel(null)} disabled={isCancelling}>Back</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleConfirmCancelBooking} 
+                          disabled={isCancelling}
+                          className={buttonVariants({variant: "destructive"})}
+                        >
+                          {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <XCircle className="mr-2 h-4 w-4"/>}
+                          Confirm Cancel
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
                 <Button 
                   size="sm" 
                   onClick={() => handleProceedToPayment(booking.id, booking.estimatedCostLKR)}
                   className="w-full sm:w-auto"
-                  disabled={booking.estimatedCostLKR === undefined || booking.estimatedCostLKR === null}
+                  disabled={booking.estimatedCostLKR === undefined || booking.estimatedCostLKR === null || booking.status === 'Cancelled'}
                 >
                   <CreditCard className="mr-2 h-4 w-4"/> Continue to Payment
                 </Button>
@@ -237,11 +317,6 @@ export default function MyBookingsPage() {
           ))}
         </div>
       )}
-      {/* Printable component is always in the DOM but hidden, content updates via currentPrintBooking prop */}
-      <div style={{ display: "none" }}>
-          <PrintableBookingForm ref={printableComponentRef} booking={currentPrintBooking} />
-      </div>
     </div>
   );
 }
-
