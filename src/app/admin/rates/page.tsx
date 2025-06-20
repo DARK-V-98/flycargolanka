@@ -11,7 +11,7 @@ import type { CountryRate, WeightRate } from '@/types/shippingRates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'; // Added FormDescription
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -28,7 +28,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogDescription as DialogDescriptionComponent, // Renamed to avoid conflict if CardDescription is used directly
   DialogFooter,
   DialogTrigger,
   DialogClose,
@@ -125,7 +125,7 @@ export default function ManageRatesPage() {
       });
       toast({ title: "Success", description: `${data.name} added. Manage its weight rates.`, variant: "default" });
       countryForm.reset();
-      fetchCountries(); 
+      fetchCountries();
     } catch (error) {
       console.error("Error adding country:", error);
       toast({ title: "Error", description: "Could not add country.", variant: "destructive" });
@@ -133,7 +133,7 @@ export default function ManageRatesPage() {
       setIsSubmittingCountry(false);
     }
   };
-  
+
   const handleDeleteCountry = async () => {
     if (!countryToDelete) return;
     setIsDeletingCountry(true);
@@ -241,7 +241,7 @@ export default function ManageRatesPage() {
         isExpressEnabled: weightRate.isExpressEnabled,
     });
   };
-  
+
   const handleDeleteWeightRate = async () => {
     if (!selectedCountryForWeights || !weightRateToDelete) return;
     setIsDeletingWeight(true);
@@ -338,7 +338,7 @@ export default function ManageRatesPage() {
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader> <DialogTitle>Confirm Delete Country</DialogTitle>
-                              <DialogDescription>Are you sure you want to delete <strong>{countryToDelete?.name}</strong>? This also deletes all its weight rates. This is irreversible.</DialogDescription>
+                              <DialogDescriptionComponent>Are you sure you want to delete <strong>{countryToDelete?.name}</strong>? This also deletes all its weight rates. This is irreversible.</DialogDescriptionComponent>
                             </DialogHeader>
                             <DialogFooter>
                               <DialogClose asChild><Button variant="outline" onClick={() => setCountryToDelete(null)}>Cancel</Button></DialogClose>
@@ -370,9 +370,9 @@ export default function ManageRatesPage() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Manage Weights & Prices for {selectedCountryForWeights?.name}</DialogTitle>
-            <DialogDescription>Add, edit, or delete weight rates for this country.</DialogDescription>
+            <DialogDescriptionComponent>Add, edit, or delete weight rates for this country.</DialogDescriptionComponent>
           </DialogHeader>
-          
+
           <Form {...weightRateForm}>
             <form onSubmit={weightRateForm.handleSubmit(onAddEditWeightSubmit)} className="space-y-4 border p-4 rounded-md mt-4">
               <h3 className="text-lg font-medium mb-2">{editingWeightRate ? "Edit Weight Rate" : "Add New Weight Rate"}</h3>
@@ -451,14 +451,14 @@ export default function ManageRatesPage() {
                         </TableCell>
                         <TableCell className="text-right space-x-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEditWeightClick(wr)}><Edit3 className="h-4 w-4"/></Button>
-                          
+
                           <Dialog open={!!weightRateToDelete && weightRateToDelete.id === wr.id} onOpenChange={(isOpen) => !isOpen && setWeightRateToDelete(null)}>
                             <DialogTrigger asChild>
                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setWeightRateToDelete(wr)}><Trash2 className="h-4 w-4"/></Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader><DialogTitle>Confirm Delete Weight Rate</DialogTitle>
-                                <DialogDescription>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name}</strong>? This is irreversible.</DialogDescription>
+                                <DialogDescriptionComponent>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name}</strong>? This is irreversible.</DialogDescriptionComponent>
                                 </DialogHeader>
                                 <DialogFooter>
                                 <DialogClose asChild><Button variant="outline" onClick={() => setWeightRateToDelete(null)}>Cancel</Button></DialogClose>
@@ -486,3 +486,5 @@ export default function ManageRatesPage() {
     </div>
   );
 }
+
+    
