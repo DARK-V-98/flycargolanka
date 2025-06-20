@@ -342,7 +342,9 @@ export default function BookingPage() {
                       <FormItem><FormLabel>Country</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger></FormControl>
-                          <SelectContent><SelectItem value="" disabled>Select country</SelectItem>{sampleCountries.map(c => <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                          <SelectContent>
+                            {sampleCountries.map(c => <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>)}
+                          </SelectContent>
                         </Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="receiverZipCode" render={({ field }) => (
@@ -451,3 +453,4 @@ export default function BookingPage() {
     </div>
   );
 }
+
