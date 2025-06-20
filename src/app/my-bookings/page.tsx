@@ -23,10 +23,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle, BellRing } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
+export type BookingStatus = 'Pending' | 'Confirmed' | 'In Transit' | 'Delivered' | 'Cancelled' | 'Rejected' | 'Paused';
 
 interface Booking {
   id: string;
@@ -50,11 +51,10 @@ interface Booking {
   senderAddress: string;
   senderContactNo: string;
   senderWhatsAppNo?: string;
-  status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
+  status: BookingStatus;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
   estimatedCostLKR?: number | null;
-  // Declarations are optional as they might not be on older bookings
   declaration1?: boolean;
   declaration2?: boolean;
 }
@@ -101,12 +101,15 @@ export default function MyBookingsPage() {
     }
   }, [user, fetchUserBookings]);
 
-  const getStatusVariant = (status: Booking['status']) => {
+  const getStatusVariant = (status: BookingStatus) => {
     switch (status) {
       case 'Pending': return 'secondary';
+      case 'Confirmed': return 'default';
       case 'In Transit': return 'default';
       case 'Delivered': return 'outline'; 
       case 'Cancelled': return 'destructive';
+      case 'Rejected': return 'destructive';
+      case 'Paused': return 'secondary';
       default: return 'secondary';
     }
   };
@@ -125,6 +128,11 @@ export default function MyBookingsPage() {
     console.log(`Proceeding to payment for booking: ${bookingId}. Cost: ${cost ? `${cost} LKR` : 'N/A'}`);
     // Placeholder: Implement actual payment navigation/logic here
     // router.push(`/payment?bookingId=${bookingId}`); // Example
+     toast({
+        title: "Payment Gateway",
+        description: `Payment gateway integration is pending. Booking ID: ${bookingId}, Cost: ${cost || 'N/A'} LKR.`,
+        duration: 5000,
+      });
   };
 
   const handleConfirmCancelBooking = async () => {
@@ -160,7 +168,7 @@ export default function MyBookingsPage() {
   };
 
 
-  if (authLoading || (loadingBookings && bookings.length === 0)) { // Show loader if auth loading or initial bookings fetch
+  if (authLoading || (loadingBookings && bookings.length === 0)) { 
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading your bookings...</p>
@@ -248,13 +256,25 @@ export default function MyBookingsPage() {
                 <CardDescription className="text-xs text-muted-foreground mt-1 flex items-center">
                   <CalendarDays className="mr-1.5 h-3 w-3" /> Booked on: {booking.createdAt ? format(booking.createdAt.toDate(), 'PPp') : 'N/A'}
                 </CardDescription>
-                 {booking.updatedAt && booking.status === 'Cancelled' && (
+                 {booking.updatedAt && (booking.status === 'Cancelled' || booking.status === 'Rejected') && (
                     <CardDescription className="text-xs text-muted-foreground mt-1 flex items-center">
-                        <XCircle className="mr-1.5 h-3 w-3 text-destructive" /> Cancelled on: {format(booking.updatedAt.toDate(), 'PPp')}
+                        <XCircle className="mr-1.5 h-3 w-3 text-destructive" /> {booking.status} on: {format(booking.updatedAt.toDate(), 'PPp')}
                     </CardDescription>
                 )}
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
+                 {booking.status === 'Confirmed' && (
+                    <Alert variant="default" className="bg-green-500/10 border-green-500/30">
+                        <BellRing className="h-5 w-5 text-green-600"/>
+                        <AlertTitle className="text-green-700 font-semibold">Booking Confirmed & Processing!</AlertTitle>
+                        <AlertDescription>
+                            Your order <strong className="font-mono text-xs">{booking.id}</strong> is now processing. You can track its progress using your booking ID on the{' '}
+                            <Link href="/track-package" className="font-semibold underline hover:text-primary/80">
+                                Track Package page
+                            </Link>.
+                        </AlertDescription>
+                    </Alert>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                     <p><span className="font-semibold">Sender:</span> {booking.senderFullName}</p>
                     <p><span className="font-semibold">Receiver:</span> {booking.receiverFullName}</p>
@@ -308,7 +328,7 @@ export default function MyBookingsPage() {
                   size="sm" 
                   onClick={() => handleProceedToPayment(booking.id, booking.estimatedCostLKR)}
                   className="w-full sm:w-auto"
-                  disabled={booking.estimatedCostLKR === undefined || booking.estimatedCostLKR === null || booking.status === 'Cancelled'}
+                  disabled={booking.estimatedCostLKR === undefined || booking.estimatedCostLKR === null || booking.status === 'Cancelled' || booking.status === 'Rejected' || booking.status === 'Delivered'}
                 >
                   <CreditCard className="mr-2 h-4 w-4"/> Continue to Payment
                 </Button>
