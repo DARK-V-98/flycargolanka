@@ -132,8 +132,8 @@ export default function AdminOrdersPage() {
       const lowerSearchTerm = searchTerm.toLowerCase();
       currentBookings = currentBookings.filter(booking =>
         booking.id.toLowerCase().includes(lowerSearchTerm) ||
-        booking.senderFullName.toLowerCase().includes(lowerSearchTerm) || // Use senderFullName
-        booking.receiverFullName.toLowerCase().includes(lowerSearchTerm) || // Use receiverFullName
+        booking.senderFullName.toLowerCase().includes(lowerSearchTerm) || 
+        booking.receiverFullName.toLowerCase().includes(lowerSearchTerm) || 
         (booking.userEmail && booking.userEmail.toLowerCase().includes(lowerSearchTerm))
       );
     }
@@ -244,29 +244,30 @@ export default function AdminOrdersPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-            <Table className="min-w-[1000px]"><TableHeader>
+            <Table className="min-w-[1000px]">
+              <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[100px] px-2 py-2 text-xs sm:text-sm">ID</TableHead>
-                  <TableHead className="px-2 py-2 text-xs sm:text-sm">Sender</TableHead>
-                  <TableHead className="px-2 py-2 text-xs sm:text-sm">Receiver</TableHead>
-                  <TableHead className="px-2 py-2 text-xs sm:text-sm">Service</TableHead>
-                  <TableHead className="text-center px-1 py-2 text-xs sm:text-sm">Weight (kg)</TableHead>
-                  <TableHead className="text-center px-1 py-2 text-xs sm:text-sm">Cost (LKR)</TableHead>
-                  <TableHead className="text-center px-2 py-2 text-xs sm:text-sm">Status</TableHead>
-                  <TableHead className="text-right min-w-[140px] px-2 py-2 text-xs sm:text-sm">Booked On</TableHead>
-                  <TableHead className="text-center min-w-[210px] px-2 py-2 text-xs sm:text-sm">Actions</TableHead>
-                  <TableHead className="text-center px-2 py-2 text-xs sm:text-sm">Details</TableHead>
+                  <TableHead className="min-w-[100px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">ID</TableHead>
+                  <TableHead className="px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Sender</TableHead>
+                  <TableHead className="px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Receiver</TableHead>
+                  <TableHead className="px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Service</TableHead>
+                  <TableHead className="text-center px-1 py-2 text-xs sm:text-sm whitespace-nowrap">Weight (kg)</TableHead>
+                  <TableHead className="text-center px-1 py-2 text-xs sm:text-sm whitespace-nowrap">Cost (LKR)</TableHead>
+                  <TableHead className="text-center px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
+                  <TableHead className="text-right min-w-[140px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Booked On</TableHead>
+                  <TableHead className="text-center min-w-[210px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Actions</TableHead>
+                  <TableHead className="text-center px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Details</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredBookings.map((booking) => (
                   <TableRow key={booking.id}>
-                    <TableCell className="font-mono text-xs truncate max-w-[100px] sm:max-w-[120px] px-2 py-2.5">
+                    <TableCell className="font-mono text-xs truncate max-w-[100px] sm:max-w-[120px] px-2 py-2.5 whitespace-nowrap">
                         {booking.id}
                     </TableCell>
-                    <TableCell className="font-medium text-xs sm:text-sm px-2 py-2.5">{booking.senderFullName}</TableCell>
-                    <TableCell className="text-xs sm:text-sm px-2 py-2.5">{booking.receiverFullName}</TableCell>
-                    <TableCell className="capitalize text-xs sm:text-sm px-2 py-2.5">{booking.serviceType.replace('_', ' ')}</TableCell>
+                    <TableCell className="font-medium text-xs sm:text-sm px-2 py-2.5 whitespace-nowrap">{booking.senderFullName}</TableCell>
+                    <TableCell className="text-xs sm:text-sm px-2 py-2.5 whitespace-nowrap">{booking.receiverFullName}</TableCell>
+                    <TableCell className="capitalize text-xs sm:text-sm px-2 py-2.5 whitespace-nowrap">{booking.serviceType.replace('_', ' ')}</TableCell>
                     <TableCell className="text-center text-xs sm:text-sm px-1 py-2.5">{booking.packageWeight}</TableCell>
                     <TableCell className="text-center text-xs sm:text-sm px-1 py-2.5">
                       {booking.estimatedCostLKR !== null && booking.estimatedCostLKR !== undefined ? booking.estimatedCostLKR.toLocaleString() : 'N/A'}
@@ -274,7 +275,7 @@ export default function AdminOrdersPage() {
                     <TableCell className="text-center px-2 py-2.5">
                       <Badge variant={getStatusVariant(booking.status)} className="text-xs whitespace-nowrap">{booking.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-right text-xs sm:text-sm px-2 py-2.5">
+                    <TableCell className="text-right text-xs sm:text-sm px-2 py-2.5 whitespace-nowrap">
                       {booking.createdAt ? format(booking.createdAt.toDate(), 'PPp') : 'N/A'}
                     </TableCell>
                     <TableCell className="text-center px-2 py-2.5">
