@@ -306,95 +306,97 @@ export default function ManageRatesPage() {
         </CardHeader>
       </Card>
 
-      <div className="space-y-6 mt-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-xl font-headline text-accent">
-              <Globe className="mr-2 h-5 w-5 text-primary" /> Add New Country
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...countryForm}>
-              <form onSubmit={countryForm.handleSubmit(onAddCountrySubmit)} className="flex flex-col sm:flex-row gap-4 items-start">
-                <FormField
-                  control={countryForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem className="flex-grow">
-                      <FormLabel className="sr-only">Country Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter country name (e.g., Sri Lanka)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={isSubmittingCountry} className="w-full sm:w-auto">
-                  {isSubmittingCountry ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-                  Add Country
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+      <div className="max-w-6xl mx-auto w-full">
+        <div className="space-y-6 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl font-headline text-accent">
+                <Globe className="mr-2 h-5 w-5 text-primary" /> Add New Country
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...countryForm}>
+                <form onSubmit={countryForm.handleSubmit(onAddCountrySubmit)} className="flex flex-col sm:flex-row gap-4 items-start">
+                  <FormField
+                    control={countryForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem className="flex-grow">
+                        <FormLabel className="sr-only">Country Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter country name (e.g., Sri Lanka)" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={isSubmittingCountry} className="w-full sm:w-auto">
+                    {isSubmittingCountry ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                    Add Country
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-xl font-headline text-accent">
-              <ListOrdered className="mr-2 h-5 w-5 text-primary" /> Configured Countries
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingCountries ? (
-              <div className="flex justify-center items-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading countries...</p>
-              </div>
-            ) : countries.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No countries added yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="px-2 py-2 sm:px-4">Country Name</TableHead>
-                      <TableHead className="text-right px-2 py-2 sm:px-4">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {countries.map((country) => (
-                      <TableRow key={country.id}>
-                        <TableCell className="font-medium px-2 py-2 sm:px-4">{country.name}</TableCell>
-                        <TableCell className="text-right space-x-1 sm:space-x-2 px-2 py-2 sm:px-4">
-                          <Button variant="outline" size="sm" onClick={() => handleManageWeightsClick(country)} className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700 text-xs sm:text-sm px-2 sm:px-3">
-                            <BookOpen className="mr-1 h-3 w-3 sm:h-4 sm:w-4"/> Manage Weights
-                          </Button>
-                          <Dialog open={!!countryToDelete && countryToDelete.id === country.id} onOpenChange={(isOpen) => !isOpen && setCountryToDelete(null)}>
-                              <DialogTrigger asChild>
-                                <Button variant="destructive" size="sm" onClick={() => setCountryToDelete(country)} className="text-xs sm:text-sm px-2 sm:px-3">
-                                  <Trash2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> Delete
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader> <DialogTitle>Confirm Delete Country</DialogTitle>
-                                  <DialogDescriptionComponent>Are you sure you want to delete <strong>{countryToDelete?.name}</strong>? This also deletes all its weight rates. This is irreversible.</DialogDescriptionComponent>
-                                </DialogHeader>
-                                <DialogFooter>
-                                  <DialogClose asChild><Button variant="outline" onClick={() => setCountryToDelete(null)}>Cancel</Button></DialogClose>
-                                  <Button variant="destructive" onClick={handleDeleteCountry} disabled={isDeletingCountry}>
-                                    {isDeletingCountry ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                        </TableCell>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl font-headline text-accent">
+                <ListOrdered className="mr-2 h-5 w-5 text-primary" /> Configured Countries
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loadingCountries ? (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading countries...</p>
+                </div>
+              ) : countries.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4">No countries added yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="px-2 py-2 sm:px-4">Country Name</TableHead>
+                        <TableHead className="text-right px-2 py-2 sm:px-4">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {countries.map((country) => (
+                        <TableRow key={country.id}>
+                          <TableCell className="font-medium px-2 py-2 sm:px-4">{country.name}</TableCell>
+                          <TableCell className="text-right space-x-1 sm:space-x-2 px-2 py-2 sm:px-4">
+                            <Button variant="outline" size="sm" onClick={() => handleManageWeightsClick(country)} className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700 text-xs sm:text-sm px-2 sm:px-3">
+                              <BookOpen className="mr-1 h-3 w-3 sm:h-4 sm:w-4"/> Manage Weights
+                            </Button>
+                            <Dialog open={!!countryToDelete && countryToDelete.id === country.id} onOpenChange={(isOpen) => !isOpen && setCountryToDelete(null)}>
+                                <DialogTrigger asChild>
+                                  <Button variant="destructive" size="sm" onClick={() => setCountryToDelete(country)} className="text-xs sm:text-sm px-2 sm:px-3">
+                                    <Trash2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4" /> Delete
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader> <DialogTitle>Confirm Delete Country</DialogTitle>
+                                    <DialogDescriptionComponent>Are you sure you want to delete <strong>{countryToDelete?.name}</strong>? This also deletes all its weight rates. This is irreversible.</DialogDescriptionComponent>
+                                  </DialogHeader>
+                                  <DialogFooter>
+                                    <DialogClose asChild><Button variant="outline" onClick={() => setCountryToDelete(null)}>Cancel</Button></DialogClose>
+                                    <Button variant="destructive" onClick={handleDeleteCountry} disabled={isDeletingCountry}>
+                                      {isDeletingCountry ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
 
@@ -523,7 +525,51 @@ export default function ManageRatesPage() {
               <p className="text-muted-foreground text-sm text-center py-4">No weight rates added for this country yet.</p>
             ) : (
               <div className="overflow-x-auto max-h-[300px] sm:max-h-[400px] md:max-h-[500px]">
-                <Table className="min-w-[900px]"><TableHeader><TableRow><TableHead className="px-2 py-2 text-xs sticky left-0 bg-card z-10 whitespace-nowrap">Label</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Value (kg)</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">ND Econ. (LKR)</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">ND Exp. (LKR)</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Doc Econ. (LKR)</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Doc Exp. (LKR)</TableHead><TableHead className="px-2 py-2 text-xs text-right sticky right-0 bg-card z-10 whitespace-nowrap">Actions</TableHead></TableRow></TableHeader><TableBody>{currentWeights.map((wr) => (<TableRow key={wr.id}><TableCell className="px-2 py-2 text-xs sticky left-0 bg-card z-0 whitespace-nowrap">{wr.weightLabel}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.weightValue}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isNdEconomyEnabled ? (wr.ndEconomyPrice !== null && wr.ndEconomyPrice !== undefined ? wr.ndEconomyPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isNdExpressEnabled ? (wr.ndExpressPrice !== null && wr.ndExpressPrice !== undefined ? wr.ndExpressPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isDocEconomyEnabled ? (wr.docEconomyPrice !== null && wr.docEconomyPrice !== undefined ? wr.docEconomyPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isDocExpressEnabled ? (wr.docExpressPrice !== null && wr.docExpressPrice !== undefined ? wr.docExpressPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell><TableCell className="px-2 py-2 text-xs text-right space-x-1 sticky right-0 bg-card z-0 whitespace-nowrap"><Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => handleEditWeightClick(wr)}><Edit3 className="h-3 w-3 sm:h-4 sm:w-4"/></Button><Dialog open={!!weightRateToDelete && weightRateToDelete.id === wr.id} onOpenChange={(isOpen) => !isOpen && setWeightRateToDelete(null)}><DialogTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 text-destructive hover:text-destructive" onClick={() => setWeightRateToDelete(wr)}><Trash2 className="h-3 w-3 sm:h-4 sm:w-4"/></Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>Confirm Delete Weight Rate</DialogTitle><DialogDescriptionComponent>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name}</strong>? This is irreversible.</DialogDescriptionComponent></DialogHeader><DialogFooter><DialogClose asChild><Button variant="outline" onClick={() => setWeightRateToDelete(null)}>Cancel</Button></DialogClose><Button variant="destructive" onClick={handleDeleteWeightRate} disabled={isDeletingWeight}>{isDeletingWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete Rate</Button></DialogFooter></DialogContent></Dialog></TableCell></TableRow>))}</TableBody></Table>
+                <Table className="min-w-[900px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="px-2 py-2 text-xs sticky left-0 bg-card z-10 whitespace-nowrap">Label</TableHead>
+                      <TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Value (kg)</TableHead>
+                      <TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">ND Econ. (LKR)</TableHead>
+                      <TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">ND Exp. (LKR)</TableHead>
+                      <TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Doc Econ. (LKR)</TableHead>
+                      <TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Doc Exp. (LKR)</TableHead>
+                      <TableHead className="px-2 py-2 text-xs text-right sticky right-0 bg-card z-10 whitespace-nowrap">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentWeights.map((wr) => (
+                    <TableRow key={wr.id}>
+                      <TableCell className="font-medium px-2 py-2 text-xs sticky left-0 bg-card z-0 whitespace-nowrap">{wr.weightLabel}</TableCell>
+                      <TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.weightValue}</TableCell>
+                      <TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isNdEconomyEnabled ? (wr.ndEconomyPrice !== null && wr.ndEconomyPrice !== undefined ? wr.ndEconomyPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell>
+                      <TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isNdExpressEnabled ? (wr.ndExpressPrice !== null && wr.ndExpressPrice !== undefined ? wr.ndExpressPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell>
+                      <TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isDocEconomyEnabled ? (wr.docEconomyPrice !== null && wr.docEconomyPrice !== undefined ? wr.docEconomyPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell>
+                      <TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isDocExpressEnabled ? (wr.docExpressPrice !== null && wr.docExpressPrice !== undefined ? wr.docExpressPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell>
+                      <TableCell className="px-2 py-2 text-xs text-right space-x-1 sticky right-0 bg-card z-0 whitespace-nowrap">
+                        <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => handleEditWeightClick(wr)}><Edit3 className="h-3 w-3 sm:h-4 sm:w-4"/></Button>
+                        <Dialog open={!!weightRateToDelete && weightRateToDelete.id === wr.id} onOpenChange={(isOpen) => !isOpen && setWeightRateToDelete(null)}>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 text-destructive hover:text-destructive" onClick={() => setWeightRateToDelete(wr)}><Trash2 className="h-3 w-3 sm:h-4 sm:w-4"/></Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Confirm Delete Weight Rate</DialogTitle>
+                              <DialogDescriptionComponent>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name}</strong>? This is irreversible.</DialogDescriptionComponent>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <DialogClose asChild><Button variant="outline" onClick={() => setWeightRateToDelete(null)}>Cancel</Button></DialogClose>
+                              <Button variant="destructive" onClick={handleDeleteWeightRate} disabled={isDeletingWeight}>
+                                {isDeletingWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete Rate
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>
