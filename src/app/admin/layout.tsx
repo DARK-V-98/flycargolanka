@@ -30,7 +30,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
-import { LogOut, UserCog, LayoutDashboard, ChevronLeft, Menu as MenuIcon, Package, Users } from 'lucide-react';
+import { LogOut, UserCog, LayoutDashboard, ChevronLeft, Menu as MenuIcon, Package, Users, Settings2 } from 'lucide-react'; // Added Settings2
 import { useEffect } from 'react';
 
 interface AdminLayoutProps {
@@ -72,7 +72,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/orders', label: 'Orders', icon: Package },
     { href: '/admin/manage-roles', label: 'Manage Roles', icon: Users },
-    // { href: '/admin/settings', label: 'Settings', icon: Settings },
+    { href: '/admin/rates', label: 'Manage Rates', icon: Settings2 }, // Added Manage Rates
   ];
 
   return (
@@ -165,4 +165,3 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     </SidebarProvider>
   );
 }
-
