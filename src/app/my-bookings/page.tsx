@@ -61,7 +61,10 @@ export default function MyBookingsPage() {
   const printableComponentRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
-    content: () => printableComponentRef.current,
+    content: () => {
+      // Ensure we only return the ref if it's truly populated
+      return printableComponentRef.current || null;
+    },
     documentTitle: selectedBookingForPrint ? `FlyCargo-Booking-${selectedBookingForPrint.id}` : "FlyCargo-Booking",
     onAfterPrint: () => setSelectedBookingForPrint(null),
   });
@@ -69,9 +72,13 @@ export default function MyBookingsPage() {
   useEffect(() => {
     // Only attempt to print if a booking is selected AND the ref to the printable component is available
     if (selectedBookingForPrint && printableComponentRef.current) {
-      handlePrint();
+      // Defer the print call to the next tick to allow the DOM to fully update
+      const timerId = setTimeout(() => {
+        handlePrint();
+      }, 0);
+      return () => clearTimeout(timerId); // Clean up the timeout if the component unmounts or dependencies change
     }
-  }, [selectedBookingForPrint, handlePrint]);
+  }, [selectedBookingForPrint, handlePrint]); // handlePrint is memoized by useReactToPrint
 
 
   useEffect(() => {
@@ -265,4 +272,3 @@ export default function MyBookingsPage() {
     </div>
   );
 }
-
