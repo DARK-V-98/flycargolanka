@@ -244,8 +244,7 @@ export default function AdminOrdersPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-            <Table className="min-w-[1000px]"> {/* Adjusted min-width for new column */}
-              <TableHeader>
+            <Table className="min-w-[1000px]"><TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[100px] px-2 py-2 text-xs sm:text-sm">ID</TableHead>
                   <TableHead className="px-2 py-2 text-xs sm:text-sm">Sender</TableHead>
@@ -405,3 +404,5 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
+
+    
