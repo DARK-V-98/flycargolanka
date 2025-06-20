@@ -121,7 +121,7 @@ export default function ManageRatesPage() {
     if (currentView === 'countries') {
       fetchCountries();
     }
-  }, [currentView]);
+  }, [currentView, toast]);
 
   const onAddCountrySubmit: SubmitHandler<AddCountryFormValues> = async (data) => {
     setIsSubmittingCountry(true);
@@ -313,18 +313,18 @@ export default function ManageRatesPage() {
   if (currentView === 'weights' && selectedCountryForWeights) {
     return (
       <div className="space-y-6 opacity-0 animate-fadeInUp">
-        <Button variant="outline" onClick={handleBackToCountries} className="mb-2 sm:mb-4">
+        <Button variant="outline" onClick={handleBackToCountries} className="mb-2 sm:mb-4 text-xs sm:text-sm">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Countries
         </Button>
         <div className="max-w-5xl mx-auto w-full">
-          <Card className="shadow-xl border-border/50">
+          <Card className="shadow-xl border-border/50 overflow-hidden">
               <CardHeader>
                   <CardTitle className="flex items-center text-lg sm:text-xl md:text-2xl font-headline text-accent">
                       <BookOpen className="mr-2 h-5 sm:h-6 md:h-7 w-5 sm:w-6 md:w-7 text-primary" /> Manage Weights &amp; Prices for {selectedCountryForWeights.name}
                   </CardTitle>
                   <CardDescription className="text-sm sm:text-base">Add, edit, or delete weight rates. Specify prices for Non-Document and Document types.</CardDescription>
               </CardHeader>
-              <CardContent className="overflow-y-auto">
+              <CardContent className="overflow-y-auto"> {/* Consider max-height here if needed for overall page scroll */}
                   <Form {...weightRateForm}>
                   <form onSubmit={weightRateForm.handleSubmit(onAddEditWeightSubmit)} className="space-y-4 sm:space-y-6 border p-2 sm:p-4 rounded-md mt-2 sm:mt-4">
                       <h3 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">{editingWeightRate ? "Edit Weight Rate" : "Add New Weight Rate"}</h3>
@@ -555,7 +555,7 @@ export default function ManageRatesPage() {
                     <TableBody>
                       {countries.map((country) => (
                         <TableRow key={country.id}>
-                          <TableCell className="font-medium px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm">{country.name}</TableCell>
+                          <TableCell className="font-medium px-1.5 sm:px-2 py-1.5 sm:py-2 text-xs sm:text-sm whitespace-nowrap">{country.name}</TableCell>
                           <TableCell className="text-right space-x-1 px-1.5 sm:px-2 py-1.5 sm:py-2">
                             <Button variant="outline" size="sm" onClick={() => handleManageWeightsClick(country)} className="text-primary border-primary hover:bg-primary/10 hover:text-primary text-xs sm:text-sm px-2 sm:px-3">
                               <BookOpen className="mr-1 h-3 w-3"/> Manage Weights
@@ -569,7 +569,7 @@ export default function ManageRatesPage() {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle className="text-base sm:text-lg">Confirm Delete Country</AlertDialogTitle>
+                                    <AlertDialogTitle>Confirm Delete Country</AlertDialogTitle>
                                     <AlertDialogDescription className="text-xs sm:text-sm">Are you sure you want to delete <strong>{countryToDelete?.name}</strong>? This also deletes all its weight rates. This is irreversible.</AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -594,4 +594,3 @@ export default function ManageRatesPage() {
     </div>
   );
 }
-
