@@ -7,7 +7,6 @@ import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target, Cal
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
-import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
 
 
 const services = [
@@ -54,13 +53,7 @@ export default function Home() {
               </p>
               <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
                  <Button asChild variant="default" size="lg" className="transition-transform duration-300 hover:scale-105">
-                  <Link href="/book">Book a Courier</Link>
-                </Button>
-                 <Button asChild variant="outline" size="lg" className="transition-transform duration-300 hover:scale-105 bg-background/20 hover:bg-background/30 border-white/50 text-white hover:text-white backdrop-blur-sm">
-                  <Link href="/#shipping-calculator-section">
-                    <Calculator className="mr-2 h-5 w-5" />
-                    Estimate Cost
-                  </Link>
+                  <Link href="/book">Book a Courier & Estimate Cost</Link>
                 </Button>
               </div>
             </div>
@@ -131,19 +124,6 @@ export default function Home() {
               </CardContent>
             </Card>
           ))}
-        </div>
-      </section>
-
-      {/* Shipping Calculator Section */}
-      <section id="shipping-calculator-section" className="py-12 md:py-16 opacity-0 animate-fadeInUp scroll-mt-20" style={{animationDelay: '0.4s'}}>
-        <div className="container mx-auto px-4">
-          <div className="opacity-0 animate-fadeInUp">
-            <PageHeader 
-              title="Estimate Your Shipping Cost"
-              description="Select destination, weight, and delivery type to get an estimate."
-            />
-          </div>
-          <ShippingCalculatorForm />
         </div>
       </section>
 
