@@ -84,7 +84,7 @@ export default function ManageRatesPage() {
     resolver: zodResolver(weightRateSchema),
     defaultValues: {
       weightLabel: '',
-      weightValue: '' as any, // Will be handled by ?? '' in input
+      weightValue: '' as any, 
       ndEconomyPrice: null,
       ndExpressPrice: null,
       isNdEconomyEnabled: true,
@@ -214,10 +214,10 @@ export default function ManageRatesPage() {
     const processedData = {
       ...data,
       weightValue: Number(data.weightValue),
-      ndEconomyPrice: (data.ndEconomyPrice === '' || data.ndEconomyPrice === undefined || isNaN(Number(data.ndEconomyPrice))) ? null : Number(data.ndEconomyPrice),
-      ndExpressPrice: (data.ndExpressPrice === '' || data.ndExpressPrice === undefined || isNaN(Number(data.ndExpressPrice))) ? null : Number(data.ndExpressPrice),
-      docEconomyPrice: (data.docEconomyPrice === '' || data.docEconomyPrice === undefined || isNaN(Number(data.docEconomyPrice))) ? null : Number(data.docEconomyPrice),
-      docExpressPrice: (data.docExpressPrice === '' || data.docExpressPrice === undefined || isNaN(Number(data.docExpressPrice))) ? null : Number(data.docExpressPrice),
+      ndEconomyPrice: (data.ndEconomyPrice === '' || data.ndEconomyPrice === undefined || data.ndEconomyPrice === null || isNaN(Number(data.ndEconomyPrice))) ? null : Number(data.ndEconomyPrice),
+      ndExpressPrice: (data.ndExpressPrice === '' || data.ndExpressPrice === undefined || data.ndExpressPrice === null || isNaN(Number(data.ndExpressPrice))) ? null : Number(data.ndExpressPrice),
+      docEconomyPrice: (data.docEconomyPrice === '' || data.docEconomyPrice === undefined || data.docEconomyPrice === null || isNaN(Number(data.docEconomyPrice))) ? null : Number(data.docEconomyPrice),
+      docExpressPrice: (data.docExpressPrice === '' || data.docExpressPrice === undefined || data.docExpressPrice === null || isNaN(Number(data.docExpressPrice))) ? null : Number(data.docExpressPrice),
     };
     
     const dataToSave: Partial<WeightRate> = { 
@@ -431,6 +431,7 @@ export default function ManageRatesPage() {
                       <Input type="number" step="0.01" placeholder="e.g., 1 or 2.5" {...field} value={field.value ?? ''}
                         onChange={e => { const valStr = e.target.value; field.onChange(valStr === '' ? '' : (isNaN(parseFloat(valStr)) ? '' : parseFloat(valStr))); }}/>
                     </FormControl>
+                    <ShadFormDescription>Numeric value for sorting and calculation (e.g., 0.5 for 500g).</ShadFormDescription>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -522,61 +523,7 @@ export default function ManageRatesPage() {
               <p className="text-muted-foreground text-sm text-center py-4">No weight rates added for this country yet.</p>
             ) : (
               <div className="overflow-x-auto max-h-[300px] sm:max-h-[400px] md:max-h-[500px]">
-                <Table className="min-w-[900px]"> {/* Ensure table has a min-width for horizontal scroll */}
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="px-2 py-2 text-xs sticky left-0 bg-background z-10">Label</TableHead>
-                      <TableHead className="px-2 py-2 text-xs text-center">Value (kg)</TableHead>
-                      <TableHead className="px-2 py-2 text-xs text-center">ND Econ. (LKR)</TableHead>
-                      <TableHead className="px-2 py-2 text-xs text-center">ND Exp. (LKR)</TableHead>
-                      <TableHead className="px-2 py-2 text-xs text-center">Doc Econ. (LKR)</TableHead>
-                      <TableHead className="px-2 py-2 text-xs text-center">Doc Exp. (LKR)</TableHead>
-                      <TableHead className="px-2 py-2 text-xs text-right sticky right-0 bg-background z-10">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentWeights.map((wr) => (
-                      <TableRow key={wr.id}>
-                        <TableCell className="px-2 py-2 text-xs sticky left-0 bg-background z-0">{wr.weightLabel}</TableCell>
-                        <TableCell className="px-2 py-2 text-xs text-center">{wr.weightValue}</TableCell>
-                        
-                        <TableCell className="px-2 py-2 text-xs text-center">
-                          {wr.isNdEconomyEnabled ? (wr.ndEconomyPrice !== null && wr.ndEconomyPrice !== undefined ? wr.ndEconomyPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}
-                        </TableCell>
-                        <TableCell className="px-2 py-2 text-xs text-center">
-                          {wr.isNdExpressEnabled ? (wr.ndExpressPrice !== null && wr.ndExpressPrice !== undefined ? wr.ndExpressPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}
-                        </TableCell>
-
-                        <TableCell className="px-2 py-2 text-xs text-center">
-                          {wr.isDocEconomyEnabled ? (wr.docEconomyPrice !== null && wr.docEconomyPrice !== undefined ? wr.docEconomyPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}
-                        </TableCell>
-                        <TableCell className="px-2 py-2 text-xs text-center">
-                          {wr.isDocExpressEnabled ? (wr.docExpressPrice !== null && wr.docExpressPrice !== undefined ? wr.docExpressPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}
-                        </TableCell>
-
-                        <TableCell className="px-2 py-2 text-xs text-right space-x-1 sticky right-0 bg-background z-0">
-                          <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => handleEditWeightClick(wr)}><Edit3 className="h-3 w-3 sm:h-4 sm:w-4"/></Button>
-                          <Dialog open={!!weightRateToDelete && weightRateToDelete.id === wr.id} onOpenChange={(isOpen) => !isOpen && setWeightRateToDelete(null)}>
-                            <DialogTrigger asChild>
-                               <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 text-destructive hover:text-destructive" onClick={() => setWeightRateToDelete(wr)}><Trash2 className="h-3 w-3 sm:h-4 sm:w-4"/></Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader><DialogTitle>Confirm Delete Weight Rate</DialogTitle>
-                                <DialogDescriptionComponent>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name}</strong>? This is irreversible.</DialogDescriptionComponent>
-                                </DialogHeader>
-                                <DialogFooter>
-                                <DialogClose asChild><Button variant="outline" onClick={() => setWeightRateToDelete(null)}>Cancel</Button></DialogClose>
-                                <Button variant="destructive" onClick={handleDeleteWeightRate} disabled={isDeletingWeight}>
-                                    {isDeletingWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete Rate
-                                </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                           </Dialog>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <Table className="min-w-[900px]"><TableHeader><TableRow><TableHead className="px-2 py-2 text-xs sticky left-0 bg-card z-10 whitespace-nowrap">Label</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Value (kg)</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">ND Econ. (LKR)</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">ND Exp. (LKR)</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Doc Econ. (LKR)</TableHead><TableHead className="px-2 py-2 text-xs text-center whitespace-nowrap">Doc Exp. (LKR)</TableHead><TableHead className="px-2 py-2 text-xs text-right sticky right-0 bg-card z-10 whitespace-nowrap">Actions</TableHead></TableRow></TableHeader><TableBody>{currentWeights.map((wr) => (<TableRow key={wr.id}><TableCell className="px-2 py-2 text-xs sticky left-0 bg-card z-0 whitespace-nowrap">{wr.weightLabel}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.weightValue}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isNdEconomyEnabled ? (wr.ndEconomyPrice !== null && wr.ndEconomyPrice !== undefined ? wr.ndEconomyPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isNdExpressEnabled ? (wr.ndExpressPrice !== null && wr.ndExpressPrice !== undefined ? wr.ndExpressPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isDocEconomyEnabled ? (wr.docEconomyPrice !== null && wr.docEconomyPrice !== undefined ? wr.docEconomyPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell><TableCell className="px-2 py-2 text-xs text-center whitespace-nowrap">{wr.isDocExpressEnabled ? (wr.docExpressPrice !== null && wr.docExpressPrice !== undefined ? wr.docExpressPrice : <XCircle className="h-3 w-3 text-muted-foreground mx-auto"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell><TableCell className="px-2 py-2 text-xs text-right space-x-1 sticky right-0 bg-card z-0 whitespace-nowrap"><Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={() => handleEditWeightClick(wr)}><Edit3 className="h-3 w-3 sm:h-4 sm:w-4"/></Button><Dialog open={!!weightRateToDelete && weightRateToDelete.id === wr.id} onOpenChange={(isOpen) => !isOpen && setWeightRateToDelete(null)}><DialogTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7 text-destructive hover:text-destructive" onClick={() => setWeightRateToDelete(wr)}><Trash2 className="h-3 w-3 sm:h-4 sm:w-4"/></Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>Confirm Delete Weight Rate</DialogTitle><DialogDescriptionComponent>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name}</strong>? This is irreversible.</DialogDescriptionComponent></DialogHeader><DialogFooter><DialogClose asChild><Button variant="outline" onClick={() => setWeightRateToDelete(null)}>Cancel</Button></DialogClose><Button variant="destructive" onClick={handleDeleteWeightRate} disabled={isDeletingWeight}>{isDeletingWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete Rate</Button></DialogFooter></DialogContent></Dialog></TableCell></TableRow>))}</TableBody></Table>
               </div>
             )}
           </div>
@@ -590,3 +537,4 @@ export default function ManageRatesPage() {
     </div>
   );
 }
+
