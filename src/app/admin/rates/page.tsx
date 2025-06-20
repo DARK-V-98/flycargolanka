@@ -2,17 +2,18 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useForm, type SubmitHandler, useFieldArray } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, deleteDoc, doc, writeBatch, updateDoc, getDoc } from 'firebase/firestore';
-import type { CountryRate, WeightRate } from '@/types/shippingRates';
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, deleteDoc, doc, writeBatch, updateDoc, where } from 'firebase/firestore';
+import type { CountryRate, WeightRate, RateType } from '@/types/shippingRates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -22,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2, Trash2, PlusCircle, ListOrdered, Globe, Loader2, Edit3, Settings2, XCircle, Save, BookOpen } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Trash2, PlusCircle, ListOrdered, Globe, Loader2, Edit3, Settings2, XCircle, Save, BookOpen, FileText, Package } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -40,7 +41,7 @@ const addCountrySchema = z.object({
 type AddCountryFormValues = z.infer<typeof addCountrySchema>;
 
 const weightRateSchema = z.object({
-  id: z.string().optional(), // For editing existing entries
+  id: z.string().optional(), 
   weightLabel: z.string().min(1, "Weight label is required (e.g., '0.5 kg', '1-2 kg').").max(50,"Label too long."),
   weightValue: z.coerce.number().positive("Weight value must be a positive number (for sorting)."),
   economyPrice: z.coerce.number().nonnegative("Price must be 0 or positive.").optional().nullable(),
@@ -57,6 +58,8 @@ export default function ManageRatesPage() {
   const [isSubmittingCountry, setIsSubmittingCountry] = useState(false);
   const [countryToDelete, setCountryToDelete] = useState<CountryRate | null>(null);
   const [isDeletingCountry, setIsDeletingCountry] = useState(false);
+  const [activeRateType, setActiveRateType] = useState<RateType>('non-document');
+
 
   const [selectedCountryForWeights, setSelectedCountryForWeights] = useState<CountryRate | null>(null);
   const [isWeightsModalOpen, setIsWeightsModalOpen] = useState(false);
@@ -79,7 +82,7 @@ export default function ManageRatesPage() {
     resolver: zodResolver(weightRateSchema),
     defaultValues: {
       weightLabel: '',
-      weightValue: '' as any, // Initialize as empty string, will be coerced by Zod
+      weightValue: '' as any,
       economyPrice: null,
       expressPrice: null,
       isEconomyEnabled: true,
@@ -87,11 +90,11 @@ export default function ManageRatesPage() {
     },
   });
 
-  const fetchCountries = async () => {
+  const fetchCountries = async (rateType: RateType) => {
     setLoadingCountries(true);
     try {
       const ratesCol = collection(db, 'shipping_rates');
-      const q = query(ratesCol, orderBy('name', 'asc'));
+      const q = query(ratesCol, where('type', '==', rateType), orderBy('name', 'asc'));
       const snapshot = await getDocs(q);
       const fetchedCountries = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -99,33 +102,39 @@ export default function ManageRatesPage() {
       } as CountryRate));
       setCountries(fetchedCountries);
     } catch (error) {
-      console.error("Error fetching countries:", error);
-      toast({ title: "Error", description: "Could not fetch countries.", variant: "destructive" });
+      console.error(`Error fetching ${rateType} countries:`, error);
+      toast({ title: "Error", description: `Could not fetch ${rateType} countries.`, variant: "destructive" });
     } finally {
       setLoadingCountries(false);
     }
   };
 
   useEffect(() => {
-    fetchCountries();
-  }, []);
+    fetchCountries(activeRateType);
+  }, [activeRateType]);
 
   const onAddCountrySubmit: SubmitHandler<AddCountryFormValues> = async (data) => {
     setIsSubmittingCountry(true);
     try {
-      const existingCountry = countries.find(c => c.name.toLowerCase() === data.name.toLowerCase());
-      if (existingCountry) {
-        toast({ title: "Duplicate Country", description: "This country name already exists.", variant: "destructive" });
+      // Check for duplicates within the *same* rate type
+      const ratesCol = collection(db, 'shipping_rates');
+      const q = query(ratesCol, where('type', '==', activeRateType), where('name', '==', data.name));
+      const existingSnapshot = await getDocs(q);
+
+      if (!existingSnapshot.empty) {
+        toast({ title: "Duplicate Country", description: `This country name already exists for ${activeRateType} rates.`, variant: "destructive" });
         setIsSubmittingCountry(false);
         return;
       }
+
       await addDoc(collection(db, 'shipping_rates'), {
         name: data.name,
+        type: activeRateType,
         createdAt: serverTimestamp(),
       });
-      toast({ title: "Success", description: `${data.name} added. Manage its weight rates.`, variant: "default" });
+      toast({ title: "Success", description: `${data.name} added as a ${activeRateType} rate. Manage its weight rates.`, variant: "default" });
       countryForm.reset();
-      fetchCountries();
+      fetchCountries(activeRateType); // Refresh list for current type
     } catch (error) {
       console.error("Error adding country:", error);
       toast({ title: "Error", description: "Could not add country.", variant: "destructive" });
@@ -142,10 +151,10 @@ export default function ManageRatesPage() {
       const weightsSnapshot = await getDocs(weightsSubcollectionRef);
       const batch = writeBatch(db);
       weightsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-      batch.delete(doc(db, 'shipping_rates', countryToDelete.id)); // Delete country doc
+      batch.delete(doc(db, 'shipping_rates', countryToDelete.id)); 
       await batch.commit();
-      toast({ title: "Success", description: `${countryToDelete.name} and its weights deleted.`, variant: "default" });
-      setCountries(countries.filter(c => c.id !== countryToDelete.id));
+      toast({ title: "Success", description: `${countryToDelete.name} (${countryToDelete.type}) and its weights deleted.`, variant: "default" });
+      setCountries(countries.filter(c => c.id !== countryToDelete.id)); // Optimistic update
       setCountryToDelete(null);
     } catch (error) {
       console.error("Error deleting country:", error);
@@ -194,19 +203,17 @@ export default function ManageRatesPage() {
     if (!selectedCountryForWeights) return;
     setIsSubmittingWeight(true);
 
-    // Ensure prices are numbers or null
     const processedData = {
       ...data,
       economyPrice: (data.economyPrice === '' || data.economyPrice === undefined || isNaN(Number(data.economyPrice))) ? null : Number(data.economyPrice),
       expressPrice: (data.expressPrice === '' || data.expressPrice === undefined || isNaN(Number(data.expressPrice))) ? null : Number(data.expressPrice),
-      weightValue: Number(data.weightValue) // Already coerced by Zod, but ensure it's a number for Firestore
+      weightValue: Number(data.weightValue) 
     };
     
     const dataToSave = {
         ...processedData,
         updatedAt: serverTimestamp(),
     };
-
 
     try {
       if (editingWeightRate && editingWeightRate.id) { 
@@ -233,16 +240,16 @@ export default function ManageRatesPage() {
     const formData = {
         id: weightRate.id,
         weightLabel: weightRate.weightLabel,
-        weightValue: weightRate.weightValue, // This should be a number
-        economyPrice: weightRate.economyPrice, // number or null
-        expressPrice: weightRate.expressPrice, // number or null
+        weightValue: weightRate.weightValue,
+        economyPrice: weightRate.economyPrice,
+        expressPrice: weightRate.expressPrice,
         isEconomyEnabled: weightRate.isEconomyEnabled,
         isExpressEnabled: weightRate.isExpressEnabled,
     };
     setEditingWeightRate(formData);
     weightRateForm.reset({
         ...formData,
-        weightValue: formData.weightValue !== null && formData.weightValue !== undefined ? String(formData.weightValue) : '', // Ensure string for input if it was number
+        weightValue: formData.weightValue !== null && formData.weightValue !== undefined ? String(formData.weightValue) : '',
         economyPrice: formData.economyPrice,
         expressPrice: formData.expressPrice,
     });
@@ -272,98 +279,112 @@ export default function ManageRatesPage() {
           <CardTitle className="flex items-center text-2xl font-headline text-accent">
             <Settings2 className="mr-3 h-7 w-7 text-primary" /> Manage Shipping Rates
           </CardTitle>
-          <CardDescription>Add countries and then manage their specific shipping weight rates and prices.</CardDescription>
+          <CardDescription>Select rate type, add countries, then manage their specific shipping weight rates and prices.</CardDescription>
         </CardHeader>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl font-headline text-accent">
-            <Globe className="mr-2 h-5 w-5 text-primary" /> Add New Country
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...countryForm}>
-            <form onSubmit={countryForm.handleSubmit(onAddCountrySubmit)} className="flex flex-col sm:flex-row gap-4 items-start">
-              <FormField
-                control={countryForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="flex-grow">
-                    <FormLabel className="sr-only">Country Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter country name (e.g., Sri Lanka)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={isSubmittingCountry} className="w-full sm:w-auto">
-                {isSubmittingCountry ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
-                Add Country
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      <Tabs value={activeRateType} onValueChange={(value) => setActiveRateType(value as RateType)} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="non-document" className="flex items-center gap-2">
+            <Package className="h-5 w-5"/> Non-Document Rates
+          </TabsTrigger>
+          <TabsTrigger value="document" className="flex items-center gap-2">
+            <FileText className="h-5 w-5"/> Document Rates
+          </TabsTrigger>
+        </TabsList>
+        
+        {['non-document', 'document'].map(rateType => (
+          <TabsContent key={rateType} value={rateType} className="space-y-6 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-xl font-headline text-accent">
+                  <Globe className="mr-2 h-5 w-5 text-primary" /> Add New Country for {rateType === 'document' ? 'Document' : 'Non-Document'} Rates
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Form {...countryForm}>
+                  <form onSubmit={countryForm.handleSubmit(onAddCountrySubmit)} className="flex flex-col sm:flex-row gap-4 items-start">
+                    <FormField
+                      control={countryForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem className="flex-grow">
+                          <FormLabel className="sr-only">Country Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter country name (e.g., Sri Lanka)" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="submit" disabled={isSubmittingCountry} className="w-full sm:w-auto">
+                      {isSubmittingCountry ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                      Add Country
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl font-headline text-accent">
-            <ListOrdered className="mr-2 h-5 w-5 text-primary" /> Configured Countries
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingCountries ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading countries...</p>
-            </div>
-          ) : countries.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No countries added yet.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Country Name</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {countries.map((country) => (
-                  <TableRow key={country.id}>
-                    <TableCell className="font-medium">{country.name}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                       <Button variant="outline" size="sm" onClick={() => handleManageWeightsClick(country)} className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700">
-                         <BookOpen className="mr-1 h-4 w-4"/> Manage Weights & Prices
-                       </Button>
-                       <Dialog open={!!countryToDelete && countryToDelete.id === country.id} onOpenChange={(isOpen) => !isOpen && setCountryToDelete(null)}>
-                          <DialogTrigger asChild>
-                            <Button variant="destructive" size="sm" onClick={() => setCountryToDelete(country)}>
-                              <Trash2 className="mr-1 h-4 w-4" /> Delete Country
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-xl font-headline text-accent">
+                  <ListOrdered className="mr-2 h-5 w-5 text-primary" /> Configured Countries for {rateType === 'document' ? 'Document' : 'Non-Document'} Rates
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingCountries ? (
+                  <div className="flex justify-center items-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading countries...</p>
+                  </div>
+                ) : countries.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No countries added for {rateType} rates yet.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Country Name</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {countries.map((country) => (
+                        <TableRow key={country.id}>
+                          <TableCell className="font-medium">{country.name}</TableCell>
+                          <TableCell className="text-right space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => handleManageWeightsClick(country)} className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700">
+                              <BookOpen className="mr-1 h-4 w-4"/> Manage Weights & Prices
                             </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader> <DialogTitle>Confirm Delete Country</DialogTitle>
-                              <DialogDescriptionComponent>Are you sure you want to delete <strong>{countryToDelete?.name}</strong>? This also deletes all its weight rates. This is irreversible.</DialogDescriptionComponent>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <DialogClose asChild><Button variant="outline" onClick={() => setCountryToDelete(null)}>Cancel</Button></DialogClose>
-                              <Button variant="destructive" onClick={handleDeleteCountry} disabled={isDeletingCountry}>
-                                {isDeletingCountry ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete Country
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                            <Dialog open={!!countryToDelete && countryToDelete.id === country.id} onOpenChange={(isOpen) => !isOpen && setCountryToDelete(null)}>
+                                <DialogTrigger asChild>
+                                  <Button variant="destructive" size="sm" onClick={() => setCountryToDelete(country)}>
+                                    <Trash2 className="mr-1 h-4 w-4" /> Delete Country
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader> <DialogTitle>Confirm Delete Country</DialogTitle>
+                                    <DialogDescriptionComponent>Are you sure you want to delete <strong>{countryToDelete?.name} ({countryToDelete?.type})</strong>? This also deletes all its weight rates. This is irreversible.</DialogDescriptionComponent>
+                                  </DialogHeader>
+                                  <DialogFooter>
+                                    <DialogClose asChild><Button variant="outline" onClick={() => setCountryToDelete(null)}>Cancel</Button></DialogClose>
+                                    <Button variant="destructive" onClick={handleDeleteCountry} disabled={isDeletingCountry}>
+                                      {isDeletingCountry ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete Country
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
 
-      {/* Weights Management Modal */}
       <Dialog open={isWeightsModalOpen} onOpenChange={(isOpen) => {
           setIsWeightsModalOpen(isOpen);
           if (!isOpen) {
@@ -375,7 +396,7 @@ export default function ManageRatesPage() {
       }}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Manage Weights & Prices for {selectedCountryForWeights?.name}</DialogTitle>
+            <DialogTitle>Manage Weights & Prices for {selectedCountryForWeights?.name} ({selectedCountryForWeights?.type})</DialogTitle>
             <DialogDescriptionComponent>Add, edit, or delete weight rates for this country.</DialogDescriptionComponent>
           </DialogHeader>
 
@@ -399,10 +420,10 @@ export default function ManageRatesPage() {
                         onChange={e => {
                           const valStr = e.target.value;
                           if (valStr === '') {
-                            field.onChange(''); // Keep as empty string for Zod to coerce
+                            field.onChange(''); 
                           } else {
                             const num = parseFloat(valStr);
-                            field.onChange(isNaN(num) ? '' : num); // Pass num or ''
+                            field.onChange(isNaN(num) ? '' : num); 
                           }
                         }}
                       />
@@ -490,7 +511,7 @@ export default function ManageRatesPage() {
           </Form>
 
           <div className="mt-6">
-            <h4 className="text-md font-medium mb-2">Existing Weight Rates for {selectedCountryForWeights?.name}</h4>
+            <h4 className="text-md font-medium mb-2">Existing Weight Rates for {selectedCountryForWeights?.name} ({selectedCountryForWeights?.type})</h4>
             {loadingWeights ? (
               <div className="flex justify-center items-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /><p className="ml-2">Loading rates...</p></div>
             ) : currentWeights.length === 0 ? (
@@ -520,14 +541,13 @@ export default function ManageRatesPage() {
                         </TableCell>
                         <TableCell className="text-right space-x-1">
                           <Button variant="ghost" size="sm" onClick={() => handleEditWeightClick(wr)}><Edit3 className="h-4 w-4"/></Button>
-
                           <Dialog open={!!weightRateToDelete && weightRateToDelete.id === wr.id} onOpenChange={(isOpen) => !isOpen && setWeightRateToDelete(null)}>
                             <DialogTrigger asChild>
                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setWeightRateToDelete(wr)}><Trash2 className="h-4 w-4"/></Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader><DialogTitle>Confirm Delete Weight Rate</DialogTitle>
-                                <DialogDescriptionComponent>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name}</strong>? This is irreversible.</DialogDescriptionComponent>
+                                <DialogDescriptionComponent>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name} ({selectedCountryForWeights?.type})</strong>? This is irreversible.</DialogDescriptionComponent>
                                 </DialogHeader>
                                 <DialogFooter>
                                 <DialogClose asChild><Button variant="outline" onClick={() => setWeightRateToDelete(null)}>Cancel</Button></DialogClose>

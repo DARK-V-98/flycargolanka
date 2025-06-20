@@ -1,9 +1,12 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
+export type RateType = 'document' | 'non-document';
+
 export interface CountryRate {
   id: string; // Firestore document ID
   name: string;
+  type: RateType; // 'document' or 'non-document'
   createdAt: Timestamp;
 }
 
