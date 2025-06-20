@@ -93,8 +93,9 @@ export default function ManageRatesPage() {
       await addDoc(collection(db, 'shipping_rates'), {
         name: data.name,
         createdAt: serverTimestamp(),
+        // Add a default empty weights subcollection if needed, or handle on first weight add
       });
-      toast({ title: "Success", description: `${data.name} added successfully.`, variant: "default" });
+      toast({ title: "Success", description: `${data.name} added successfully. You can now manage its weight rates.`, variant: "default" });
       countryForm.reset();
       fetchCountries(); // Refresh list
     } catch (error) {
@@ -141,7 +142,7 @@ export default function ManageRatesPage() {
           <CardTitle className="flex items-center text-2xl font-headline text-accent">
             <Settings2 className="mr-3 h-7 w-7 text-primary" /> Manage Shipping Rates
           </CardTitle>
-          <CardDescription>Add, edit, or remove countries and their shipping weight rates.</CardDescription>
+          <CardDescription>Add countries and then manage their specific shipping weight rates and prices.</CardDescription>
         </CardHeader>
       </Card>
 
@@ -181,7 +182,7 @@ export default function ManageRatesPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center text-xl font-headline text-accent">
-            <ListOrdered className="mr-2 h-5 w-5 text-primary" /> Countries
+            <ListOrdered className="mr-2 h-5 w-5 text-primary" /> Configured Countries
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -205,8 +206,8 @@ export default function ManageRatesPage() {
                   <TableRow key={country.id}>
                     <TableCell className="font-medium">{country.name}</TableCell>
                     <TableCell className="text-right space-x-2">
-                       <Button variant="outline" size="sm" onClick={() => alert(`Editing for ${country.name} - To be implemented`)} className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700">
-                         <Edit3 className="mr-1 h-4 w-4"/> Manage Weights
+                       <Button variant="outline" size="sm" onClick={() => toast({ title: "Manage Weights", description: `Configuration for ${country.name} weights & prices will be implemented here.`, duration: 3000 })} className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700">
+                         <Edit3 className="mr-1 h-4 w-4"/> Manage Weights & Prices
                        </Button>
                        <Dialog open={!!countryToDelete && countryToDelete.id === country.id} onOpenChange={(isOpen) => !isOpen && setCountryToDelete(null)}>
                           <DialogTrigger asChild>
@@ -241,9 +242,11 @@ export default function ManageRatesPage() {
         </CardContent>
       </Card>
 
-      {/* Placeholder for managing weights of a selected country - To be implemented in next phase */}
-      {/* {selectedCountry && ( ... UI for weights ... ) } */}
+      {/* Placeholder for managing weights of a selected country - This will be the next major implementation step */}
+      {/* For example, clicking "Manage Weights & Prices" above could open a modal or navigate to a new sub-view for that country. */}
 
     </div>
   );
 }
+
+    
