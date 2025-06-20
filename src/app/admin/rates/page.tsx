@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, deleteDoc, doc, writeBatch, updateDoc, where } from 'firebase/firestore';
 import type { CountryRate, WeightRate } from '@/types/shippingRates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as ShadFormDescription } from '@/components/ui/form';
 import { Switch } from "@/components/ui/switch";
@@ -595,3 +595,5 @@ export default function ManageRatesPage() {
 }
 
   
+
+    
