@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign, Landmark } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where } from 'firebase/firestore';
+import { collection, setDoc, doc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where } from 'firebase/firestore';
 import type { CountryRate, WeightRate } from '@/types/shippingRates';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -54,6 +54,20 @@ const bookingSchema = z.object({
 });
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
+
+const generateBookingId = (): string => {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let randomLetters = '';
+  for (let i = 0; i < 3; i++) {
+    randomLetters += letters.charAt(Math.floor(Math.random() * letters.length));
+  }
+
+  let randomNumbers = '';
+  for (let i = 0; i < 10; i++) {
+    randomNumbers += Math.floor(Math.random() * 10).toString();
+  }
+  return `${randomLetters}${randomNumbers}`;
+};
 
 export default function BookingPage() {
   const { toast } = useToast();
@@ -175,9 +189,9 @@ export default function BookingPage() {
         const weightsColRef = collection(db, 'shipping_rates', selectedCountry.id, 'weights');
         const q = query(weightsColRef, orderBy('weightValue', 'asc'));
         const snapshot = await getDocs(q);
-        const fetchedWeights = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const fetchedWeights = snapshot.docs.map(docSnap => ({ // Renamed doc to docSnap to avoid conflict
+          id: docSnap.id,
+          ...docSnap.data()
         } as WeightRate));
         setAvailableWeights(fetchedWeights);
         if (fetchedWeights.length === 0) {
@@ -306,7 +320,9 @@ export default function BookingPage() {
     if (isSubmitting || showProfileCompletionAlert || !user || !userProfile) return;
     setIsSubmitting(true);
     try {
+      const newBookingId = generateBookingId();
       const bookingData = {
+        id: newBookingId, // Include the generated ID in the data
         ...data,
         userId: user.uid,
         userEmail: user.email,
@@ -318,11 +334,13 @@ export default function BookingPage() {
         receiverName: data.receiverFullName,
       };
 
-      await addDoc(collection(db, 'bookings'), bookingData);
+      const bookingDocRef = doc(db, 'bookings', newBookingId);
+      await setDoc(bookingDocRef, bookingData);
+
 
       toast({
         title: "Booking Submitted!",
-        description: "Your shipment details have been received.",
+        description: `Your shipment details (ID: ${newBookingId}) have been received.`,
         variant: "default",
         action: <CheckCircle2 className="text-green-500" />,
       });
