@@ -78,9 +78,9 @@ export default function BookingPage() {
       shipmentType: undefined,
       serviceType: undefined,
       locationType: undefined,
-      receiverCountry: '', // Initialize, will be required if conditional section shown
-      approxWeight: undefined, // Initialize
-      approxValue: undefined, // Initialize
+      receiverCountry: '', 
+      approxWeight: undefined, 
+      approxValue: undefined, 
       receiverFullName: '',
       receiverEmail: '',
       receiverAddress: '',
@@ -103,7 +103,6 @@ export default function BookingPage() {
   const watchedReceiverCountryName = form.watch('receiverCountry');
   const watchedApproxWeight = form.watch('approxWeight');
   
-  // Determine if rate calculation section should be visible
   const showRateCalculationFields = !!(watchedShipmentType && watchedServiceType);
 
   useEffect(() => {
@@ -118,7 +117,7 @@ export default function BookingPage() {
           ...doc.data()
         } as CountryRate));
         setAvailableCountries(fetchedCountries);
-        if (fetchedCountries.length === 0 && showRateCalculationFields) { // Only error if relevant fields are shown
+        if (fetchedCountries.length === 0 && showRateCalculationFields) { 
             setCalculationError("No destination countries configured for shipping.");
         }
       } catch (error) {
@@ -130,7 +129,7 @@ export default function BookingPage() {
       }
     };
     fetchCountries();
-  }, [toast, showRateCalculationFields]); // Re-fetch or update error state if showRateCalculationFields changes
+  }, [toast, showRateCalculationFields]); 
 
   useEffect(() => {
     if (!authLoading) {
@@ -143,7 +142,7 @@ export default function BookingPage() {
             form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: true });
             form.setValue('senderAddress', userProfile.address || '', { shouldValidate: true });
             form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: true });
-        } else { // Pre-fill even if not complete, but allow editing
+        } else { 
             form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: false });
             form.setValue('senderAddress', userProfile.address || '', { shouldValidate: false });
             form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
@@ -157,7 +156,6 @@ export default function BookingPage() {
       if (!showRateCalculationFields || !watchedReceiverCountryName) {
         setAvailableWeights([]);
         if (showRateCalculationFields && !watchedReceiverCountryName) {
-          // Clear previous costs/errors if country is deselected or not yet selected in visible section
           setCalculatedCost(null);
           setCalculationError(null);
         }
@@ -196,7 +194,7 @@ export default function BookingPage() {
       }
     };
 
-    if (availableCountries.length > 0) { // Ensure countries are loaded before attempting to fetch weights
+    if (availableCountries.length > 0) { 
         fetchWeights();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,10 +204,9 @@ export default function BookingPage() {
   useEffect(() => {
     const calculateCost = () => {
       setCalculatedCost(null);
-      setCalculationError(null); // Reset previous calculation error first
+      setCalculationError(null); 
 
       if (!showRateCalculationFields || !watchedShipmentType || !watchedServiceType || !watchedReceiverCountryName || !watchedApproxWeight) {
-        // If essential fields for calculation are missing but section is shown, don't show an error yet, just no cost.
         return;
       }
       
@@ -218,27 +215,24 @@ export default function BookingPage() {
           return;
       }
       
-      if (availableWeights.length === 0 && !loadingWeights && watchedReceiverCountryName) { // If country is selected but no weights
+      if (availableWeights.length === 0 && !loadingWeights && watchedReceiverCountryName) { 
           setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
           return;
       }
       
       if (!watchedReceiverCountryName && (loadingCountries || availableCountries.length > 0) ) {
-          // If countries are loading or available, but none selected yet, don't show an error - user needs to pick.
           return;
       }
-
 
       if (watchedApproxWeight <= 0) {
         setCalculationError("Approximate weight must be positive.");
         return;
       }
       
-      if (availableWeights.length === 0 && !loadingWeights) { // Final check if weights truly aren't there
+      if (availableWeights.length === 0 && !loadingWeights) { 
         setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
         return;
       }
-
 
       const sortedWeights = [...availableWeights].sort((a, b) => a.weightValue - b.weightValue);
       let selectedWeightBand: WeightRate | undefined = undefined;
@@ -254,7 +248,6 @@ export default function BookingPage() {
         selectedWeightBand = sortedWeights[sortedWeights.length - 1];
          setCalculationError(`Weight exceeds max band. Using rate for ${selectedWeightBand.weightLabel}.`);
       }
-
 
       if (!selectedWeightBand) {
         setCalculationError(`No suitable weight band found for ${watchedApproxWeight}kg.`);
@@ -294,7 +287,7 @@ export default function BookingPage() {
       }
     };
 
-    if (!loadingCountries && !loadingWeights) { // Only calculate if all data sources are ready
+    if (!loadingCountries && !loadingWeights) { 
         calculateCost();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -307,7 +300,7 @@ export default function BookingPage() {
       availableWeights, 
       loadingCountries, 
       loadingWeights,
-      availableCountries // Added to re-evaluate if countries list changes (e.g. becomes empty)
+      availableCountries 
   ]);
 
 
@@ -316,15 +309,15 @@ export default function BookingPage() {
     setIsSubmitting(true);
     try {
       const bookingData = {
-        ...data, // Includes all form fields (receiverCountry, approxWeight, approxValue)
+        ...data, 
         userId: user.uid,
         userEmail: user.email,
         status: 'Pending' as 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled',
         createdAt: serverTimestamp(),
-        packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`, // For summary
-        packageWeight: data.approxWeight, // Explicitly for admin view
-        senderName: data.senderFullName, // For admin view
-        receiverName: data.receiverFullName, // For admin view
+        packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`, 
+        packageWeight: data.approxWeight, 
+        senderName: data.senderFullName, 
+        receiverName: data.receiverFullName, 
       };
 
       await addDoc(collection(db, 'bookings'), bookingData);
@@ -349,7 +342,6 @@ export default function BookingPage() {
             form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
         }
       }
-
 
     } catch (error) {
       console.error("Error submitting booking:", error);
@@ -393,7 +385,6 @@ export default function BookingPage() {
     );
   }
   
-
   return (
     <div className="opacity-0 animate-fadeInUp">
       <PageHeader
@@ -457,7 +448,6 @@ export default function BookingPage() {
                   </FormItem>
               )} />
 
-              {/* Conditional Rate Calculation Section */}
               {showRateCalculationFields && (
                 <div className="space-y-4 pt-4 mt-4 border-t border-border/30">
                   <h3 className="text-lg font-semibold text-muted-foreground flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary" />Destination &amp; Weight for Rate Calculation</h3>
@@ -478,14 +468,14 @@ export default function BookingPage() {
                   <FormField control={form.control} name="approxWeight" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Approximate Weight (KG)</FormLabel>
-                      <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || undefined)} /></FormControl>
+                      <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseFloat(e.target.value) || undefined)} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="approxValue" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Approximate Value of Goods (USD)</FormLabel>
-                      <FormControl><Input type="number" step="0.01" min="1" placeholder="e.g., 50.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || undefined)} /></FormControl>
+                      <FormControl><Input type="number" step="0.01" min="1" placeholder="e.g., 50.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseFloat(e.target.value) || undefined)} /></FormControl>
                       <FormDescription>For customs clearance purposes only.</FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -493,7 +483,6 @@ export default function BookingPage() {
                 </div>
               )}
             </CardContent>
-            {/* Cost display in footer */}
             {(calculatedCost || calculationError || (showRateCalculationFields && (loadingWeights || (loadingCountries && !watchedReceiverCountryName)))) && (
                 <CardFooter className={`mt-0 p-4 rounded-b-md ${calculationError ? 'bg-destructive/10' : 'bg-primary/10'}`}>
                     <div className="text-center w-full">
@@ -519,18 +508,17 @@ export default function BookingPage() {
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><User className="mr-2 h-5 w-5"/>Receiver Details</h3>
                 <div className="space-y-4">
-                  <FormField control={form.control} name="receiverFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name (as per passport)</FormLabel><FormControl><Input placeholder="John Michael Doe" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                  <FormField control={form.control} name="receiverEmail" render={({ field }) => ( <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="receiver@example.com" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                  <FormField control={form.control} name="receiverAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="123 Global St, Apt 4B" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                  <FormField control={form.control} name="receiverDoorCode" render={({ field }) => ( <FormItem><FormLabel>Door Code / Access Code / Floor Number (Optional)</FormLabel><FormControl><Input placeholder="e.g., #1234, Floor 5" {...field} /></FormControl><FormDescription className="text-xs">Address without door code will be delivered to the nearest parcel point.</FormDescription><FormMessage /></FormItem> )} />
-                  {/* Country is now in the first card for calculation */}
+                  <FormField control={form.control} name="receiverFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name (as per passport)</FormLabel><FormControl><Input placeholder="John Michael Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="receiverEmail" render={({ field }) => ( <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="receiver@example.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="receiverAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="123 Global St, Apt 4B" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="receiverDoorCode" render={({ field }) => ( <FormItem><FormLabel>Door Code / Access Code / Floor Number (Optional)</FormLabel><FormControl><Input placeholder="e.g., #1234, Floor 5" {...field} value={field.value ?? ''} /></FormControl><FormDescription className="text-xs">Address without door code will be delivered to the nearest parcel point.</FormDescription><FormMessage /></FormItem> )} />
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="receiverZipCode" render={({ field }) => ( <FormItem><FormLabel>ZIP / Postal Code</FormLabel><FormControl><Input placeholder="e.g., 90210" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="receiverCity" render={({ field }) => ( <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Springfield" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="receiverZipCode" render={({ field }) => ( <FormItem><FormLabel>ZIP / Postal Code</FormLabel><FormControl><Input placeholder="e.g., 90210" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="receiverCity" render={({ field }) => ( <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Springfield" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="receiverContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="+1 555 123 4567" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="receiverWhatsAppNo" render={({ field }) => ( <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="+1 555 123 4567" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="receiverContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="+1 555 123 4567" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="receiverWhatsAppNo" render={({ field }) => ( <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="+1 555 123 4567" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
                   </div>
                 </div>
               </div>
@@ -540,11 +528,11 @@ export default function BookingPage() {
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><User className="mr-2 h-5 w-5"/>Sender Details</h3>
                 <div className="space-y-4">
-                  <FormField control={form.control} name="senderFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} readOnly={!!userProfile?.displayName && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
-                  <FormField control={form.control} name="senderAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Your Address" {...field} readOnly={!!userProfile?.address && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="senderFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} value={field.value ?? ''} readOnly={!!userProfile?.displayName && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="senderAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Your Address" {...field} value={field.value ?? ''} readOnly={!!userProfile?.address && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="senderContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Your Contact No." {...field} readOnly={!!userProfile?.phone && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="senderWhatsAppNo" render={({ field }) => ( <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="Your WhatsApp No." {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="senderContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Your Contact No." {...field} value={field.value ?? ''} readOnly={!!userProfile?.phone && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="senderWhatsAppNo" render={({ field }) => ( <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="Your WhatsApp No." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
                   </div>
                 </div>
               </div>
@@ -595,3 +583,6 @@ export default function BookingPage() {
     </div>
   );
 }
+
+
+    
