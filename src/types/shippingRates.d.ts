@@ -9,12 +9,13 @@ export interface CountryRate {
 
 export interface WeightRate {
   id: string; // Firestore document ID for this weight entry in subcollection
-  weightValue: number; // e.g., 0.5, 1, 2 (numeric value, typically in kg)
-  weightLabel: string; // e.g., "0.5 kg", "1 kg", "2 kg" (display label)
-  economyPrice?: number | null; // Optional price
-  expressPrice?: number | null; // Optional price
+  weightLabel: string; // e.g., "0.5 kg", "1 kg - 2 kg", "Up to 5kg" (display label)
+  weightValue: number; // e.g., 0.5, 1, 5 (numeric value for sorting, typically kg)
+  economyPrice: number | null; 
+  expressPrice: number | null; 
   isEconomyEnabled: boolean;
   isExpressEnabled: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
+
