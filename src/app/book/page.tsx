@@ -31,14 +31,16 @@ const bookingSchema = z.object({
   serviceType: z.enum(['economy', 'express'], { required_error: "Please select a service type." }),
   locationType: z.enum(['pickup', 'dropoff_maharagama', 'dropoff_galle'], { required_error: "Please select a location type." }),
   
+  // Fields for rate calculation, conditionally shown
+  receiverCountry: z.string().min(1, "Receiver country is required for rate calculation."), 
   approxWeight: z.coerce.number().positive("Approximate weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."),
   approxValue: z.coerce.number().positive("Approximate value of goods must be a positive number.").min(1, "Value must be at least 1 USD."),
 
+  // Receiver details (excluding country, which is now above for calculation)
   receiverFullName: z.string().min(2, "Receiver full name is required (as per passport).").max(100),
   receiverEmail: z.string().email("Invalid receiver email address.").max(100),
   receiverAddress: z.string().min(5, "Receiver address is required.").max(200),
   receiverDoorCode: z.string().max(50).optional().or(z.literal('')),
-  receiverCountry: z.string().min(1, "Receiver country is required."), 
   receiverZipCode: z.string().min(1, "Receiver ZIP/Postal code is required.").max(20),
   receiverCity: z.string().min(1, "Receiver city is required.").max(50),
   receiverContactNo: z.string().regex(phoneRegex, "Invalid receiver contact number (include country code)."),
@@ -76,13 +78,13 @@ export default function BookingPage() {
       shipmentType: undefined,
       serviceType: undefined,
       locationType: undefined,
-      approxWeight: undefined,
-      approxValue: undefined,
+      receiverCountry: '', // Initialize, will be required if conditional section shown
+      approxWeight: undefined, // Initialize
+      approxValue: undefined, // Initialize
       receiverFullName: '',
       receiverEmail: '',
       receiverAddress: '',
       receiverDoorCode: '',
-      receiverCountry: '',
       receiverZipCode: '',
       receiverCity: '',
       receiverContactNo: '',
@@ -96,6 +98,14 @@ export default function BookingPage() {
     },
   });
 
+  const watchedShipmentType = form.watch('shipmentType');
+  const watchedServiceType = form.watch('serviceType');
+  const watchedReceiverCountryName = form.watch('receiverCountry');
+  const watchedApproxWeight = form.watch('approxWeight');
+  
+  // Determine if rate calculation section should be visible
+  const showRateCalculationFields = !!(watchedShipmentType && watchedServiceType);
+
   useEffect(() => {
     const fetchCountries = async () => {
       setLoadingCountries(true);
@@ -108,7 +118,7 @@ export default function BookingPage() {
           ...doc.data()
         } as CountryRate));
         setAvailableCountries(fetchedCountries);
-        if (fetchedCountries.length === 0) {
+        if (fetchedCountries.length === 0 && showRateCalculationFields) { // Only error if relevant fields are shown
             setCalculationError("No destination countries configured for shipping.");
         }
       } catch (error) {
@@ -120,7 +130,7 @@ export default function BookingPage() {
       }
     };
     fetchCountries();
-  }, [toast]);
+  }, [toast, showRateCalculationFields]); // Re-fetch or update error state if showRateCalculationFields changes
 
   useEffect(() => {
     if (!authLoading) {
@@ -133,17 +143,24 @@ export default function BookingPage() {
             form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: true });
             form.setValue('senderAddress', userProfile.address || '', { shouldValidate: true });
             form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: true });
+        } else { // Pre-fill even if not complete, but allow editing
+            form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: false });
+            form.setValue('senderAddress', userProfile.address || '', { shouldValidate: false });
+            form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
         }
       }
     }
   }, [user, userProfile, authLoading, router, form]);
 
-  const watchedReceiverCountryName = form.watch('receiverCountry');
-
   useEffect(() => {
     const fetchWeights = async () => {
-      if (!watchedReceiverCountryName) {
+      if (!showRateCalculationFields || !watchedReceiverCountryName) {
         setAvailableWeights([]);
+        if (showRateCalculationFields && !watchedReceiverCountryName) {
+          // Clear previous costs/errors if country is deselected or not yet selected in visible section
+          setCalculatedCost(null);
+          setCalculationError(null);
+        }
         return;
       }
       setLoadingWeights(true);
@@ -179,34 +196,49 @@ export default function BookingPage() {
       }
     };
 
-    if (watchedReceiverCountryName && availableCountries.length > 0) {
+    if (availableCountries.length > 0) { // Ensure countries are loaded before attempting to fetch weights
         fetchWeights();
     }
-  }, [watchedReceiverCountryName, availableCountries, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showRateCalculationFields, watchedReceiverCountryName, availableCountries, toast]);
 
-
-  const watchedShipmentType = form.watch('shipmentType');
-  const watchedServiceType = form.watch('serviceType');
-  const watchedApproxWeight = form.watch('approxWeight');
 
   useEffect(() => {
     const calculateCost = () => {
       setCalculatedCost(null);
-      setCalculationError(null);
+      setCalculationError(null); // Reset previous calculation error first
 
-      if (!watchedShipmentType || !watchedServiceType || !watchedReceiverCountryName || !watchedApproxWeight || availableWeights.length === 0) {
-        if (watchedReceiverCountryName && watchedApproxWeight && availableWeights.length === 0 && !loadingWeights && !loadingCountries) {
-            setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
-        } else if (watchedReceiverCountryName && watchedApproxWeight && availableCountries.length === 0 && !loadingCountries) {
-            setCalculationError("No destination countries configured for shipping.");
-        }
+      if (!showRateCalculationFields || !watchedShipmentType || !watchedServiceType || !watchedReceiverCountryName || !watchedApproxWeight) {
+        // If essential fields for calculation are missing but section is shown, don't show an error yet, just no cost.
         return;
       }
+      
+      if (availableCountries.length === 0 && !loadingCountries) {
+          setCalculationError("No destination countries configured for shipping.");
+          return;
+      }
+      
+      if (availableWeights.length === 0 && !loadingWeights && watchedReceiverCountryName) { // If country is selected but no weights
+          setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
+          return;
+      }
+      
+      if (!watchedReceiverCountryName && (loadingCountries || availableCountries.length > 0) ) {
+          // If countries are loading or available, but none selected yet, don't show an error - user needs to pick.
+          return;
+      }
+
 
       if (watchedApproxWeight <= 0) {
         setCalculationError("Approximate weight must be positive.");
         return;
       }
+      
+      if (availableWeights.length === 0 && !loadingWeights) { // Final check if weights truly aren't there
+        setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
+        return;
+      }
+
 
       const sortedWeights = [...availableWeights].sort((a, b) => a.weightValue - b.weightValue);
       let selectedWeightBand: WeightRate | undefined = undefined;
@@ -253,7 +285,7 @@ export default function BookingPage() {
 
       if (!serviceAvailable) {
         setCalculatedCost(null);
-        setCalculationError(`Selected ${watchedServiceType} service for ${watchedShipmentType} is not available.`);
+        setCalculationError(`Selected ${watchedServiceType} service for ${watchedShipmentType} is not available for this weight band.`);
       } else if (price === null || price === undefined) {
         setCalculatedCost(null);
         setCalculationError(`Price not configured for ${watchedShipmentType} ${watchedServiceType} at ${selectedWeightBand.weightLabel}.`);
@@ -262,11 +294,21 @@ export default function BookingPage() {
       }
     };
 
-    if (!loadingCountries && !loadingWeights) {
+    if (!loadingCountries && !loadingWeights) { // Only calculate if all data sources are ready
         calculateCost();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchedShipmentType, watchedServiceType, watchedReceiverCountryName, watchedApproxWeight, availableWeights, loadingCountries, loadingWeights]);
+  }, [
+      showRateCalculationFields, 
+      watchedShipmentType, 
+      watchedServiceType, 
+      watchedReceiverCountryName, 
+      watchedApproxWeight, 
+      availableWeights, 
+      loadingCountries, 
+      loadingWeights,
+      availableCountries // Added to re-evaluate if countries list changes (e.g. becomes empty)
+  ]);
 
 
   const onSubmit: SubmitHandler<BookingFormValues> = async (data) => {
@@ -274,15 +316,15 @@ export default function BookingPage() {
     setIsSubmitting(true);
     try {
       const bookingData = {
-        ...data,
+        ...data, // Includes all form fields (receiverCountry, approxWeight, approxValue)
         userId: user.uid,
         userEmail: user.email,
         status: 'Pending' as 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled',
         createdAt: serverTimestamp(),
-        packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`,
-        packageWeight: data.approxWeight,
-        senderName: data.senderFullName,
-        receiverName: data.receiverFullName,
+        packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`, // For summary
+        packageWeight: data.approxWeight, // Explicitly for admin view
+        senderName: data.senderFullName, // For admin view
+        receiverName: data.receiverFullName, // For admin view
       };
 
       await addDoc(collection(db, 'bookings'), bookingData);
@@ -296,14 +338,16 @@ export default function BookingPage() {
       form.reset();
       setCalculatedCost(null);
       setCalculationError(null);
-      if (userProfile && userProfile.isProfileComplete) {
-        form.setValue('senderFullName', userProfile.displayName || '');
-        form.setValue('senderAddress', userProfile.address || '');
-        form.setValue('senderContactNo', userProfile.phone || '');
-      } else if (userProfile) { // Pre-fill even if not complete, but allow editing
-        form.setValue('senderFullName', userProfile.displayName || '');
-        form.setValue('senderAddress', userProfile.address || '');
-        form.setValue('senderContactNo', userProfile.phone || '');
+       if (userProfile) {
+        if (userProfile.isProfileComplete) {
+            form.setValue('senderFullName', userProfile.displayName || '');
+            form.setValue('senderAddress', userProfile.address || '');
+            form.setValue('senderContactNo', userProfile.phone || '');
+        } else {
+            form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: false });
+            form.setValue('senderAddress', userProfile.address || '', { shouldValidate: false });
+            form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
+        }
       }
 
 
@@ -375,14 +419,14 @@ export default function BookingPage() {
           
           <Card className="shadow-lg border-border/50">
             <CardHeader>
-              <CardTitle className="text-xl font-headline text-accent flex items-center"><Package className="mr-2 h-6 w-6 text-primary" />Shipment Details</CardTitle>
+              <CardTitle className="text-xl font-headline text-accent flex items-center"><Package className="mr-2 h-6 w-6 text-primary" />Shipment Details &amp; Cost</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <FormField control={form.control} name="shipmentType" render={({ field }) => (
                   <FormItem className="space-y-3">
                     <FormLabel className="text-base font-semibold">Shipment Type</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                      <RadioGroup onValueChange={(value) => { field.onChange(value); form.setValue('receiverCountry', ''); form.setValue('approxWeight', undefined); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="parcel" id="parcel" /></FormControl><FormLabel htmlFor="parcel" className="font-normal">Parcel</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="document" id="document" /></FormControl><FormLabel htmlFor="document" className="font-normal">Document</FormLabel></FormItem>
                       </RadioGroup>
@@ -393,7 +437,7 @@ export default function BookingPage() {
                   <FormItem className="space-y-3">
                     <FormLabel className="text-base font-semibold">Service Type</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                      <RadioGroup onValueChange={(value) => { field.onChange(value); form.setValue('receiverCountry', ''); form.setValue('approxWeight', undefined); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="economy" id="economy" /></FormControl><FormLabel htmlFor="economy" className="font-normal flex items-center"><Clock className="mr-1.5 h-4 w-4 text-muted-foreground"/>Economy Service</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="express" id="express" /></FormControl><FormLabel htmlFor="express" className="font-normal flex items-center"><Zap className="mr-1.5 h-4 w-4 text-muted-foreground"/>Express Service</FormLabel></FormItem>
                       </RadioGroup>
@@ -412,47 +456,60 @@ export default function BookingPage() {
                     </FormControl><FormMessage />
                   </FormItem>
               )} />
-            </CardContent>
-          </Card>
 
-          <Card className="shadow-lg border-border/50">
-            <CardHeader>
-              <CardTitle className="text-xl font-headline text-accent flex items-center"><Info className="mr-2 h-6 w-6 text-primary"/>Shipment Info &amp; Cost</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField control={form.control} name="approxWeight" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Approximate Weight (KG)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="approxValue" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Approximate Value of Goods (USD)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" placeholder="e.g., 50.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl>
-                  <FormDescription>For customs clearance purposes only.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )} />
-                {(calculatedCost || calculationError || loadingWeights || loadingCountries) && (
-                    <CardFooter className={`mt-4 p-4 rounded-md ${calculationError ? 'bg-destructive/10' : 'bg-primary/10'}`}>
-                        <div className="text-center w-full">
-                        {loadingWeights || loadingCountries ? (
-                            <div className="flex items-center justify-center text-muted-foreground">
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin"/> {(loadingCountries && !watchedReceiverCountryName) ? "Loading countries..." : "Loading rates..."}
-                            </div>
-                        ) : calculationError ? (
-                            <p className="text-destructive flex items-center justify-center"><AlertTriangle className="mr-2 h-5 w-5"/> {calculationError}</p>
-                        ) : calculatedCost ? (
-                            <h3 className="text-lg font-semibold text-accent flex items-center justify-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>{calculatedCost}</h3>
-                        ) : null}
+              {/* Conditional Rate Calculation Section */}
+              {showRateCalculationFields && (
+                <div className="space-y-4 pt-4 mt-4 border-t border-border/30">
+                  <h3 className="text-lg font-semibold text-muted-foreground flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary" />Destination &amp; Weight for Rate Calculation</h3>
+                  <FormField control={form.control} name="receiverCountry" render={({ field }) => (
+                    <FormItem><FormLabel>Destination Country</FormLabel>
+                      <Select onValueChange={(value) => {field.onChange(value); form.setValue('approxWeight', undefined); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]);}} defaultValue={field.value} disabled={loadingCountries || availableCountries.length === 0}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={ loadingCountries ? "Loading countries..." : availableCountries.length === 0 ? "No countries available" : "Select country" } />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableCountries.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select><FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="approxWeight" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Approximate Weight (KG)</FormLabel>
+                      <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || undefined)} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="approxValue" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Approximate Value of Goods (USD)</FormLabel>
+                      <FormControl><Input type="number" step="0.01" min="1" placeholder="e.g., 50.00" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || undefined)} /></FormControl>
+                      <FormDescription>For customs clearance purposes only.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+              )}
+            </CardContent>
+            {/* Cost display in footer */}
+            {(calculatedCost || calculationError || (showRateCalculationFields && (loadingWeights || (loadingCountries && !watchedReceiverCountryName)))) && (
+                <CardFooter className={`mt-0 p-4 rounded-b-md ${calculationError ? 'bg-destructive/10' : 'bg-primary/10'}`}>
+                    <div className="text-center w-full">
+                    {(loadingWeights || (loadingCountries && !watchedReceiverCountryName && showRateCalculationFields)) ? (
+                        <div className="flex items-center justify-center text-muted-foreground">
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin"/> {(loadingCountries && !watchedReceiverCountryName) ? "Loading countries..." : "Loading rates..."}
                         </div>
-                    </CardFooter>
-                )}
-            </CardContent>
+                    ) : calculationError ? (
+                        <p className="text-destructive flex items-center justify-center"><AlertTriangle className="mr-2 h-5 w-5"/> {calculationError}</p>
+                    ) : calculatedCost ? (
+                        <h3 className="text-lg font-semibold text-accent flex items-center justify-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>{calculatedCost}</h3>
+                    ) : null}
+                    </div>
+                </CardFooter>
+            )}
           </Card>
-
 
           <Card className="shadow-lg border-border/50">
             <CardHeader>
@@ -466,23 +523,11 @@ export default function BookingPage() {
                   <FormField control={form.control} name="receiverEmail" render={({ field }) => ( <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="receiver@example.com" {...field} /></FormControl><FormMessage /></FormItem> )} />
                   <FormField control={form.control} name="receiverAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="123 Global St, Apt 4B" {...field} /></FormControl><FormMessage /></FormItem> )} />
                   <FormField control={form.control} name="receiverDoorCode" render={({ field }) => ( <FormItem><FormLabel>Door Code / Access Code / Floor Number (Optional)</FormLabel><FormControl><Input placeholder="e.g., #1234, Floor 5" {...field} /></FormControl><FormDescription className="text-xs">Address without door code will be delivered to the nearest parcel point.</FormDescription><FormMessage /></FormItem> )} />
+                  {/* Country is now in the first card for calculation */}
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="receiverCountry" render={({ field }) => (
-                      <FormItem><FormLabel>Country</FormLabel>
-                        <Select onValueChange={(value) => {field.onChange(value); setAvailableWeights([]); setCalculatedCost(null); setCalculationError(null);}} defaultValue={field.value} disabled={loadingCountries || availableCountries.length === 0}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={ loadingCountries ? "Loading countries..." : availableCountries.length === 0 ? "No countries available" : "Select country" } />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {availableCountries.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select><FormMessage /></FormItem>
-                    )} />
                     <FormField control={form.control} name="receiverZipCode" render={({ field }) => ( <FormItem><FormLabel>ZIP / Postal Code</FormLabel><FormControl><Input placeholder="e.g., 90210" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="receiverCity" render={({ field }) => ( <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Springfield" {...field} /></FormControl><FormMessage /></FormItem> )} />
                   </div>
-                  <FormField control={form.control} name="receiverCity" render={({ field }) => ( <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Springfield" {...field} /></FormControl><FormMessage /></FormItem> )} />
                   <div className="grid md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="receiverContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="+1 555 123 4567" {...field} /></FormControl><FormMessage /></FormItem> )} />
                     <FormField control={form.control} name="receiverWhatsAppNo" render={({ field }) => ( <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="+1 555 123 4567" {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -525,7 +570,7 @@ export default function BookingPage() {
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
                     <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="font-normal"> I have read and checked the Important Guide, Amendment Fees & Terms-Conditions, and Remote Area Postal Codes for Economy Service – Europe, and I am fully aware of the additional charges if applicable to my parcel/document. </FormLabel>
+                      <FormLabel className="font-normal"> I have read and checked the Important Guide, Amendment Fees &amp; Terms-Conditions, and Remote Area Postal Codes for Economy Service – Europe, and I am fully aware of the additional charges if applicable to my parcel/document. </FormLabel>
                       <FormMessage />
                     </div>
                   </FormItem>
@@ -534,7 +579,7 @@ export default function BookingPage() {
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
                     <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="font-normal"> I have read and agreed to the Terms & Conditions and wish to proceed with my shipment via CFC Express. </FormLabel>
+                      <FormLabel className="font-normal"> I have read and agreed to the Terms &amp; Conditions and wish to proceed with my shipment via CFC Express. </FormLabel>
                       <FormMessage />
                     </div>
                   </FormItem>
