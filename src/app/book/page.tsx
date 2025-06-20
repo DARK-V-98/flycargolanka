@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign, Landmark } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where } from 'firebase/firestore';
@@ -30,13 +30,11 @@ const bookingSchema = z.object({
   shipmentType: z.enum(['parcel', 'document'], { required_error: "Please select a shipment type." }),
   serviceType: z.enum(['economy', 'express'], { required_error: "Please select a service type." }),
   locationType: z.enum(['pickup', 'dropoff_maharagama', 'dropoff_galle'], { required_error: "Please select a location type." }),
-  
-  // Fields for rate calculation, conditionally shown
-  receiverCountry: z.string().min(1, "Receiver country is required for rate calculation."), 
+
+  receiverCountry: z.string().min(1, "Receiver country is required."),
   approxWeight: z.coerce.number().positive("Approximate weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."),
   approxValue: z.coerce.number().positive("Approximate value of goods must be a positive number.").min(1, "Value must be at least 1 USD."),
 
-  // Receiver details (excluding country, which is now above for calculation)
   receiverFullName: z.string().min(2, "Receiver full name is required (as per passport).").max(100),
   receiverEmail: z.string().email("Invalid receiver email address.").max(100),
   receiverAddress: z.string().min(5, "Receiver address is required.").max(200),
@@ -50,7 +48,7 @@ const bookingSchema = z.object({
   senderAddress: z.string().min(5, "Sender address is required.").max(200),
   senderContactNo: z.string().regex(phoneRegex, "Invalid sender contact number (include country code)."),
   senderWhatsAppNo: z.string().regex(phoneRegex, "Invalid WhatsApp number (include country code).").optional().or(z.literal('')),
-  
+
   declaration1: z.boolean().refine(val => val === true, { message: "You must agree to the first declaration." }),
   declaration2: z.boolean().refine(val => val === true, { message: "You must agree to the second declaration." }),
 });
@@ -63,10 +61,10 @@ export default function BookingPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProfileCompletionAlert, setShowProfileCompletionAlert] = useState(false);
-  
+
   const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
-  
+
   const [availableWeights, setAvailableWeights] = useState<WeightRate[]>([]);
   const [loadingWeights, setLoadingWeights] = useState(false);
   const [calculatedCost, setCalculatedCost] = useState<string | null>(null);
@@ -78,9 +76,9 @@ export default function BookingPage() {
       shipmentType: undefined,
       serviceType: undefined,
       locationType: undefined,
-      receiverCountry: '', 
-      approxWeight: undefined, 
-      approxValue: undefined, 
+      receiverCountry: '',
+      approxWeight: undefined,
+      approxValue: undefined,
       receiverFullName: '',
       receiverEmail: '',
       receiverAddress: '',
@@ -102,7 +100,7 @@ export default function BookingPage() {
   const watchedServiceType = form.watch('serviceType');
   const watchedReceiverCountryName = form.watch('receiverCountry');
   const watchedApproxWeight = form.watch('approxWeight');
-  
+
   const showRateCalculationFields = !!(watchedShipmentType && watchedServiceType);
 
   useEffect(() => {
@@ -117,7 +115,7 @@ export default function BookingPage() {
           ...doc.data()
         } as CountryRate));
         setAvailableCountries(fetchedCountries);
-        if (fetchedCountries.length === 0 && showRateCalculationFields) { 
+        if (fetchedCountries.length === 0 && showRateCalculationFields) {
             setCalculationError("No destination countries configured for shipping.");
         }
       } catch (error) {
@@ -129,7 +127,7 @@ export default function BookingPage() {
       }
     };
     fetchCountries();
-  }, [toast, showRateCalculationFields]); 
+  }, [toast, showRateCalculationFields]);
 
   useEffect(() => {
     if (!authLoading) {
@@ -142,7 +140,7 @@ export default function BookingPage() {
             form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: true });
             form.setValue('senderAddress', userProfile.address || '', { shouldValidate: true });
             form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: true });
-        } else { 
+        } else {
             form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: false });
             form.setValue('senderAddress', userProfile.address || '', { shouldValidate: false });
             form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
@@ -194,7 +192,7 @@ export default function BookingPage() {
       }
     };
 
-    if (availableCountries.length > 0) { 
+    if (availableCountries.length > 0) {
         fetchWeights();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -204,22 +202,22 @@ export default function BookingPage() {
   useEffect(() => {
     const calculateCost = () => {
       setCalculatedCost(null);
-      setCalculationError(null); 
+      setCalculationError(null);
 
       if (!showRateCalculationFields || !watchedShipmentType || !watchedServiceType || !watchedReceiverCountryName || !watchedApproxWeight) {
         return;
       }
-      
+
       if (availableCountries.length === 0 && !loadingCountries) {
           setCalculationError("No destination countries configured for shipping.");
           return;
       }
-      
-      if (availableWeights.length === 0 && !loadingWeights && watchedReceiverCountryName) { 
+
+      if (availableWeights.length === 0 && !loadingWeights && watchedReceiverCountryName) {
           setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
           return;
       }
-      
+
       if (!watchedReceiverCountryName && (loadingCountries || availableCountries.length > 0) ) {
           return;
       }
@@ -228,8 +226,8 @@ export default function BookingPage() {
         setCalculationError("Approximate weight must be positive.");
         return;
       }
-      
-      if (availableWeights.length === 0 && !loadingWeights) { 
+
+      if (availableWeights.length === 0 && !loadingWeights) {
         setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
         return;
       }
@@ -243,7 +241,7 @@ export default function BookingPage() {
           break;
         }
       }
-      
+
       if(!selectedWeightBand && sortedWeights.length > 0) {
         selectedWeightBand = sortedWeights[sortedWeights.length - 1];
          setCalculationError(`Weight exceeds max band. Using rate for ${selectedWeightBand.weightLabel}.`);
@@ -287,44 +285,44 @@ export default function BookingPage() {
       }
     };
 
-    if (!loadingCountries && !loadingWeights) { 
+    if (!loadingCountries && !loadingWeights) {
         calculateCost();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-      showRateCalculationFields, 
-      watchedShipmentType, 
-      watchedServiceType, 
-      watchedReceiverCountryName, 
-      watchedApproxWeight, 
-      availableWeights, 
-      loadingCountries, 
+      showRateCalculationFields,
+      watchedShipmentType,
+      watchedServiceType,
+      watchedReceiverCountryName,
+      watchedApproxWeight,
+      availableWeights,
+      loadingCountries,
       loadingWeights,
-      availableCountries 
+      availableCountries
   ]);
 
 
   const onSubmit: SubmitHandler<BookingFormValues> = async (data) => {
-    if (isSubmitting || showProfileCompletionAlert || !user) return;
+    if (isSubmitting || showProfileCompletionAlert || !user || !userProfile) return;
     setIsSubmitting(true);
     try {
       const bookingData = {
-        ...data, 
+        ...data,
         userId: user.uid,
         userEmail: user.email,
         status: 'Pending' as 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled',
         createdAt: serverTimestamp(),
-        packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`, 
-        packageWeight: data.approxWeight, 
-        senderName: data.senderFullName, 
-        receiverName: data.receiverFullName, 
+        packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`,
+        packageWeight: data.approxWeight,
+        senderName: data.senderFullName,
+        receiverName: data.receiverFullName,
       };
 
       await addDoc(collection(db, 'bookings'), bookingData);
-      
+
       toast({
         title: "Booking Submitted!",
-        description: "Your shipment details have been received. We will contact you shortly.",
+        description: "Your shipment details have been received.",
         variant: "default",
         action: <CheckCircle2 className="text-green-500" />,
       });
@@ -341,6 +339,13 @@ export default function BookingPage() {
             form.setValue('senderAddress', userProfile.address || '', { shouldValidate: false });
             form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
         }
+      }
+
+      // NIC Verification Redirect Logic
+      if (userProfile.nicVerificationStatus === 'none' || userProfile.nicVerificationStatus === 'rejected') {
+        router.push('/book/verify-nic');
+      } else {
+        router.push('/my-bookings');
       }
 
     } catch (error) {
@@ -384,7 +389,7 @@ export default function BookingPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="opacity-0 animate-fadeInUp">
       <PageHeader
@@ -407,7 +412,7 @@ export default function BookingPage() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className="space-y-8 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-          
+
           <Card className="shadow-lg border-border/50">
             <CardHeader>
               <CardTitle className="text-xl font-headline text-accent flex items-center"><Package className="mr-2 h-6 w-6 text-primary" />Shipment Details &amp; Cost</CardTitle>
@@ -453,7 +458,7 @@ export default function BookingPage() {
                   <h3 className="text-lg font-semibold text-muted-foreground flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary" />Destination &amp; Weight for Rate Calculation</h3>
                   <FormField control={form.control} name="receiverCountry" render={({ field }) => (
                     <FormItem><FormLabel>Destination Country</FormLabel>
-                      <Select onValueChange={(value) => {field.onChange(value); form.setValue('approxWeight', undefined); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]);}} defaultValue={field.value} disabled={loadingCountries || availableCountries.length === 0}>
+                      <Select onValueChange={(value) => {field.onChange(value); form.setValue('approxWeight', undefined); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]);}} value={field.value ?? ''} disabled={loadingCountries || availableCountries.length === 0}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={ loadingCountries ? "Loading countries..." : availableCountries.length === 0 ? "No countries available" : "Select country" } />
@@ -522,7 +527,7 @@ export default function BookingPage() {
                   </div>
                 </div>
               </div>
-              
+
               <hr className="my-6 border-border/50" />
 
               <div>
@@ -556,7 +561,7 @@ export default function BookingPage() {
             <CardContent className="space-y-4">
               <FormField control={form.control} name="declaration1" render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    <FormControl><Checkbox checked={field.value ?? false} onCheckedChange={field.onChange} /></FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="font-normal"> I have read and checked the Important Guide, Amendment Fees &amp; Terms-Conditions, and Remote Area Postal Codes for Economy Service – Europe, and I am fully aware of the additional charges if applicable to my parcel/document. </FormLabel>
                       <FormMessage />
@@ -565,7 +570,7 @@ export default function BookingPage() {
               )} />
               <FormField control={form.control} name="declaration2" render={({ field }) => (
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    <FormControl><Checkbox checked={field.value ?? false} onCheckedChange={field.onChange} /></FormControl>
                     <div className="space-y-1 leading-none">
                       <FormLabel className="font-normal"> I have read and agreed to the Terms &amp; Conditions and wish to proceed with my shipment via CFC Express. </FormLabel>
                       <FormMessage />
@@ -583,6 +588,3 @@ export default function BookingPage() {
     </div>
   );
 }
-
-
-    

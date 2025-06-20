@@ -7,9 +7,10 @@ import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignO
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { FirebaseError } from 'firebase/app'; 
+import { FirebaseError } from 'firebase/app';
 
 export type UserRole = 'user' | 'admin' | 'developer';
+export type NicVerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
 
 export interface UserProfile {
   uid: string;
@@ -21,6 +22,9 @@ export interface UserProfile {
   phone?: string | null;
   address?: string | null;
   isProfileComplete?: boolean;
+  nicFrontUrl?: string | null;
+  nicBackUrl?: string | null;
+  nicVerificationStatus?: NicVerificationStatus;
   createdAt?: any;
   updatedAt?: any;
 }
@@ -38,6 +42,7 @@ interface AuthContextType {
   updateUserDisplayName: (newName: string) => Promise<void>;
   updateUserRoleByEmail: (targetUserEmail: string, newRole: UserRole) => Promise<void>;
   updateUserExtendedProfile: (data: { nic?: string | null; phone?: string | null; address?: string | null }) => Promise<void>;
+  updateNicVerificationDetails: (details: { nicFrontUrl?: string; nicBackUrl?: string; nicVerificationStatus: NicVerificationStatus }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -106,11 +111,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             firestoreUpdates.isProfileComplete = isProfileComplete;
             needsFirestoreUpdate = true;
           }
-          
-          // Ensure new fields are at least initialized if not present in older documents
-          if (profileDataFromFirestore.nic === undefined) firestoreUpdates.nic = null;
-          if (profileDataFromFirestore.phone === undefined) firestoreUpdates.phone = null;
-          if (profileDataFromFirestore.address === undefined) firestoreUpdates.address = null;
+
+          // Initialize new NIC verification fields if they don't exist
+          if (profileDataFromFirestore.nicFrontUrl === undefined) firestoreUpdates.nicFrontUrl = null;
+          if (profileDataFromFirestore.nicBackUrl === undefined) firestoreUpdates.nicBackUrl = null;
+          if (profileDataFromFirestore.nicVerificationStatus === undefined) firestoreUpdates.nicVerificationStatus = 'none';
 
 
           if (needsFirestoreUpdate) {
@@ -120,15 +125,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               console.error("Error updating user profile in Firestore:", error);
             }
           }
-          
+
           const updatedUserProfileState: UserProfile = {
-            ...profileDataFromFirestore, // Base from Firestore
-            ...profileDataFromAuth,     // Override with fresh auth data
-            role: effectiveRole,        // Determined role
-            isProfileComplete,          // Calculated completeness
+            ...profileDataFromFirestore,
+            ...profileDataFromAuth,
+            role: effectiveRole,
+            isProfileComplete,
             nic: currentNic,
             phone: currentPhone,
             address: currentAddress,
+            nicFrontUrl: profileDataFromFirestore.nicFrontUrl || null,
+            nicBackUrl: profileDataFromFirestore.nicBackUrl || null,
+            nicVerificationStatus: profileDataFromFirestore.nicVerificationStatus || 'none',
           };
           setUserProfile(updatedUserProfileState);
           setRole(effectiveRole);
@@ -143,7 +151,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             nic: null,
             phone: null,
             address: null,
-            isProfileComplete: false, // New users are not complete by default
+            isProfileComplete: false,
+            nicFrontUrl: null,
+            nicBackUrl: null,
+            nicVerificationStatus: 'none',
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           };
@@ -152,7 +163,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUserProfile(newUserProfileData);
           } catch (error) {
              console.error("Error creating new user profile in Firestore:", error);
-             setUserProfile({ ...newUserProfileData, createdAt: new Date(), updatedAt: new Date() }); // Fallback local state
+             setUserProfile({ ...newUserProfileData, createdAt: new Date(), updatedAt: new Date() });
           }
           setRole(determinedRoleForNewUser);
         }
@@ -234,7 +245,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       throw new Error("Failed to update display name.");
     }
   };
-  
+
   const updateUserExtendedProfile = async (data: { nic?: string | null; phone?: string | null; address?: string | null }) => {
     if (!user) {
       throw new Error("You must be logged in to update your profile.");
@@ -246,11 +257,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const currentNic = data.nic !== undefined ? data.nic : userProfile?.nic;
       const currentPhone = data.phone !== undefined ? data.phone : userProfile?.phone;
       const currentAddress = data.address !== undefined ? data.address : userProfile?.address;
-      
+
       const isNowComplete = !!(currentNic && currentNic.trim() !== '' &&
                                currentPhone && currentPhone.trim() !== '' &&
                                currentAddress && currentAddress.trim() !== '');
-      
+
       updatesToFirestore.isProfileComplete = isNowComplete;
 
       await updateDoc(userDocRef, updatesToFirestore);
@@ -262,7 +273,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           phone: data.phone !== undefined ? data.phone : prevProfile.phone,
           address: data.address !== undefined ? data.address : prevProfile.address,
           isProfileComplete: isNowComplete,
-          updatedAt: new Date() 
+          updatedAt: new Date()
         };
       });
     } catch (error) {
@@ -270,6 +281,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       throw new Error("Failed to update profile details.");
     }
   };
+
+  const updateNicVerificationDetails = async (details: { nicFrontUrl?: string; nicBackUrl?: string; nicVerificationStatus: NicVerificationStatus }) => {
+    if (!user) {
+      throw new Error("You must be logged in to update NIC verification details.");
+    }
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const updates: Partial<UserProfile> = {
+        nicVerificationStatus: details.nicVerificationStatus,
+        updatedAt: serverTimestamp(),
+      };
+      if (details.nicFrontUrl) updates.nicFrontUrl = details.nicFrontUrl;
+      if (details.nicBackUrl) updates.nicBackUrl = details.nicBackUrl;
+
+      await updateDoc(userDocRef, updates);
+      setUserProfile(prevProfile => prevProfile ? { ...prevProfile, ...updates, updatedAt: new Date() } : null);
+    } catch (error) {
+      console.error("Error updating NIC verification details:", error);
+      throw new Error("Failed to update NIC verification details.");
+    }
+  };
+
 
   const updateUserRoleByEmail = async (targetUserEmail: string, newRole: UserRole) => {
     if (!user || !role) {
@@ -279,15 +312,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (role === 'user') {
       throw new Error("Users do not have permission to change roles.");
     }
-    
+
     if (role === 'admin' && newRole === 'developer') {
       throw new Error("Admins cannot assign developer role.");
     }
-    
+
     const usersRef = collection(db, "users");
     const normalizedTargetUserEmail = targetUserEmail.toLowerCase();
-    const q = query(usersRef, where("email", "==", targetUserEmail)); 
-    
+    const q = query(usersRef, where("email", "==", targetUserEmail));
+
     try {
       let userToUpdateRef: any;
       let userToUpdateData: any;
@@ -318,34 +351,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           throw new Error("Cannot change your own role through this interface.");
       }
       const targetEmailInFirestore = userToUpdateData.email;
-      if (targetEmailInFirestore && typeof targetEmailInFirestore === 'string' && 
+      if (targetEmailInFirestore && typeof targetEmailInFirestore === 'string' &&
           targetEmailInFirestore.toLowerCase() === NORMALIZED_DEVELOPER_EMAIL && newRole !== 'developer') {
           throw new Error(`Cannot change the role of the primary developer account (${DEVELOPER_EMAIL}) to ${newRole}.`);
       }
-      
+
       await updateDoc(userToUpdateRef, { role: newRole, updatedAt: serverTimestamp() });
-      
+
     } catch (error: any) {
       console.error("Error updating user role by email:", error);
-      throw error; 
+      throw error;
     }
   };
 
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      userProfile, 
-      loading, 
-      role, 
-      signInWithGoogle, 
-      signUpWithEmail, 
-      signInWithEmail, 
-      sendPasswordReset, 
-      logout, 
-      updateUserDisplayName, 
+    <AuthContext.Provider value={{
+      user,
+      userProfile,
+      loading,
+      role,
+      signInWithGoogle,
+      signUpWithEmail,
+      signInWithEmail,
+      sendPasswordReset,
+      logout,
+      updateUserDisplayName,
       updateUserRoleByEmail,
-      updateUserExtendedProfile 
+      updateUserExtendedProfile,
+      updateNicVerificationDetails
     }}>
       {children}
     </AuthContext.Provider>
@@ -359,3 +393,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

@@ -2,6 +2,7 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage'; // Added Storage
 
 // Firebase configuration will now be primarily sourced from environment variables
 // Ensure these are prefixed with NEXT_PUBLIC_ to be available client-side
@@ -30,8 +31,8 @@ const missingKeys = requiredConfigKeys.filter(key => !firebaseConfig[key]);
 
 if (missingKeys.length > 0) {
   console.warn(
-    `Firebase configuration is missing the following keys from environment variables: ${missingKeys.join(', ')}. 
-    Please ensure they are set in your .env.local file (e.g., NEXT_PUBLIC_FIREBASE_API_KEY). 
+    `Firebase configuration is missing the following keys from environment variables: ${missingKeys.join(', ')}.
+    Please ensure they are set in your .env.local file (e.g., NEXT_PUBLIC_FIREBASE_API_KEY).
     Using placeholder values for now, but Firebase will likely not function correctly.`
   );
   // Provide default placeholder values if any are missing to prevent crashing,
@@ -50,5 +51,7 @@ if (!getApps().length) {
 
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
+const storage: FirebaseStorage = getStorage(app); // Initialize Storage
 
-export { app, auth, db };
+export { app, auth, db, storage }; // Export Storage
+

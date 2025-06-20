@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog, Info } from "lucide-react";
+import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog, Info, BookMarked } from "lucide-react"; // Added BookMarked
 import { useAuth } from '@/contexts/AuthContext';
 import type { Route } from 'next';
 
@@ -31,6 +31,7 @@ export default function Header() {
   const getNavItems = () => {
     let items = [...baseNavItems];
     if (!loading && user) {
+      items.push({ href: '/my-bookings' as Route, label: 'My Bookings' });
       items.push({ href: '/track-package' as Route, label: 'Track Package' });
       if (role === 'admin' || role === 'developer') {
         items.push({ href: '/admin/dashboard' as Route, label: 'Admin Dashboard' });
@@ -54,6 +55,7 @@ export default function Header() {
                 {item.label === 'Admin Dashboard' && <ShieldCheck className="inline-block mr-0.5 h-3.5 w-3.5" />}
                 {item.label === 'Track Package' && <PackageSearch className="inline-block mr-0.5 h-3.5 w-3.5" />}
                 {item.label === 'About Us' && <Info className="inline-block mr-0.5 h-3.5 w-3.5" />}
+                {item.label === 'My Bookings' && <BookMarked className="inline-block mr-0.5 h-3.5 w-3.5" />}
                 {item.label}
               </NavLink>
             ))}
@@ -119,6 +121,7 @@ export default function Header() {
                        {item.label === 'Admin Dashboard' && <ShieldCheck className="inline-block mr-2 h-5 w-5" />}
                        {item.label === 'Track Package' && <PackageSearch className="inline-block mr-2 h-5 w-5" />}
                        {item.label === 'About Us' && <Info className="inline-block mr-2 h-5 w-5" />}
+                       {item.label === 'My Bookings' && <BookMarked className="inline-block mr-2 h-5 w-5" />}
                       {item.label}
                     </NavLink>
                   ))}
