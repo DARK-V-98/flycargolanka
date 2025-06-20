@@ -67,7 +67,8 @@ export default function MyBookingsPage() {
   });
 
   useEffect(() => {
-    if (selectedBookingForPrint) {
+    // Only attempt to print if a booking is selected AND the ref to the printable component is available
+    if (selectedBookingForPrint && printableComponentRef.current) {
       handlePrint();
     }
   }, [selectedBookingForPrint, handlePrint]);
@@ -226,7 +227,7 @@ export default function MyBookingsPage() {
                     <p><span className="font-semibold">Service:</span> <span className="capitalize">{booking.serviceType}</span></p>
                     <p><span className="font-semibold">Type:</span> <span className="capitalize">{booking.shipmentType}</span></p>
                     <p><span className="font-semibold">Weight:</span> {booking.approxWeight} kg</p>
-                    {booking.estimatedCostLKR && (
+                    {booking.estimatedCostLKR !== undefined && booking.estimatedCostLKR !== null && (
                         <p className="md:col-span-2 font-semibold text-primary">
                             <DollarSign className="inline-block mr-1 h-4 w-4" />
                             Estimated Cost: {booking.estimatedCostLKR.toLocaleString()} LKR
@@ -247,7 +248,7 @@ export default function MyBookingsPage() {
                   size="sm" 
                   onClick={() => handleProceedToPayment(booking.id, booking.estimatedCostLKR)}
                   className="w-full sm:w-auto"
-                  disabled={!booking.estimatedCostLKR} // Disable if no cost available
+                  disabled={booking.estimatedCostLKR === undefined || booking.estimatedCostLKR === null}
                 >
                   <CreditCard className="mr-2 h-4 w-4"/> Continue to Payment
                 </Button>
@@ -264,3 +265,4 @@ export default function MyBookingsPage() {
     </div>
   );
 }
+
