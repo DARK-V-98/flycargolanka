@@ -11,7 +11,7 @@ import type { CountryRate, WeightRate } from '@/types/shippingRates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'; // Added FormDescription
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -28,7 +28,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription as DialogDescriptionComponent, // Renamed to avoid conflict if CardDescription is used directly
+  DialogDescription as DialogDescriptionComponent,
   DialogFooter,
   DialogTrigger,
   DialogClose,
@@ -79,7 +79,7 @@ export default function ManageRatesPage() {
     resolver: zodResolver(weightRateSchema),
     defaultValues: {
       weightLabel: '',
-      weightValue: undefined,
+      weightValue: '' as any, // Initialize as empty string, will be coerced by Zod
       economyPrice: null,
       expressPrice: null,
       isEconomyEnabled: true,
@@ -178,10 +178,10 @@ export default function ManageRatesPage() {
   const handleManageWeightsClick = (country: CountryRate) => {
     setSelectedCountryForWeights(country);
     fetchWeightsForCountry(country.id);
-    setEditingWeightRate(null); // Clear any previous edit state
-    weightRateForm.reset({ // Reset form to defaults
+    setEditingWeightRate(null); 
+    weightRateForm.reset({ 
         weightLabel: '',
-        weightValue: undefined,
+        weightValue: '' as any, 
         economyPrice: null,
         expressPrice: null,
         isEconomyEnabled: true,
@@ -194,26 +194,33 @@ export default function ManageRatesPage() {
     if (!selectedCountryForWeights) return;
     setIsSubmittingWeight(true);
 
+    // Ensure prices are numbers or null
+    const processedData = {
+      ...data,
+      economyPrice: (data.economyPrice === '' || data.economyPrice === undefined || isNaN(Number(data.economyPrice))) ? null : Number(data.economyPrice),
+      expressPrice: (data.expressPrice === '' || data.expressPrice === undefined || isNaN(Number(data.expressPrice))) ? null : Number(data.expressPrice),
+      weightValue: Number(data.weightValue) // Already coerced by Zod, but ensure it's a number for Firestore
+    };
+    
     const dataToSave = {
-        ...data,
-        economyPrice: data.economyPrice === undefined || data.economyPrice === null || isNaN(data.economyPrice) ? null : Number(data.economyPrice),
-        expressPrice: data.expressPrice === undefined || data.expressPrice === null || isNaN(data.expressPrice) ? null : Number(data.expressPrice),
+        ...processedData,
         updatedAt: serverTimestamp(),
     };
 
+
     try {
-      if (editingWeightRate && editingWeightRate.id) { // Editing existing
+      if (editingWeightRate && editingWeightRate.id) { 
         const weightDocRef = doc(db, 'shipping_rates', selectedCountryForWeights.id, 'weights', editingWeightRate.id);
         await updateDoc(weightDocRef, dataToSave);
         toast({ title: "Success", description: "Weight rate updated.", variant: "default" });
-      } else { // Adding new
+      } else { 
         const weightsColRef = collection(db, 'shipping_rates', selectedCountryForWeights.id, 'weights');
         await addDoc(weightsColRef, { ...dataToSave, createdAt: serverTimestamp() });
         toast({ title: "Success", description: "Weight rate added.", variant: "default" });
       }
-      weightRateForm.reset({ weightLabel: '', weightValue: undefined, economyPrice: null, expressPrice: null, isEconomyEnabled: true, isExpressEnabled: true});
+      weightRateForm.reset({ weightLabel: '', weightValue: '' as any, economyPrice: null, expressPrice: null, isEconomyEnabled: true, isExpressEnabled: true});
       setEditingWeightRate(null);
-      fetchWeightsForCountry(selectedCountryForWeights.id); // Refresh list
+      fetchWeightsForCountry(selectedCountryForWeights.id); 
     } catch (error) {
       console.error("Error saving weight rate:", error);
       toast({ title: "Error", description: "Could not save weight rate.", variant: "destructive" });
@@ -223,22 +230,21 @@ export default function ManageRatesPage() {
   };
 
   const handleEditWeightClick = (weightRate: WeightRate) => {
-    setEditingWeightRate({
+    const formData = {
         id: weightRate.id,
         weightLabel: weightRate.weightLabel,
-        weightValue: weightRate.weightValue,
-        economyPrice: weightRate.economyPrice,
-        expressPrice: weightRate.expressPrice,
+        weightValue: weightRate.weightValue, // This should be a number
+        economyPrice: weightRate.economyPrice, // number or null
+        expressPrice: weightRate.expressPrice, // number or null
         isEconomyEnabled: weightRate.isEconomyEnabled,
         isExpressEnabled: weightRate.isExpressEnabled,
-    });
-    weightRateForm.reset({ // Populate form with existing data
-        weightLabel: weightRate.weightLabel,
-        weightValue: weightRate.weightValue,
-        economyPrice: weightRate.economyPrice,
-        expressPrice: weightRate.expressPrice,
-        isEconomyEnabled: weightRate.isEconomyEnabled,
-        isExpressEnabled: weightRate.isExpressEnabled,
+    };
+    setEditingWeightRate(formData);
+    weightRateForm.reset({
+        ...formData,
+        weightValue: formData.weightValue !== null && formData.weightValue !== undefined ? String(formData.weightValue) : '', // Ensure string for input if it was number
+        economyPrice: formData.economyPrice,
+        expressPrice: formData.expressPrice,
     });
   };
 
@@ -249,7 +255,7 @@ export default function ManageRatesPage() {
       await deleteDoc(doc(db, 'shipping_rates', selectedCountryForWeights.id, 'weights', weightRateToDelete.id));
       toast({ title: "Success", description: `Weight rate ${weightRateToDelete.weightLabel} deleted.`, variant: "default" });
       setCurrentWeights(currentWeights.filter(wr => wr.id !== weightRateToDelete.id));
-      setWeightRateToDelete(null); // Close confirmation
+      setWeightRateToDelete(null); 
     } catch (error) {
       console.error("Error deleting weight rate:", error);
       toast({ title: "Error", description: "Could not delete weight rate.", variant: "destructive" });
@@ -381,13 +387,76 @@ export default function ManageRatesPage() {
                   <FormItem> <FormLabel>Weight Label (e.g., 0.5 kg)</FormLabel> <FormControl><Input placeholder="e.g., 1 kg, 2-3 kg" {...field} /></FormControl> <FormMessage /> </FormItem>
                 )} />
                 <FormField control={weightRateForm.control} name="weightValue" render={({ field }) => (
-                  <FormItem> <FormLabel>Weight Value (kg, for sorting)</FormLabel> <FormControl><Input type="number" step="0.01" placeholder="e.g., 1 or 2.5" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} /></FormControl> <FormMessage /> </FormItem>
+                  <FormItem>
+                    <FormLabel>Weight Value (kg, for sorting)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="e.g., 1 or 2.5"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const valStr = e.target.value;
+                          if (valStr === '') {
+                            field.onChange(''); // Keep as empty string for Zod to coerce
+                          } else {
+                            const num = parseFloat(valStr);
+                            field.onChange(isNaN(num) ? '' : num); // Pass num or ''
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
                 <FormField control={weightRateForm.control} name="economyPrice" render={({ field }) => (
-                  <FormItem> <FormLabel>Economy Price (LKR)</FormLabel> <FormControl><Input type="number" step="0.01" placeholder="Optional, e.g., 1500" {...field} onChange={e => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))} value={field.value ?? ''} /></FormControl> <FormMessage /> </FormItem>
+                  <FormItem>
+                    <FormLabel>Economy Price (LKR)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Optional, e.g., 1500"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const valStr = e.target.value;
+                          if (valStr === '') {
+                            field.onChange(null); 
+                          } else {
+                            const num = parseFloat(valStr);
+                            field.onChange(isNaN(num) ? null : num);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
                 <FormField control={weightRateForm.control} name="expressPrice" render={({ field }) => (
-                  <FormItem> <FormLabel>Express Price (LKR)</FormLabel> <FormControl><Input type="number" step="0.01" placeholder="Optional, e.g., 2000" {...field} onChange={e => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))} value={field.value ?? ''} /></FormControl> <FormMessage /> </FormItem>
+                  <FormItem>
+                    <FormLabel>Express Price (LKR)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Optional, e.g., 2000"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => {
+                          const valStr = e.target.value;
+                          if (valStr === '') {
+                            field.onChange(null);
+                          } else {
+                            const num = parseFloat(valStr);
+                            field.onChange(isNaN(num) ? null : num);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
               </div>
               <div className="flex items-center space-x-4">
@@ -411,7 +480,7 @@ export default function ManageRatesPage() {
                 )} />
               </div>
               <div className="flex justify-end space-x-2">
-                {editingWeightRate && <Button type="button" variant="outline" onClick={() => { setEditingWeightRate(null); weightRateForm.reset(); }}>Cancel Edit</Button>}
+                {editingWeightRate && <Button type="button" variant="outline" onClick={() => { setEditingWeightRate(null); weightRateForm.reset({ weightLabel: '', weightValue: '' as any, economyPrice: null, expressPrice: null, isEconomyEnabled: true, isExpressEnabled: true}); }}>Cancel Edit</Button>}
                 <Button type="submit" disabled={isSubmittingWeight}>
                   {isSubmittingWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   {editingWeightRate ? "Update Rate" : "Add Rate"}
@@ -486,5 +555,3 @@ export default function ManageRatesPage() {
     </div>
   );
 }
-
-    
