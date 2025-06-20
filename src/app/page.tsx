@@ -56,7 +56,12 @@ export default function Home() {
                  <Button asChild variant="default" size="lg" className="transition-transform duration-300 hover:scale-105">
                   <Link href="/book">Book a Courier</Link>
                 </Button>
-                 {/* Calculator button removed from here */}
+                 <Button asChild variant="outline" size="lg" className="transition-transform duration-300 hover:scale-105 bg-background/20 hover:bg-background/30 border-white/50 text-white hover:text-white backdrop-blur-sm">
+                  <Link href="/#shipping-calculator-section">
+                    <Calculator className="mr-2 h-5 w-5" />
+                    Estimate Cost
+                  </Link>
+                </Button>
               </div>
             </div>
 
@@ -129,8 +134,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Shipping Calculator Section - Placeholder */}
-      <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.4s'}}>
+      {/* Shipping Calculator Section */}
+      <section id="shipping-calculator-section" className="py-12 md:py-16 opacity-0 animate-fadeInUp scroll-mt-20" style={{animationDelay: '0.4s'}}>
         <div className="container mx-auto px-4">
           <div className="opacity-0 animate-fadeInUp">
             <PageHeader 
