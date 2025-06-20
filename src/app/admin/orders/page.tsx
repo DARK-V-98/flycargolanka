@@ -17,26 +17,65 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter } from "lucide-react";
+import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export type BookingStatus = 'Pending' | 'Confirmed' | 'In Transit' | 'Delivered' | 'Cancelled' | 'Rejected' | 'Paused';
 
+// Expanded Booking interface to include all fields from the booking form
 interface Booking {
   id: string;
-  senderName: string;
-  receiverName: string;
-  serviceType: string;
+  userId: string;
+  userEmail: string | null; // Email of the user who made the booking
+
+  shipmentType: 'parcel' | 'document';
+  serviceType: 'economy' | 'express';
+  locationType: 'pickup' | 'dropoff_maharagama' | 'dropoff_galle';
+
+  receiverCountry: string;
+  approxWeight: number; // same as packageWeight
+  approxValue: number; // value of goods in USD
+
+  receiverFullName: string; // same as receiverName
+  receiverEmail: string;
+  receiverAddress: string;
+  receiverDoorCode?: string | null;
+  receiverZipCode: string;
+  receiverCity: string;
+  receiverContactNo: string;
+  receiverWhatsAppNo?: string | null;
+
+  senderFullName: string; // same as senderName
+  senderAddress: string;
+  senderContactNo: string;
+  senderWhatsAppNo?: string | null;
+
   status: BookingStatus;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
-  packageDescription: string;
-  packageWeight: number;
+  packageDescription: string; // Derived description (already present)
+  packageWeight: number; // Redundant with approxWeight, keeping for now for backend consistency
   estimatedCostLKR?: number | null;
-  userId: string;
-  userEmail: string | null;
+
+  declaration1?: boolean;
+  declaration2?: boolean;
+
+  // Fields that were in the old interface, ensure they map or are handled
+  senderName: string; // Can be removed if senderFullName is primary
+  receiverName: string; // Can be removed if receiverFullName is primary
 }
+
 
 const ALL_STATUSES: BookingStatus[] = ['Pending', 'Confirmed', 'In Transit', 'Delivered', 'Cancelled', 'Rejected', 'Paused'];
 
@@ -47,6 +86,7 @@ export default function AdminOrdersPage() {
   const { toast } = useToast();
   const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [selectedStatusMap, setSelectedStatusMap] = useState<Record<string, BookingStatus>>({});
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<BookingStatus | 'All'>('All');
@@ -92,8 +132,8 @@ export default function AdminOrdersPage() {
       const lowerSearchTerm = searchTerm.toLowerCase();
       currentBookings = currentBookings.filter(booking =>
         booking.id.toLowerCase().includes(lowerSearchTerm) ||
-        booking.senderName.toLowerCase().includes(lowerSearchTerm) ||
-        booking.receiverName.toLowerCase().includes(lowerSearchTerm) ||
+        booking.senderFullName.toLowerCase().includes(lowerSearchTerm) || // Use senderFullName
+        booking.receiverFullName.toLowerCase().includes(lowerSearchTerm) || // Use receiverFullName
         (booking.userEmail && booking.userEmail.toLowerCase().includes(lowerSearchTerm))
       );
     }
@@ -105,11 +145,11 @@ export default function AdminOrdersPage() {
     switch (status) {
       case 'Pending': return 'secondary';
       case 'Confirmed': return 'default'; 
-      case 'In Transit': return 'default'; // Using 'default' (primary color) for visual distinction
-      case 'Delivered': return 'outline'; // Using 'outline' as it's less prominent than success, implying completion
+      case 'In Transit': return 'default'; 
+      case 'Delivered': return 'outline'; 
       case 'Cancelled': return 'destructive';
       case 'Rejected': return 'destructive';
-      case 'Paused': return 'secondary'; // Using secondary, similar to pending but distinct
+      case 'Paused': return 'secondary';
       default: return 'secondary';
     }
   };
@@ -129,7 +169,6 @@ export default function AdminOrdersPage() {
         status: newStatus,
         updatedAt: serverTimestamp()
       });
-      // Update allBookings so filters re-apply correctly
       setAllBookings(prevAllBookings =>
         prevAllBookings.map(b =>
           b.id === bookingId ? { ...b, status: newStatus, updatedAt: { seconds: Date.now()/1000, nanoseconds: 0 } as unknown as Timestamp } : b
@@ -205,9 +244,10 @@ export default function AdminOrdersPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-            <Table className="min-w-[900px]"><TableHeader>
+            <Table className="min-w-[1000px]"> {/* Adjusted min-width for new column */}
+              <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[120px] px-2 py-2 text-xs sm:text-sm">ID</TableHead>
+                  <TableHead className="min-w-[100px] px-2 py-2 text-xs sm:text-sm">ID</TableHead>
                   <TableHead className="px-2 py-2 text-xs sm:text-sm">Sender</TableHead>
                   <TableHead className="px-2 py-2 text-xs sm:text-sm">Receiver</TableHead>
                   <TableHead className="px-2 py-2 text-xs sm:text-sm">Service</TableHead>
@@ -216,6 +256,7 @@ export default function AdminOrdersPage() {
                   <TableHead className="text-center px-2 py-2 text-xs sm:text-sm">Status</TableHead>
                   <TableHead className="text-right min-w-[140px] px-2 py-2 text-xs sm:text-sm">Booked On</TableHead>
                   <TableHead className="text-center min-w-[210px] px-2 py-2 text-xs sm:text-sm">Actions</TableHead>
+                  <TableHead className="text-center px-2 py-2 text-xs sm:text-sm">Details</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -224,8 +265,8 @@ export default function AdminOrdersPage() {
                     <TableCell className="font-mono text-xs truncate max-w-[100px] sm:max-w-[120px] px-2 py-2.5">
                         {booking.id}
                     </TableCell>
-                    <TableCell className="font-medium text-xs sm:text-sm px-2 py-2.5">{booking.senderName}</TableCell>
-                    <TableCell className="text-xs sm:text-sm px-2 py-2.5">{booking.receiverName}</TableCell>
+                    <TableCell className="font-medium text-xs sm:text-sm px-2 py-2.5">{booking.senderFullName}</TableCell>
+                    <TableCell className="text-xs sm:text-sm px-2 py-2.5">{booking.receiverFullName}</TableCell>
                     <TableCell className="capitalize text-xs sm:text-sm px-2 py-2.5">{booking.serviceType.replace('_', ' ')}</TableCell>
                     <TableCell className="text-center text-xs sm:text-sm px-1 py-2.5">{booking.packageWeight}</TableCell>
                     <TableCell className="text-center text-xs sm:text-sm px-1 py-2.5">
@@ -269,6 +310,11 @@ export default function AdminOrdersPage() {
                         </Button>
                        </div>
                     </TableCell>
+                    <TableCell className="text-center px-2 py-2.5">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewingBooking(booking)}>
+                            <Eye className="h-4 w-4 text-primary" />
+                        </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -277,7 +323,85 @@ export default function AdminOrdersPage() {
           )}
         </CardContent>
       </Card>
+
+      {viewingBooking && (
+        <Dialog open={!!viewingBooking} onOpenChange={(isOpen) => !isOpen && setViewingBooking(null)}>
+          <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="text-xl flex items-center">
+                <Info className="mr-2 h-5 w-5 text-primary"/>Booking Details: <span className="ml-1 font-mono text-base text-muted-foreground">{viewingBooking.id}</span>
+              </DialogTitle>
+              <DialogDescription>
+                Full information for the selected booking.
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[65vh] pr-4">
+              <div className="space-y-6 py-4 text-sm">
+                {/* Shipment Overview */}
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Shipment Overview</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                    <p><strong className="text-muted-foreground">ID:</strong> {viewingBooking.id}</p>
+                    <p><strong className="text-muted-foreground">Status:</strong> <Badge variant={getStatusVariant(viewingBooking.status)} className="text-xs">{viewingBooking.status}</Badge></p>
+                    <p><strong className="text-muted-foreground">Booked On:</strong> {viewingBooking.createdAt ? format(viewingBooking.createdAt.toDate(), 'PPp') : 'N/A'}</p>
+                    {viewingBooking.updatedAt && <p><strong className="text-muted-foreground">Last Updated:</strong> {format(viewingBooking.updatedAt.toDate(), 'PPp')}</p>}
+                    <p><strong className="text-muted-foreground">Shipment Type:</strong> <span className="capitalize">{viewingBooking.shipmentType}</span></p>
+                    <p><strong className="text-muted-foreground">Service Type:</strong> <span className="capitalize">{viewingBooking.serviceType}</span></p>
+                    <p><strong className="text-muted-foreground">Location Type:</strong> <span className="capitalize">{viewingBooking.locationType.replace('_', ' ')}</span></p>
+                    <p><strong className="text-muted-foreground">Destination:</strong> {viewingBooking.receiverCountry}</p>
+                    <p><strong className="text-muted-foreground">Weight:</strong> {viewingBooking.approxWeight} kg</p>
+                    <p><strong className="text-muted-foreground">Value (USD):</strong> {viewingBooking.approxValue?.toLocaleString() || 'N/A'}</p>
+                    <p><strong className="text-muted-foreground">Est. Cost (LKR):</strong> {viewingBooking.estimatedCostLKR?.toLocaleString() || 'N/A'}</p>
+                  </div>
+                </section>
+
+                {/* Receiver Details */}
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Receiver Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                    <p><strong className="text-muted-foreground">Full Name:</strong> {viewingBooking.receiverFullName}</p>
+                    <p><strong className="text-muted-foreground">Email:</strong> {viewingBooking.receiverEmail}</p>
+                    <p className="md:col-span-2"><strong className="text-muted-foreground">Address:</strong> {viewingBooking.receiverAddress}</p>
+                    <p><strong className="text-muted-foreground">Door Code:</strong> {viewingBooking.receiverDoorCode || 'N/A'}</p>
+                    <p><strong className="text-muted-foreground">ZIP/Postal:</strong> {viewingBooking.receiverZipCode}</p>
+                    <p><strong className="text-muted-foreground">City:</strong> {viewingBooking.receiverCity}</p>
+                    <p><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.receiverContactNo}</p>
+                    <p><strong className="text-muted-foreground">WhatsApp No:</strong> {viewingBooking.receiverWhatsAppNo || 'N/A'}</p>
+                  </div>
+                </section>
+
+                {/* Sender Details */}
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Sender Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                    <p><strong className="text-muted-foreground">Full Name:</strong> {viewingBooking.senderFullName}</p>
+                    <p><strong className="text-muted-foreground">Email (User):</strong> {viewingBooking.userEmail || 'N/A'}</p>
+                    <p className="md:col-span-2"><strong className="text-muted-foreground">Address:</strong> {viewingBooking.senderAddress}</p>
+                    <p><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.senderContactNo}</p>
+                    <p><strong className="text-muted-foreground">WhatsApp No:</strong> {viewingBooking.senderWhatsAppNo || 'N/A'}</p>
+                    <p><strong className="text-muted-foreground">User ID:</strong> {viewingBooking.userId}</p>
+                  </div>
+                </section>
+
+                 {/* Declarations */}
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Declarations</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                    <p><strong className="text-muted-foreground">Declaration 1 Agreed:</strong> {viewingBooking.declaration1 ? 'Yes' : 'No'}</p>
+                    <p><strong className="text-muted-foreground">Declaration 2 Agreed:</strong> {viewingBooking.declaration2 ? 'Yes' : 'No'}</p>
+                   </div>
+                </section>
+
+              </div>
+            </ScrollArea>
+            <DialogFooter className="mt-4">
+                <DialogClose asChild>
+                    <Button type="button" variant="outline">Close</Button>
+                </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
-
