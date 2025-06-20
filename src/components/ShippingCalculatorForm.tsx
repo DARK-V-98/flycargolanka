@@ -11,7 +11,7 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, getDocs, where } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, where } from "firebase/firestore"; // where might be needed if we re-introduce type filtering later
 import type { CountryRate, WeightRate, RateType } from "@/types/shippingRates";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,11 +27,11 @@ type CalculatorFormValues = z.infer<typeof calculatorSchema>;
 export default function ShippingCalculatorForm() {
   const [countries, setCountries] = useState<CountryRate[]>([]);
   const [weights, setWeights] = useState<WeightRate[]>([]);
-  const [selectedShipmentType, setSelectedShipmentType] = useState<RateType | null>(null);
+  // selectedShipmentType is now directly from form.watch
   const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
   
   const [calculatedCost, setCalculatedCost] = useState<string | null>(null);
-  const [loadingCountries, setLoadingCountries] = useState(false); // Initially true for first load, then false for subsequent type changes
+  const [loadingCountries, setLoadingCountries] = useState(false);
   const [loadingWeights, setLoadingWeights] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -46,44 +46,41 @@ export default function ShippingCalculatorForm() {
     },
   });
 
-  // Fetch countries based on selected shipment type
+  const watchedShipmentType = form.watch("shipmentType");
+
+  // Fetch countries (no longer filtered by type at this stage)
   useEffect(() => {
-    if (selectedShipmentType) {
-      const fetchCountriesByType = async () => {
-        setLoadingCountries(true);
-        setCountries([]); // Clear previous countries
-        form.resetField("countryId"); // Reset country selection
-        form.resetField("weightId"); // Reset weight selection
-        setSelectedCountryId(null);
-        setWeights([]);
-        setCalculatedCost(null);
-        setFormError(null);
-        try {
-          const ratesCol = collection(db, 'shipping_rates');
-          const q = query(ratesCol, where('type', '==', selectedShipmentType), orderBy('name', 'asc'));
-          const snapshot = await getDocs(q);
-          const fetchedCountries = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          } as CountryRate));
-          setCountries(fetchedCountries);
-          if (fetchedCountries.length === 0) {
-            setFormError(`No countries configured for ${selectedShipmentType} shipments.`);
-          }
-        } catch (error) {
-          console.error(`Error fetching ${selectedShipmentType} countries:`, error);
-          setFormError(`Could not load countries for ${selectedShipmentType} shipments.`);
-          toast({ title: "Error", description: `Could not load countries for ${selectedShipmentType}.`, variant: "destructive" });
-        } finally {
-          setLoadingCountries(false);
-        }
-      };
-      fetchCountriesByType();
-    } else {
+    const fetchAllCountries = async () => {
+      setLoadingCountries(true);
       setCountries([]);
       form.resetField("countryId");
-    }
-  }, [selectedShipmentType, form, toast]);
+      form.resetField("weightId");
+      setSelectedCountryId(null);
+      setWeights([]);
+      setCalculatedCost(null);
+      setFormError(null);
+      try {
+        const ratesCol = collection(db, 'shipping_rates');
+        const q = query(ratesCol, orderBy('name', 'asc')); // Fetch all countries
+        const snapshot = await getDocs(q);
+        const fetchedCountries = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as CountryRate));
+        setCountries(fetchedCountries);
+        if (fetchedCountries.length === 0) {
+          setFormError(`No countries configured in the system.`);
+        }
+      } catch (error) {
+        console.error(`Error fetching countries:`, error);
+        setFormError(`Could not load countries.`);
+        toast({ title: "Error", description: `Could not load countries.`, variant: "destructive" });
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+    fetchAllCountries();
+  }, [form, toast]); // Only re-run if form instance changes (rare) or toast changes (for error display)
 
   // Fetch weights based on selected country
   useEffect(() => {
@@ -136,26 +133,30 @@ export default function ShippingCalculatorForm() {
 
     let price: number | null | undefined = null;
     let currency = "LKR"; 
-    let serviceAvailable = true;
+    let serviceAvailable = false; // Default to false, prove it's available
 
-    if (data.deliveryType === 'economy') {
-      if (!selectedWeightEntry.isEconomyEnabled) {
-        serviceAvailable = false;
-      } else {
-        price = selectedWeightEntry.economyPrice;
+    if (data.shipmentType === 'non-document') {
+      if (data.deliveryType === 'economy') {
+        serviceAvailable = selectedWeightEntry.isNdEconomyEnabled ?? false;
+        price = selectedWeightEntry.ndEconomyPrice;
+      } else if (data.deliveryType === 'express') {
+        serviceAvailable = selectedWeightEntry.isNdExpressEnabled ?? false;
+        price = selectedWeightEntry.ndExpressPrice;
       }
-    } else if (data.deliveryType === 'express') {
-      if (!selectedWeightEntry.isExpressEnabled) {
-        serviceAvailable = false;
-      } else {
-        price = selectedWeightEntry.expressPrice;
+    } else if (data.shipmentType === 'document') {
+      if (data.deliveryType === 'economy') {
+        serviceAvailable = selectedWeightEntry.isDocEconomyEnabled ?? false;
+        price = selectedWeightEntry.docEconomyPrice;
+      } else if (data.deliveryType === 'express') {
+        serviceAvailable = selectedWeightEntry.isDocExpressEnabled ?? false;
+        price = selectedWeightEntry.docExpressPrice;
       }
     }
 
     if (!serviceAvailable) {
-      setCalculatedCost(`The ${data.deliveryType} service is not available for this selection.`);
+      setCalculatedCost(`The selected ${data.deliveryType} service for ${data.shipmentType} is not available for this weight/destination.`);
     } else if (price === null || price === undefined) {
-      setCalculatedCost(`Price not configured for ${data.deliveryType} service on this weight.`);
+      setCalculatedCost(`Price not configured for ${data.shipmentType} ${data.deliveryType} service on this weight.`);
     } else {
       setCalculatedCost(`Estimated Cost: ${price.toLocaleString()} ${currency}`);
     }
@@ -187,7 +188,12 @@ export default function ShippingCalculatorForm() {
                   <Select 
                     onValueChange={(value) => {
                       field.onChange(value);
-                      setSelectedShipmentType(value as RateType);
+                      // Reset dependent fields when shipment type changes
+                      form.resetField("countryId");
+                      form.resetField("weightId");
+                      setSelectedCountryId(null);
+                      setWeights([]);
+                      setCalculatedCost(null);
                     }} 
                     defaultValue={field.value}
                   >
@@ -197,7 +203,7 @@ export default function ShippingCalculatorForm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="non-document">Non-Document</SelectItem>
+                      <SelectItem value="non-document">Non-Document (Package)</SelectItem>
                       <SelectItem value="document">Document</SelectItem>
                     </SelectContent>
                   </Select>
@@ -218,14 +224,14 @@ export default function ShippingCalculatorForm() {
                       setSelectedCountryId(value);
                     }} 
                     defaultValue={field.value}
-                    disabled={!selectedShipmentType || loadingCountries || countries.length === 0}
+                    disabled={!watchedShipmentType || loadingCountries || countries.length === 0}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder={
-                          !selectedShipmentType ? "Select shipment type first" :
+                          !watchedShipmentType ? "Select shipment type first" :
                           loadingCountries ? "Loading countries..." : 
-                          (countries.length === 0 && !loadingCountries) ? `No countries for ${selectedShipmentType}` :
+                          (countries.length === 0 && !loadingCountries) ? `No countries configured` :
                           "Select a country"
                         } />
                       </SelectTrigger>
@@ -329,3 +335,4 @@ export default function ShippingCalculatorForm() {
     </Card>
   );
 }
+
