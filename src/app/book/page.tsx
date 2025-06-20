@@ -11,13 +11,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription as ShadCardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase'; // Import db
+import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, type Timestamp } from 'firebase/firestore'; // Import firestore functions
+import type { CountryRate } from '@/types/shippingRates'; // Import CountryRate type
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -54,22 +55,14 @@ const bookingSchema = z.object({
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
 
-const sampleCountries = [
-  { code: "US", name: "United States" },
-  { code: "CA", name: "Canada" },
-  { code: "GB", name: "United Kingdom" },
-  { code: "AU", name: "Australia" },
-  { code: "LK", name: "Sri Lanka" },
-  // Add more countries as needed
-];
-
-
 export default function BookingPage() {
   const { toast } = useToast();
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProfileCompletionAlert, setShowProfileCompletionAlert] = useState(false);
+  const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(true);
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -98,6 +91,28 @@ export default function BookingPage() {
   });
 
   useEffect(() => {
+    const fetchCountries = async () => {
+      setLoadingCountries(true);
+      try {
+        const ratesCol = collection(db, 'shipping_rates');
+        const q = query(ratesCol, orderBy('name', 'asc'));
+        const snapshot = await getDocs(q);
+        const fetchedCountries = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as CountryRate));
+        setAvailableCountries(fetchedCountries);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+        toast({ title: "Error", description: "Could not load destination countries.", variant: "destructive" });
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+    fetchCountries();
+  }, [toast]);
+
+  useEffect(() => {
     if (!loading) {
       if (!user) {
         const currentPath = window.location.pathname + window.location.search;
@@ -108,32 +123,31 @@ export default function BookingPage() {
         } else {
           setShowProfileCompletionAlert(false);
         }
-        // Pre-fill sender details regardless of profile completion for convenience
-        form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: true });
-        form.setValue('senderAddress', userProfile.address || '', { shouldValidate: true });
-        form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: true });
-        // Assuming WhatsApp is not in userProfile, or add if it is:
-        // form.setValue('senderWhatsAppNo', userProfile.whatsappNo || '', { shouldValidate: true });
+        form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: false });
+        form.setValue('senderAddress', userProfile.address || '', { shouldValidate: false });
+        form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
       }
     }
   }, [user, userProfile, loading, router, form]);
 
 
   const onSubmit: SubmitHandler<BookingFormValues> = async (data) => {
-    if (isSubmitting || showProfileCompletionAlert) return;
+    if (isSubmitting || showProfileCompletionAlert || !user) return; // Added !user check
     setIsSubmitting(true);
     try {
       const bookingData = {
-        ...data,
-        userId: user ? user.uid : null,
-        userEmail: user ? user.email : null,
-        status: 'Pending', 
+        ...data, // All form fields
+        userId: user.uid,
+        userEmail: user.email,
+        status: 'Pending' as 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled', // Explicitly type status
         createdAt: serverTimestamp(),
-        packageDescription: `Shipment of ${data.shipmentType}`, // Example, adjust as needed
-        packageWeight: data.approxWeight, // Directly use approxWeight
-        senderName: data.senderFullName, // Map form fields to existing Booking interface
-        receiverName: data.receiverFullName, // Map form fields to existing Booking interface
+        // Fields for easier querying/display on admin orders page, matching existing structure
+        packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`,
+        packageWeight: data.approxWeight,
+        senderName: data.senderFullName,
+        receiverName: data.receiverFullName,
       };
+
       await addDoc(collection(db, 'bookings'), bookingData);
       
       toast({
@@ -178,7 +192,7 @@ export default function BookingPage() {
     return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading booking page...</p></div>;
   }
 
-  if (!user && !loading) {
+  if (!user && !loading) { // This will be hit if auth check in useEffect leads to redirect before loading finishes here
     return (
       <div className="flex flex-col items-center justify-center text-center h-screen space-y-4 p-4">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4"/>
@@ -340,10 +354,22 @@ export default function BookingPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="receiverCountry" render={({ field }) => (
                       <FormItem><FormLabel>Country</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger></FormControl>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                          disabled={loadingCountries || availableCountries.length === 0}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={
+                                loadingCountries ? "Loading countries..." : 
+                                availableCountries.length === 0 ? "No countries available" : 
+                                "Select country"
+                              } />
+                            </SelectTrigger>
+                          </FormControl>
                           <SelectContent>
-                            {sampleCountries.map(c => <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>)}
+                            {availableCountries.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                           </SelectContent>
                         </Select><FormMessage /></FormItem>
                     )} />
@@ -371,14 +397,14 @@ export default function BookingPage() {
                 <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><User className="mr-2 h-5 w-5"/>Sender Details</h3>
                 <div className="space-y-4">
                   <FormField control={form.control} name="senderFullName" render={({ field }) => (
-                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} readOnly={!!userProfile?.displayName} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} readOnly={!!userProfile?.displayName && !!userProfile.isProfileComplete} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="senderAddress" render={({ field }) => (
-                    <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Your Address" {...field} readOnly={!!userProfile?.address} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Your Address" {...field} readOnly={!!userProfile?.address && !!userProfile.isProfileComplete} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <div className="grid md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="senderContactNo" render={({ field }) => (
-                      <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Your Contact No." {...field} readOnly={!!userProfile?.phone} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Your Contact No." {...field} readOnly={!!userProfile?.phone && !!userProfile.isProfileComplete} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="senderWhatsAppNo" render={({ field }) => (
                       <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="Your WhatsApp No." {...field} /></FormControl><FormMessage /></FormItem>
