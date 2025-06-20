@@ -124,9 +124,9 @@ export default function BookingPage() {
         const ratesCol = collection(db, 'shipping_rates');
         const q = query(ratesCol, orderBy('name', 'asc'));
         const snapshot = await getDocs(q);
-        const fetchedCountries = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const fetchedCountries = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
         } as CountryRate));
         setAvailableCountries(fetchedCountries);
         if (fetchedCountries.length === 0 && showRateCalculationFields) {
@@ -140,7 +140,12 @@ export default function BookingPage() {
         setLoadingCountries(false);
       }
     };
-    fetchCountries();
+    if (showRateCalculationFields) { // Only fetch countries if section is visible
+        fetchCountries();
+    } else {
+        setAvailableCountries([]);
+        setLoadingCountries(false);
+    }
   }, [toast, showRateCalculationFields]);
 
   useEffect(() => {
@@ -189,7 +194,7 @@ export default function BookingPage() {
         const weightsColRef = collection(db, 'shipping_rates', selectedCountry.id, 'weights');
         const q = query(weightsColRef, orderBy('weightValue', 'asc'));
         const snapshot = await getDocs(q);
-        const fetchedWeights = snapshot.docs.map(docSnap => ({ // Renamed doc to docSnap to avoid conflict
+        const fetchedWeights = snapshot.docs.map(docSnap => ({
           id: docSnap.id,
           ...docSnap.data()
         } as WeightRate));
@@ -206,7 +211,7 @@ export default function BookingPage() {
       }
     };
 
-    if (availableCountries.length > 0) {
+    if (availableCountries.length > 0 || !showRateCalculationFields) { // Run if countries are loaded OR if calc fields are hidden (to clear weights)
         fetchWeights();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -319,10 +324,19 @@ export default function BookingPage() {
   const onSubmit: SubmitHandler<BookingFormValues> = async (data) => {
     if (isSubmitting || showProfileCompletionAlert || !user || !userProfile) return;
     setIsSubmitting(true);
+
+    let numericCost: number | null = null;
+    if (calculatedCost && !calculationError) {
+        const costMatch = calculatedCost.match(/Estimated Cost: ([\d,.]+)\s*LKR/);
+        if (costMatch && costMatch[1]) {
+            numericCost = parseFloat(costMatch[1].replace(/,/g, ''));
+        }
+    }
+
     try {
       const newBookingId = generateBookingId();
       const bookingData = {
-        id: newBookingId, // Include the generated ID in the data
+        id: newBookingId,
         ...data,
         userId: user.uid,
         userEmail: user.email,
@@ -332,6 +346,7 @@ export default function BookingPage() {
         packageWeight: data.approxWeight,
         senderName: data.senderFullName,
         receiverName: data.receiverFullName,
+        estimatedCostLKR: numericCost,
       };
 
       const bookingDocRef = doc(db, 'bookings', newBookingId);
@@ -359,7 +374,6 @@ export default function BookingPage() {
         }
       }
 
-      // NIC Verification Redirect Logic
       if (userProfile.nicVerificationStatus === 'none' || userProfile.nicVerificationStatus === 'rejected') {
         router.push('/book/verify-nic');
       } else {

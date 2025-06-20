@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, type UserProfile } from '@/contexts/AuthContext';
@@ -12,8 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Package, CalendarDays, User, MapPin, DollarSign, ShieldCheck, AlertCircle, Info, BookMarked, CreditCard } from 'lucide-react';
+import { Loader2, Package, CalendarDays, User, MapPin, DollarSign, ShieldCheck, AlertCircle, Info, BookMarked, CreditCard, Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { useReactToPrint } from 'react-to-print';
+import PrintableBookingForm from '@/components/PrintableBookingForm';
+
 
 interface Booking {
   id: string;
@@ -26,11 +29,27 @@ interface Booking {
   approxWeight: number;
   approxValue: number;
   receiverFullName: string;
+  receiverEmail: string;
   receiverAddress: string;
+  receiverDoorCode?: string;
+  receiverZipCode: string;
+  receiverCity: string;
+  receiverContactNo: string;
+  receiverWhatsAppNo?: string;
   senderFullName: string;
+  senderAddress: string;
+  senderContactNo: string;
+  senderWhatsAppNo?: string;
   status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
   createdAt: Timestamp;
-  // Add other fields as needed
+  estimatedCostLKR?: number | null;
+  // Include other fields from bookingSchema as needed by PrintableBookingForm
+  packageDescription?: string; // This was in admin, ensure it's part of the main type if needed
+  packageWeight?: number; // Same as above
+  senderName?: string; // Redundant with senderFullName, but ensure consistency
+  receiverName?: string; // Redundant with receiverFullName
+  declaration1?: boolean;
+  declaration2?: boolean;
 }
 
 export default function MyBookingsPage() {
@@ -38,6 +57,21 @@ export default function MyBookingsPage() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
+  const [selectedBookingForPrint, setSelectedBookingForPrint] = useState<Booking | null>(null);
+  const printableComponentRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    content: () => printableComponentRef.current,
+    documentTitle: selectedBookingForPrint ? `FlyCargo-Booking-${selectedBookingForPrint.id}` : "FlyCargo-Booking",
+    onAfterPrint: () => setSelectedBookingForPrint(null),
+  });
+
+  useEffect(() => {
+    if (selectedBookingForPrint) {
+      handlePrint();
+    }
+  }, [selectedBookingForPrint, handlePrint]);
+
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -53,14 +87,13 @@ export default function MyBookingsPage() {
           const bookingsCol = collection(db, 'bookings');
           const q = query(bookingsCol, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
           const querySnapshot = await getDocs(q);
-          const bookingsData = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
+          const bookingsData = querySnapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data()
           } as Booking));
           setBookings(bookingsData);
         } catch (error) {
           console.error("Error fetching bookings: ", error);
-          // Optionally, set an error state and display an error message
         } finally {
           setLoadingBookings(false);
         }
@@ -73,7 +106,7 @@ export default function MyBookingsPage() {
     switch (status) {
       case 'Pending': return 'secondary';
       case 'In Transit': return 'default';
-      case 'Delivered': return 'outline'; // Consider adding a 'success' variant to Badge
+      case 'Delivered': return 'outline'; 
       case 'Cancelled': return 'destructive';
       default: return 'secondary';
     }
@@ -89,6 +122,12 @@ export default function MyBookingsPage() {
     }
   };
 
+  const handleProceedToPayment = (bookingId: string, cost?: number | null) => {
+    console.log(`Proceeding to payment for booking: ${bookingId}. Cost: ${cost ? `${cost} LKR` : 'N/A'}`);
+    // Placeholder: Implement actual payment navigation/logic here
+    // router.push(`/payment?bookingId=${bookingId}`); // Example
+  };
+
 
   if (authLoading || loadingBookings) {
     return (
@@ -99,7 +138,6 @@ export default function MyBookingsPage() {
   }
 
   if (!user) {
-     // This case should be handled by the useEffect redirect, but as a fallback:
     return (
       <div className="flex flex-col items-center justify-center text-center h-screen space-y-4 p-4">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4"/>
@@ -170,7 +208,7 @@ export default function MyBookingsPage() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                     <CardTitle className="text-lg font-semibold text-accent flex items-center mb-2 sm:mb-0">
                         <Package className="mr-2 h-5 w-5 text-primary" />
-                        Booking ID: <span className="ml-1 font-mono text-sm text-muted-foreground">{booking.id.substring(0, 10)}...</span>
+                        Booking ID: <span className="ml-1 font-mono text-sm text-muted-foreground">{booking.id}</span>
                     </CardTitle>
                     <Badge variant={getStatusVariant(booking.status)} className="text-xs self-start sm:self-center">
                         {booking.status}
@@ -188,15 +226,39 @@ export default function MyBookingsPage() {
                     <p><span className="font-semibold">Service:</span> <span className="capitalize">{booking.serviceType}</span></p>
                     <p><span className="font-semibold">Type:</span> <span className="capitalize">{booking.shipmentType}</span></p>
                     <p><span className="font-semibold">Weight:</span> {booking.approxWeight} kg</p>
+                    {booking.estimatedCostLKR && (
+                        <p className="md:col-span-2 font-semibold text-primary">
+                            <DollarSign className="inline-block mr-1 h-4 w-4" />
+                            Estimated Cost: {booking.estimatedCostLKR.toLocaleString()} LKR
+                        </p>
+                    )}
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button size="sm" variant="outline" disabled>
+              <CardFooter className="flex flex-col sm:flex-row justify-end items-center gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => setSelectedBookingForPrint(booking)}
+                  className="w-full sm:w-auto"
+                >
+                  <Download className="mr-2 h-4 w-4"/> Download Form
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => handleProceedToPayment(booking.id, booking.estimatedCostLKR)}
+                  className="w-full sm:w-auto"
+                  disabled={!booking.estimatedCostLKR} // Disable if no cost available
+                >
                   <CreditCard className="mr-2 h-4 w-4"/> Continue to Payment
                 </Button>
               </CardFooter>
             </Card>
           ))}
+        </div>
+      )}
+      {selectedBookingForPrint && (
+        <div style={{ display: "none" }}>
+          <PrintableBookingForm ref={printableComponentRef} booking={selectedBookingForPrint} />
         </div>
       )}
     </div>
