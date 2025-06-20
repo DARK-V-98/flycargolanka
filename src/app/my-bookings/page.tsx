@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, type UserProfile } from '@/contexts/AuthContext';
@@ -12,44 +12,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Package, CalendarDays, User, MapPin, DollarSign, ShieldCheck, AlertCircle, Info, BookMarked, CreditCard, Printer } from 'lucide-react'; // Changed Download to Printer
+import { Loader2, Package, CalendarDays, User, MapPin, DollarSign, ShieldCheck, AlertCircle, Info, BookMarked, CreditCard, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { useReactToPrint } from 'react-to-print';
-import PrintableBookingForm from '@/components/PrintableBookingForm';
+import PrintableBookingForm, { type Booking as PrintableBookingType } from '@/components/PrintableBookingForm';
 
 
-interface Booking {
-  id: string;
-  userId: string;
-  userEmail: string | null;
-  shipmentType: 'parcel' | 'document';
-  serviceType: 'economy' | 'express';
-  locationType: 'pickup' | 'dropoff_maharagama' | 'dropoff_galle';
-  receiverCountry: string;
-  approxWeight: number;
-  approxValue: number;
-  receiverFullName: string;
-  receiverEmail: string;
-  receiverAddress: string;
-  receiverDoorCode?: string;
-  receiverZipCode: string;
-  receiverCity: string;
-  receiverContactNo: string;
-  receiverWhatsAppNo?: string;
-  senderFullName: string;
-  senderAddress: string;
-  senderContactNo: string;
-  senderWhatsAppNo?: string;
-  status: 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled';
-  createdAt: Timestamp;
-  estimatedCostLKR?: number | null;
-  // Include other fields from bookingSchema as needed by PrintableBookingForm
-  packageDescription?: string; // This was in admin, ensure it's part of the main type if needed
-  packageWeight?: number; // Same as above
-  senderName?: string; // Redundant with senderFullName, but ensure consistency
-  receiverName?: string; // Redundant with receiverFullName
-  declaration1?: boolean;
-  declaration2?: boolean;
+interface Booking extends PrintableBookingType {
+  // This interface can extend PrintableBookingType if all fields match
+  // Or define its own fields if there are differences for display vs print
 }
 
 export default function MyBookingsPage() {
@@ -57,29 +28,21 @@ export default function MyBookingsPage() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
-  const [selectedBookingForPrint, setSelectedBookingForPrint] = useState<Booking | null>(null);
+  
   const printableComponentRef = useRef<HTMLDivElement>(null);
+  const [currentPrintBooking, setCurrentPrintBooking] = useState<PrintableBookingType | null>(null);
 
   const handlePrint = useReactToPrint({
-    content: () => {
-      // Ensure we only return the ref if it's truly populated
-      return printableComponentRef.current || null;
+    content: () => printableComponentRef.current,
+    documentTitle: currentPrintBooking ? `FlyCargo-Booking-${currentPrintBooking.id}` : "FlyCargo-Booking",
+    onAfterPrint: () => {
+      setCurrentPrintBooking(null); 
     },
-    documentTitle: selectedBookingForPrint ? `FlyCargo-Booking-${selectedBookingForPrint.id}` : "FlyCargo-Booking",
-    onAfterPrint: () => setSelectedBookingForPrint(null),
+    onPrintError: (errorLocation, error) => {
+      console.error(`Error during printing (${errorLocation}):`, error);
+      setCurrentPrintBooking(null);
+    },
   });
-
-  useEffect(() => {
-    // Only attempt to print if a booking is selected AND the ref to the printable component is available
-    if (selectedBookingForPrint && printableComponentRef.current) {
-      // Defer the print call to the next tick to allow the DOM to fully update
-      const timerId = setTimeout(() => {
-        handlePrint();
-      }, 0);
-      return () => clearTimeout(timerId); // Clean up the timeout if the component unmounts or dependencies change
-    }
-  }, [selectedBookingForPrint, handlePrint]);
-
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -246,7 +209,17 @@ export default function MyBookingsPage() {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => setSelectedBookingForPrint(booking)}
+                  onClick={() => {
+                    setCurrentPrintBooking(booking);
+                    setTimeout(() => {
+                      if (printableComponentRef.current) {
+                        handlePrint();
+                      } else {
+                        console.error("Ref for printable content not ready.");
+                        setCurrentPrintBooking(null); 
+                      }
+                    }, 0);
+                  }}
                   className="w-full sm:w-auto"
                 >
                   <Printer className="mr-2 h-4 w-4"/> Print Form
@@ -264,11 +237,11 @@ export default function MyBookingsPage() {
           ))}
         </div>
       )}
-      {selectedBookingForPrint && (
-        <div style={{ display: "none" }}>
-          <PrintableBookingForm ref={printableComponentRef} booking={selectedBookingForPrint} />
-        </div>
-      )}
+      {/* Printable component is always in the DOM but hidden, content updates via currentPrintBooking prop */}
+      <div style={{ display: "none" }}>
+          <PrintableBookingForm ref={printableComponentRef} booking={currentPrintBooking} />
+      </div>
     </div>
   );
 }
+

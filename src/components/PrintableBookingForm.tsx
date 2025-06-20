@@ -4,7 +4,8 @@ import React from 'react';
 import { format } from 'date-fns';
 import type { Timestamp } from 'firebase/firestore';
 
-interface Booking {
+// Exporting the Booking type to be used by MyBookingsPage
+export interface Booking {
   id: string;
   userId: string;
   userEmail: string | null;
@@ -34,13 +35,19 @@ interface Booking {
 }
 
 interface PrintableBookingFormProps {
-  booking: Booking;
+  booking: Booking | null; // Allow booking to be null
 }
 
 const PrintableBookingForm = React.forwardRef<HTMLDivElement, PrintableBookingFormProps>(({ booking }, ref) => {
   
+  if (!booking) {
+    // If no booking data, render a minimal div with the ref, or just null.
+    // This div is needed for the ref to attach even when there's no content.
+    return <div ref={ref} style={{ display: 'none' }} />;
+  }
+
   const renderField = (label: string, value?: string | number | null, isFullWidth: boolean = false) => {
-    if (value === undefined || value === null || value === '') return null;
+    if (value === undefined || value === null || String(value).trim() === '') return null;
     return (
       <div className={`py-1 ${isFullWidth ? 'col-span-2' : ''}`}>
         <span className="font-semibold text-gray-700">{label}: </span>
@@ -54,7 +61,7 @@ const PrintableBookingForm = React.forwardRef<HTMLDivElement, PrintableBookingFo
   };
 
   return (
-    <div ref={ref} className="p-8 font-sans bg-white text-gray-800">
+    <div ref={ref} className="p-8 font-sans bg-white text-gray-800"> {/* Apply ref to the main content div */}
       <style type="text/css" media="print">
         {`
           @page { size: auto; margin: 0.5in; }
@@ -75,7 +82,7 @@ const PrintableBookingForm = React.forwardRef<HTMLDivElement, PrintableBookingFo
         {renderField("Booking ID", booking.id, true)}
         {renderField("Status", booking.status, true)}
         {renderField("Booked On", formatDate(booking.createdAt), true)}
-        {booking.estimatedCostLKR && renderField("Estimated Cost", `${booking.estimatedCostLKR.toLocaleString()} LKR`, true)}
+        {booking.estimatedCostLKR !== undefined && booking.estimatedCostLKR !== null && renderField("Estimated Cost", `${booking.estimatedCostLKR.toLocaleString()} LKR`, true)}
       </section>
 
       <section className="mb-6 p-4 border border-gray-200 rounded-md printable-card">
@@ -133,3 +140,4 @@ const PrintableBookingForm = React.forwardRef<HTMLDivElement, PrintableBookingFo
 
 PrintableBookingForm.displayName = 'PrintableBookingForm';
 export default PrintableBookingForm;
+
