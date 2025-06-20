@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle } from 'lucide-react'; // Added more icons
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -21,29 +23,46 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+const phoneRegex = /^\+?[1-9]\d{1,14}$/; // Simple international phone regex
+
 const bookingSchema = z.object({
-  // Sender Details
-  senderName: z.string().min(2, "Sender name is required."),
-  senderAddress: z.string().min(5, "Sender address is required."),
-  senderPhone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number."), // Consider using a more flexible regex if needed
-  senderEmail: z.string().email("Invalid email address."),
+  shipmentType: z.enum(['parcel', 'document'], { required_error: "Please select a shipment type." }),
+  serviceType: z.enum(['economy', 'express'], { required_error: "Please select a service type." }),
+  locationType: z.enum(['pickup', 'dropoff_maharagama', 'dropoff_galle'], { required_error: "Please select a location type." }),
+  
+  approxWeight: z.coerce.number().positive("Approximate weight must be a positive number.").min(0.1, "Weight must be at least 0.1 KG."),
+  approxValue: z.coerce.number().positive("Approximate value of goods must be a positive number.").min(1, "Value must be at least 1 USD."),
 
-  // Receiver Details
-  receiverName: z.string().min(2, "Receiver name is required."),
-  receiverAddress: z.string().min(5, "Receiver address is required."),
-  receiverPhone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number."),
-  receiverEmail: z.string().email("Invalid email address.").optional().or(z.literal('')),
+  receiverFullName: z.string().min(2, "Receiver full name is required (as per passport).").max(100),
+  receiverEmail: z.string().email("Invalid receiver email address.").max(100),
+  receiverAddress: z.string().min(5, "Receiver address is required.").max(200),
+  receiverDoorCode: z.string().max(50).optional().or(z.literal('')),
+  receiverCountry: z.string().min(1, "Receiver country is required."),
+  receiverZipCode: z.string().min(1, "Receiver ZIP/Postal code is required.").max(20),
+  receiverCity: z.string().min(1, "Receiver city is required.").max(50),
+  receiverContactNo: z.string().regex(phoneRegex, "Invalid receiver contact number (include country code)."),
+  receiverWhatsAppNo: z.string().regex(phoneRegex, "Invalid WhatsApp number (include country code).").optional().or(z.literal('')),
 
-  // Package Details
-  packageDescription: z.string().min(5, "Package description is required."),
-  packageWeight: z.coerce.number().positive("Weight must be a positive number."),
-  packageLength: z.coerce.number().positive("Length must be positive."),
-  packageWidth: z.coerce.number().positive("Width must be positive."),
-  packageHeight: z.coerce.number().positive("Height must be positive."),
-  serviceType: z.enum(['international', 'local', 'freight', 'vacuum_packing'], { required_error: "Please select a service type." }),
+  senderFullName: z.string().min(2, "Sender full name is required.").max(100),
+  senderAddress: z.string().min(5, "Sender address is required.").max(200),
+  senderContactNo: z.string().regex(phoneRegex, "Invalid sender contact number (include country code)."),
+  senderWhatsAppNo: z.string().regex(phoneRegex, "Invalid WhatsApp number (include country code).").optional().or(z.literal('')),
+  
+  declaration1: z.boolean().refine(val => val === true, { message: "You must agree to the first declaration." }),
+  declaration2: z.boolean().refine(val => val === true, { message: "You must agree to the second declaration." }),
 });
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
+
+const sampleCountries = [
+  { code: "US", name: "United States" },
+  { code: "CA", name: "Canada" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "AU", name: "Australia" },
+  { code: "LK", name: "Sri Lanka" },
+  // Add more countries as needed
+];
+
 
 export default function BookingPage() {
   const { toast } = useToast();
@@ -55,20 +74,26 @@ export default function BookingPage() {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
-      senderName: '',
-      senderAddress: '',
-      senderPhone: '',
-      senderEmail: '',
-      receiverName: '',
-      receiverAddress: '',
-      receiverPhone: '',
-      receiverEmail: '',
-      packageDescription: '',
-      packageWeight: undefined,
-      packageLength: undefined,
-      packageWidth: undefined,
-      packageHeight: undefined,
+      shipmentType: undefined,
       serviceType: undefined,
+      locationType: undefined,
+      approxWeight: undefined,
+      approxValue: undefined,
+      receiverFullName: '',
+      receiverEmail: '',
+      receiverAddress: '',
+      receiverDoorCode: '',
+      receiverCountry: '',
+      receiverZipCode: '',
+      receiverCity: '',
+      receiverContactNo: '',
+      receiverWhatsAppNo: '',
+      senderFullName: '',
+      senderAddress: '',
+      senderContactNo: '',
+      senderWhatsAppNo: '',
+      declaration1: false,
+      declaration2: false,
     },
   });
 
@@ -77,18 +102,18 @@ export default function BookingPage() {
       if (!user) {
         const currentPath = window.location.pathname + window.location.search;
         router.push(`/auth?redirect=${encodeURIComponent(currentPath)}`);
-      } else if (userProfile && !userProfile.isProfileComplete) {
-        setShowProfileCompletionAlert(true);
-        // Pre-fill available details even if profile is incomplete
-        if (userProfile.displayName) form.setValue('senderName', userProfile.displayName, { shouldValidate: true });
-        if (userProfile.email) form.setValue('senderEmail', userProfile.email, { shouldValidate: true });
-      } else if (userProfile && userProfile.isProfileComplete) {
-        setShowProfileCompletionAlert(false);
-        // Pre-fill sender details from completed profile
-        if (userProfile.displayName) form.setValue('senderName', userProfile.displayName, { shouldValidate: true });
-        if (userProfile.address) form.setValue('senderAddress', userProfile.address, { shouldValidate: true });
-        if (userProfile.phone) form.setValue('senderPhone', userProfile.phone, { shouldValidate: true });
-        if (userProfile.email) form.setValue('senderEmail', userProfile.email, { shouldValidate: true });
+      } else if (userProfile) {
+        if (!userProfile.isProfileComplete) {
+          setShowProfileCompletionAlert(true);
+        } else {
+          setShowProfileCompletionAlert(false);
+        }
+        // Pre-fill sender details regardless of profile completion for convenience
+        form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: true });
+        form.setValue('senderAddress', userProfile.address || '', { shouldValidate: true });
+        form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: true });
+        // Assuming WhatsApp is not in userProfile, or add if it is:
+        // form.setValue('senderWhatsAppNo', userProfile.whatsappNo || '', { shouldValidate: true });
       }
     }
   }, [user, userProfile, loading, router, form]);
@@ -101,6 +126,7 @@ export default function BookingPage() {
       const bookingData = {
         ...data,
         userId: user ? user.uid : null,
+        userEmail: user ? user.email : null,
         status: 'Pending', 
         createdAt: serverTimestamp(),
       };
@@ -108,20 +134,15 @@ export default function BookingPage() {
       
       toast({
         title: "Booking Submitted!",
-        description: "Your courier booking has been received. We will contact you shortly.",
+        description: "Your shipment details have been received. We will contact you shortly.",
         variant: "default",
         action: <CheckCircle2 className="text-green-500" />,
       });
-      form.reset(); // Reset form, pre-fill will re-apply if still relevant
-      // Re-trigger pre-fill based on current profile state after reset
-      if (userProfile && userProfile.isProfileComplete) {
-        if (userProfile.displayName) form.setValue('senderName', userProfile.displayName);
-        if (userProfile.address) form.setValue('senderAddress', userProfile.address);
-        if (userProfile.phone) form.setValue('senderPhone', userProfile.phone);
-        if (userProfile.email) form.setValue('senderEmail', userProfile.email);
-      } else if (userProfile) {
-         if (userProfile.displayName) form.setValue('senderName', userProfile.displayName);
-         if (userProfile.email) form.setValue('senderEmail', userProfile.email);
+      form.reset(); 
+      if (userProfile) { // Re-apply pre-fills after reset
+        form.setValue('senderFullName', userProfile.displayName || '');
+        form.setValue('senderAddress', userProfile.address || '');
+        form.setValue('senderContactNo', userProfile.phone || '');
       }
 
     } catch (error) {
@@ -139,9 +160,11 @@ export default function BookingPage() {
 
   const handleInvalidSubmit = (errors: any) => {
     console.log("Form errors:", errors);
+    const firstErrorKey = Object.keys(errors)[0];
+    const firstErrorMessage = errors[firstErrorKey]?.message || "Please correct the form errors.";
     toast({
         title: "Error in Booking Form",
-        description: "Please correct the errors highlighted in the form.",
+        description: firstErrorMessage,
         variant: "destructive",
         action: <AlertTriangle className="text-yellow-500" />,
     });
@@ -168,16 +191,16 @@ export default function BookingPage() {
   return (
     <div className="opacity-0 animate-fadeInUp">
       <PageHeader
-        title="Book Your Courier"
-        description="Fill in the details below to schedule your shipment."
+        title="Submit Your Shipment Details"
+        description="Fill in all required information to process your shipment."
       />
 
       {showProfileCompletionAlert && (
         <Alert variant="destructive" className="mb-8 opacity-0 animate-fadeInUp">
-          <AlertTriangle className="h-5 w-5" />
+          <AlertCircle className="h-5 w-5" />
           <AlertTitle className="font-semibold">Action Required: Profile Incomplete</AlertTitle>
           <AlertDescription className="mt-1">
-            To proceed with your booking, please complete your profile with your NIC, Phone Number, and Address.
+            To ensure smooth processing of your booking, please complete your profile with your NIC, Phone Number, and Address.
             <Button asChild variant="link" className="px-1 py-0 h-auto ml-1 text-destructive hover:text-destructive/80 font-semibold underline">
               <Link href="/profile">Go to Profile Page</Link>
             </Button>
@@ -186,146 +209,226 @@ export default function BookingPage() {
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className="space-y-12 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-          <Card className="shadow-xl">
+        <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className="space-y-8 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+          
+          <Card className="shadow-lg border-border/50">
             <CardHeader>
-              <CardTitle className="text-2xl font-headline text-accent">Sender Details</CardTitle>
+              <CardTitle className="text-xl font-headline text-accent flex items-center"><Package className="mr-2 h-6 w-6 text-primary" />Shipment Details</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField control={form.control} name="senderName" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="senderAddress" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl><Textarea placeholder="123 Main St, City, Country" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <div className="grid md:grid-cols-2 gap-4">
-                <FormField control={form.control} name="senderPhone" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl><Input type="tel" placeholder="+1234567890" {...field} /></FormControl>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="shipmentType"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel className="text-base font-semibold">Shipment Type</FormLabel>
+                    <FormControl>
+                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl><RadioGroupItem value="parcel" id="parcel" /></FormControl>
+                          <FormLabel htmlFor="parcel" className="font-normal">Parcel</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl><RadioGroupItem value="document" id="document" /></FormControl>
+                          <FormLabel htmlFor="document" className="font-normal">Document</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
-                )} />
-                <FormField control={form.control} name="senderEmail" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl><Input type="email" placeholder="john.doe@example.com" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-2xl font-headline text-accent">Receiver Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField control={form.control} name="receiverName" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl><Input placeholder="Jane Smith" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="receiverAddress" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl><Textarea placeholder="456 Oak Ave, City, Country" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <div className="grid md:grid-cols-2 gap-4">
-                <FormField control={form.control} name="receiverPhone" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl><Input type="tel" placeholder="+0987654321" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="receiverEmail" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address (Optional)</FormLabel>
-                    <FormControl><Input type="email" placeholder="jane.smith@example.com" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-2xl font-headline text-accent">Package Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField control={form.control} name="packageDescription" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description of Goods</FormLabel>
-                  <FormControl><Textarea placeholder="e.g., Books, Electronics, Clothing" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="packageWeight" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Weight (kg)</FormLabel>
-                  <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.5" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormLabel>Dimensions (cm)</FormLabel>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField control={form.control} name="packageLength" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm text-muted-foreground">Length</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 30" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="packageWidth" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm text-muted-foreground">Width</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 20" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="packageHeight" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm text-muted-foreground">Height</FormLabel>
-                    <FormControl><Input type="number" step="0.1" placeholder="e.g., 10" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              </div>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="serviceType"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a service type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="international">International</SelectItem>
-                        <SelectItem value="local">Local</SelectItem>
-                        <SelectItem value="freight">Freight Forwarding</SelectItem>
-                        <SelectItem value="vacuum_packing">Vacuum Packing</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <FormItem className="space-y-3">
+                    <FormLabel className="text-base font-semibold">Service Type</FormLabel>
+                    <FormControl>
+                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl><RadioGroupItem value="economy" id="economy" /></FormControl>
+                          <FormLabel htmlFor="economy" className="font-normal flex items-center"><Clock className="mr-1.5 h-4 w-4 text-muted-foreground"/>Economy Service</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl><RadioGroupItem value="express" id="express" /></FormControl>
+                          <FormLabel htmlFor="express" className="font-normal flex items-center"><Zap className="mr-1.5 h-4 w-4 text-muted-foreground"/>Express Service</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="locationType"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel className="text-base font-semibold">Pickup / Drop-off Location</FormLabel>
+                    <FormControl>
+                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-2">
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl><RadioGroupItem value="pickup" id="pickup" /></FormControl>
+                          <FormLabel htmlFor="pickup" className="font-normal flex items-center"><Home className="mr-1.5 h-4 w-4 text-muted-foreground"/>Pickup</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl><RadioGroupItem value="dropoff_maharagama" id="dropoff_maharagama" /></FormControl>
+                          <FormLabel htmlFor="dropoff_maharagama" className="font-normal flex items-center"><Building className="mr-1.5 h-4 w-4 text-muted-foreground"/>Drop Off – Maharagama</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2">
+                          <FormControl><RadioGroupItem value="dropoff_galle" id="dropoff_galle" /></FormControl>
+                          <FormLabel htmlFor="dropoff_galle" className="font-normal flex items-center"><Navigation className="mr-1.5 h-4 w-4 text-muted-foreground"/>Drop Off – Galle</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-border/50">
+            <CardHeader>
+              <CardTitle className="text-xl font-headline text-accent flex items-center"><Info className="mr-2 h-6 w-6 text-primary"/>Shipment Info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField control={form.control} name="approxWeight" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Approximate Weight (KG)</FormLabel>
+                  <FormControl><Input type="number" step="0.1" placeholder="e.g., 2.5" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="approxValue" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Approximate Value of Goods (USD)</FormLabel>
+                  <FormControl><Input type="number" step="0.01" placeholder="e.g., 50.00" {...field} /></FormControl>
+                  <FormDescription>For customs clearance purposes only.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-border/50">
+            <CardHeader>
+              <CardTitle className="text-xl font-headline text-accent flex items-center"><FileText className="mr-2 h-6 w-6 text-primary"/>Airway Bill Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><User className="mr-2 h-5 w-5"/>Receiver Details</h3>
+                <div className="space-y-4">
+                  <FormField control={form.control} name="receiverFullName" render={({ field }) => (
+                    <FormItem><FormLabel>Full Name (as per passport)</FormLabel><FormControl><Input placeholder="John Michael Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="receiverEmail" render={({ field }) => (
+                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="receiver@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="receiverAddress" render={({ field }) => (
+                    <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="123 Global St, Apt 4B" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="receiverDoorCode" render={({ field }) => (
+                    <FormItem><FormLabel>Door Code / Access Code / Floor Number (Optional)</FormLabel><FormControl><Input placeholder="e.g., #1234, Floor 5" {...field} /></FormControl>
+                    <FormDescription className="text-xs">Address without door code will be delivered to the nearest parcel point.</FormDescription><FormMessage /></FormItem>
+                  )} />
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="receiverCountry" render={({ field }) => (
+                      <FormItem><FormLabel>Country</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger></FormControl>
+                          <SelectContent><SelectItem value="" disabled>Select country</SelectItem>{sampleCountries.map(c => <SelectItem key={c.code} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                        </Select><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="receiverZipCode" render={({ field }) => (
+                      <FormItem><FormLabel>ZIP / Postal Code</FormLabel><FormControl><Input placeholder="e.g., 90210" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                  </div>
+                  <FormField control={form.control} name="receiverCity" render={({ field }) => (
+                    <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Springfield" {...field} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="receiverContactNo" render={({ field }) => (
+                      <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="+1 555 123 4567" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="receiverWhatsAppNo" render={({ field }) => (
+                      <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="+1 555 123 4567" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                  </div>
+                </div>
+              </div>
+              
+              <hr className="my-6 border-border/50" />
+
+              <div>
+                <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><User className="mr-2 h-5 w-5"/>Sender Details</h3>
+                <div className="space-y-4">
+                  <FormField control={form.control} name="senderFullName" render={({ field }) => (
+                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} readOnly={!!userProfile?.displayName} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={form.control} name="senderAddress" render={({ field }) => (
+                    <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Your Address" {...field} readOnly={!!userProfile?.address} /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="senderContactNo" render={({ field }) => (
+                      <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Your Contact No." {...field} readOnly={!!userProfile?.phone} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="senderWhatsAppNo" render={({ field }) => (
+                      <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="Your WhatsApp No." {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-border/50">
+            <CardHeader>
+              <CardTitle className="text-xl font-headline text-accent flex items-center"><FileText className="mr-2 h-6 w-6 text-primary"/>Document Upload</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-foreground/80">
+                Please forward invoices, bills, and tracking details to the following number:
+              </p>
+              <p className="font-semibold text-lg text-primary mt-1 flex items-center">
+                <Phone className="mr-2 h-5 w-5"/> +94 770 663 108
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg border-border/50">
+            <CardHeader>
+              <CardTitle className="text-xl font-headline text-accent flex items-center"><CheckCircle2 className="mr-2 h-6 w-6 text-primary"/>Declarations</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="declaration1"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="font-normal">
+                        I have read and checked the Important Guide, Amendment Fees & Terms-Conditions, and Remote Area Postal Codes for Economy Service – Europe, and I am fully aware of the additional charges if applicable to my parcel/document.
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="declaration2"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel className="font-normal">
+                        I have read and agreed to the Terms & Conditions and wish to proceed with my shipment via CFC Express.
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />
@@ -336,7 +439,7 @@ export default function BookingPage() {
             {isSubmitting ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Submitting...</>
               ) : (
-                "Submit Booking"
+                "Submit Shipment"
             )}
           </Button>
         </form>
