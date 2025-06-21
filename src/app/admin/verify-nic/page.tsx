@@ -78,7 +78,30 @@ export default function VerifyNicPage() {
         });
       
       const usersData = await Promise.all(usersDataPromises);
-      usersData.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+      
+      // Sort to prioritize pending requests, then by most recently updated
+      const statusOrder: Record<NicVerificationStatus, number> = {
+        pending: 1,
+        rejected: 2,
+        verified: 3,
+        none: 4, 
+      };
+
+      usersData.sort((a, b) => {
+        const statusA = a.nicVerificationStatus || 'none';
+        const statusB = b.nicVerificationStatus || 'none';
+        
+        const orderA = statusOrder[statusA] || 99;
+        const orderB = statusOrder[statusB] || 99;
+
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+        
+        // If statuses are the same, sort by most recently updated
+        return (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0);
+      });
+
 
       setAllUsers(usersData);
     } catch (error) {
@@ -148,7 +171,7 @@ export default function VerifyNicPage() {
             <BadgeCheck className="mr-2 sm:mr-3 h-6 sm:h-7 w-6 sm:w-7 text-primary" /> NIC Verification Requests
           </CardTitle>
           <CardDescription className="text-sm sm:text-base">
-            Review and approve or reject user NIC submissions.
+            Review and approve or reject user NIC submissions. Pending requests are shown first.
           </CardDescription>
         </CardHeader>
         <CardContent>
