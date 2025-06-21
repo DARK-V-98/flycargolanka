@@ -27,7 +27,7 @@ import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCa
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
-export type BookingStatus = 'Pending' | 'Confirmed' | 'In Transit' | 'Delivered' | 'Cancelled' | 'Rejected' | 'Paused';
+export type BookingStatus = 'Pending' | 'Confirmed' | 'Collecting' | 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled' | 'Rejected';
 
 interface Booking {
   id: string;
@@ -101,16 +101,23 @@ export default function MyBookingsPage() {
     }
   }, [user, fetchUserBookings]);
 
-  const getStatusVariant = (status: BookingStatus) => {
+  const getDisplayStatus = (status: BookingStatus): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } => {
     switch (status) {
-      case 'Pending': return 'secondary';
-      case 'Confirmed': return 'default';
-      case 'In Transit': return 'default';
-      case 'Delivered': return 'outline'; 
-      case 'Cancelled': return 'destructive';
-      case 'Rejected': return 'destructive';
-      case 'Paused': return 'secondary';
-      default: return 'secondary';
+      case 'Pending':
+        return { text: 'Pending', variant: 'secondary' };
+      case 'Cancelled':
+        return { text: 'Cancelled', variant: 'destructive' };
+      case 'Rejected':
+        return { text: 'Rejected', variant: 'destructive' };
+      case 'Confirmed':
+      case 'Collecting':
+      case 'Processing':
+      case 'In Transit':
+      case 'Delivered':
+      case 'On Hold':
+        return { text: 'Confirmed', variant: 'default' };
+      default:
+        return { text: status, variant: 'secondary' };
     }
   };
 
@@ -241,7 +248,11 @@ export default function MyBookingsPage() {
         </Alert>
       ) : (
         <div className="space-y-6">
-          {bookings.map((booking) => (
+          {bookings.map((booking) => {
+            const displayStatus = getDisplayStatus(booking.status);
+            const showProcessingAlert = !['Pending', 'Cancelled', 'Rejected'].includes(booking.status);
+
+            return(
             <Card key={booking.id} className="shadow-md hover:shadow-lg transition-shadow duration-300">
               <CardHeader>
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -249,8 +260,8 @@ export default function MyBookingsPage() {
                         <Package className="mr-2 h-5 w-5 text-primary" />
                         Booking ID: <span className="ml-1 font-mono text-sm text-muted-foreground">{booking.id}</span>
                     </CardTitle>
-                    <Badge variant={getStatusVariant(booking.status)} className="text-xs self-start sm:self-center">
-                        {booking.status}
+                    <Badge variant={displayStatus.variant} className="text-xs self-start sm:self-center">
+                        {displayStatus.text}
                     </Badge>
                 </div>
                 <CardDescription className="text-xs text-muted-foreground mt-1 flex items-center">
@@ -263,7 +274,7 @@ export default function MyBookingsPage() {
                 )}
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                 {booking.status === 'Confirmed' && (
+                 {showProcessingAlert && (
                     <Alert variant="default" className="bg-green-500/10 border-green-500/30">
                         <BellRing className="h-5 w-5 text-green-600"/>
                         <AlertTitle className="text-green-700 font-semibold">Booking Confirmed & Processing!</AlertTitle>
@@ -334,7 +345,7 @@ export default function MyBookingsPage() {
                 </Button>
               </CardFooter>
             </Card>
-          ))}
+          )})}
         </div>
       )}
     </div>

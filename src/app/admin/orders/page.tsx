@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-export type BookingStatus = 'Pending' | 'Confirmed' | 'In Transit' | 'Delivered' | 'Cancelled' | 'Rejected' | 'Paused';
+export type BookingStatus = 'Pending' | 'Confirmed' | 'Collecting' | 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled' | 'Rejected';
 
 // Expanded Booking interface to include all fields from the booking form
 interface Booking {
@@ -77,7 +77,7 @@ interface Booking {
 }
 
 
-const ALL_STATUSES: BookingStatus[] = ['Pending', 'Confirmed', 'In Transit', 'Delivered', 'Cancelled', 'Rejected', 'Paused'];
+const ALL_STATUSES: BookingStatus[] = ['Pending', 'Confirmed', 'Collecting', 'Processing', 'In Transit', 'Delivered', 'On Hold', 'Cancelled', 'Rejected'];
 
 export default function AdminOrdersPage() {
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
@@ -141,15 +141,17 @@ export default function AdminOrdersPage() {
   }, [allBookings, searchTerm, filterStatus]);
 
 
-  const getStatusVariant = (status: BookingStatus) => {
+  const getStatusVariant = (status: BookingStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
       case 'Pending': return 'secondary';
-      case 'Confirmed': return 'default'; 
-      case 'In Transit': return 'default'; 
-      case 'Delivered': return 'outline'; 
+      case 'On Hold': return 'secondary';
+      case 'Confirmed': return 'default';
+      case 'Collecting': return 'default';
+      case 'Processing': return 'default';
+      case 'In Transit': return 'default';
+      case 'Delivered': return 'outline';
       case 'Cancelled': return 'destructive';
       case 'Rejected': return 'destructive';
-      case 'Paused': return 'secondary';
       default: return 'secondary';
     }
   };
@@ -405,5 +407,3 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
-
-    
