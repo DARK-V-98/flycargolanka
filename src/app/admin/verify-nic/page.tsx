@@ -214,8 +214,8 @@ export default function VerifyNicPage() {
                         <AvatarFallback>{user.displayName ? user.displayName.charAt(0).toUpperCase() : <User />}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{user.displayName}</CardTitle>
-                        <CardDescription className="text-xs break-all">{user.email}</CardDescription>
+                        <CardTitle className="text-lg">{user.displayName || user.email}</CardTitle>
+                        {user.displayName && <CardDescription className="text-xs break-all">{user.email}</CardDescription>}
                         <Badge variant={getStatusBadgeVariant(user.nicVerificationStatus as NicVerificationStatus)} className="mt-2 capitalize text-xs">
                           {user.nicVerificationStatus}
                         </Badge>
