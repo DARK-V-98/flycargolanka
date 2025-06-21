@@ -8,6 +8,7 @@ import type { UserProfile, NicVerificationStatus } from '@/contexts/AuthContext'
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button, buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,11 +22,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, BadgeCheck, User, Mail, Phone, Fingerprint, Book, AlertTriangle, Filter, Image as ImageIcon } from 'lucide-react';
+import { Loader2, BadgeCheck, User, Mail, Phone, Fingerprint, Book, AlertTriangle, Filter, Image as ImageIcon, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface BookingStub {
@@ -54,6 +54,7 @@ export default function VerifyNicPage() {
   const [allUsers, setAllUsers] = useState<UserForVerification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<VerificationFilterStatus>('pending');
+  const [searchTerm, setSearchTerm] = useState('');
   const [actioningUser, setActioningUser] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -61,17 +62,19 @@ export default function VerifyNicPage() {
     setLoading(true);
     try {
       const usersRef = collection(db, 'users');
-      const usersQuery = query(usersRef, where('nicVerificationStatus', '!=', 'none'));
-      const userSnapshot = await getDocs(usersQuery);
+      // Fetch all users and filter client-side, as Firestore query limitations on '!=' and 'in' are restrictive.
+      const userSnapshot = await getDocs(usersRef);
 
-      const usersDataPromises = userSnapshot.docs.map(async (userDoc) => {
-        const userData = userDoc.data() as UserProfile;
-        const bookingsRef = collection(db, 'bookings');
-        const bookingsQuery = query(bookingsRef, where('userId', '==', userData.uid), orderBy('createdAt', 'desc'));
-        const bookingsSnapshot = await getDocs(bookingsQuery);
-        const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, createdAt: doc.data().createdAt as Timestamp }));
-        return { ...userData, bookings };
-      });
+      const usersDataPromises = userSnapshot.docs
+        .filter(doc => doc.data().nicVerificationStatus && doc.data().nicVerificationStatus !== 'none')
+        .map(async (userDoc) => {
+          const userData = userDoc.data() as UserProfile;
+          const bookingsRef = collection(db, 'bookings');
+          const bookingsQuery = query(bookingsRef, where('userId', '==', userData.uid), orderBy('createdAt', 'desc'));
+          const bookingsSnapshot = await getDocs(bookingsQuery);
+          const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, createdAt: doc.data().createdAt as Timestamp }));
+          return { ...userData, bookings };
+        });
       
       const usersData = await Promise.all(usersDataPromises);
       usersData.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
@@ -90,9 +93,27 @@ export default function VerifyNicPage() {
   }, [fetchUsersToVerify]);
 
   const filteredUsers = useMemo(() => {
-    if (filterStatus === 'all') return allUsers;
-    return allUsers.filter(user => user.nicVerificationStatus === filterStatus);
-  }, [allUsers, filterStatus]);
+    let currentUsers = [...allUsers];
+
+    // Filter by status first
+    if (filterStatus !== 'all') {
+      currentUsers = currentUsers.filter(user => user.nicVerificationStatus === filterStatus);
+    }
+
+    // Then filter by search term
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      currentUsers = currentUsers.filter(user =>
+        (user.email && user.email.toLowerCase().includes(lowerSearchTerm)) ||
+        (user.displayName && user.displayName.toLowerCase().includes(lowerSearchTerm)) ||
+        (user.nic && user.nic.toLowerCase().includes(lowerSearchTerm)) ||
+        user.bookings.some(booking => booking.id.toLowerCase().includes(lowerSearchTerm))
+      );
+    }
+
+    return currentUsers;
+  }, [allUsers, filterStatus, searchTerm]);
+
 
   const handleStatusUpdate = async (userId: string, newStatus: 'verified' | 'rejected') => {
     setActioningUser(userId);
@@ -130,20 +151,31 @@ export default function VerifyNicPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 mb-4 sm:mb-6">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as VerificationFilterStatus)}>
-              <SelectTrigger className="w-full sm:w-[180px] text-sm h-9">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="verified">Verified</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+            <div className="relative w-full flex-grow">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search Email, Name, NIC, Booking ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 h-10"
+                />
+            </div>
+            <div className="w-full sm:w-auto flex-shrink-0">
+                <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as VerificationFilterStatus)}>
+                    <SelectTrigger className="w-full sm:w-[200px] h-10">
+                        <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="verified">Verified</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
 
           {filteredUsers.length === 0 ? (
             <p className="text-muted-foreground text-sm text-center py-8">No users found for the selected filter.</p>
