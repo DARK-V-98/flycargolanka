@@ -336,8 +336,7 @@ export default function ManageRatesPage() {
                           <FormItem>
                           <FormLabel className="text-xs sm:text-sm">Weight Value (kg)</FormLabel>
                           <FormControl>
-                              <Input type="number" step="0.01" placeholder="e.g., 1 or 2.5" {...field} value={field.value ?? ''}
-                              onChange={e => { const valStr = e.target.value; field.onChange(valStr === '' ? '' : (isNaN(parseFloat(valStr)) ? '' : parseFloat(valStr))); }} className="text-sm"/>
+                              <Input type="number" step="0.01" placeholder="e.g., 1 or 2.5" {...field} value={field.value ?? ''} className="text-sm"/>
                           </FormControl>
                           <ShadFormDescription className="text-xs">Numeric value for sorting (e.g., 0.5 for 500g).</ShadFormDescription>
                           <FormMessage />

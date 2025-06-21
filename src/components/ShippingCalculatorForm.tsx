@@ -44,7 +44,7 @@ export default function ShippingCalculatorForm() {
       shipmentType: undefined,
       serviceType: undefined,
       destinationCountry: '',
-      weight: undefined,
+      weight: '' as any,
     },
   });
 
@@ -277,7 +277,7 @@ export default function ShippingCalculatorForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center"><Weight className="mr-2 h-5 w-5 text-muted-foreground"/>Package Weight (KG)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 1.5" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} /></FormControl>
+                  <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 1.5" {...field} value={field.value ?? ''} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -306,4 +306,3 @@ export default function ShippingCalculatorForm() {
     </Card>
   );
 }
-

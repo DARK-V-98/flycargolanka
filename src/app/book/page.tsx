@@ -91,8 +91,8 @@ export default function BookingPage() {
       serviceType: undefined,
       locationType: undefined,
       receiverCountry: '',
-      approxWeight: undefined,
-      approxValue: undefined,
+      approxWeight: '' as any,
+      approxValue: '' as any,
       receiverFullName: '',
       receiverEmail: '',
       receiverAddress: '',
@@ -454,7 +454,7 @@ export default function BookingPage() {
                   <FormItem className="space-y-3">
                     <FormLabel className="text-base font-semibold">Shipment Type</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={(value) => { field.onChange(value); form.setValue('receiverCountry', ''); form.setValue('approxWeight', undefined); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                      <RadioGroup onValueChange={(value) => { field.onChange(value); form.setValue('receiverCountry', ''); form.setValue('approxWeight', '' as any); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="parcel" id="parcel" /></FormControl><FormLabel htmlFor="parcel" className="font-normal">Parcel</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="document" id="document" /></FormControl><FormLabel htmlFor="document" className="font-normal">Document</FormLabel></FormItem>
                       </RadioGroup>
@@ -465,7 +465,7 @@ export default function BookingPage() {
                   <FormItem className="space-y-3">
                     <FormLabel className="text-base font-semibold">Service Type</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={(value) => { field.onChange(value); form.setValue('receiverCountry', ''); form.setValue('approxWeight', undefined); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                      <RadioGroup onValueChange={(value) => { field.onChange(value); form.setValue('receiverCountry', ''); form.setValue('approxWeight', '' as any); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="economy" id="economy" /></FormControl><FormLabel htmlFor="economy" className="font-normal flex items-center"><Clock className="mr-1.5 h-4 w-4 text-muted-foreground"/>Economy Service</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="express" id="express" /></FormControl><FormLabel htmlFor="express" className="font-normal flex items-center"><Zap className="mr-1.5 h-4 w-4 text-muted-foreground"/>Express Service</FormLabel></FormItem>
                       </RadioGroup>
@@ -490,7 +490,7 @@ export default function BookingPage() {
                   <h3 className="text-lg font-semibold text-muted-foreground flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary" />Destination &amp; Weight for Rate Calculation</h3>
                   <FormField control={form.control} name="receiverCountry" render={({ field }) => (
                     <FormItem><FormLabel>Destination Country</FormLabel>
-                      <Select onValueChange={(value) => {field.onChange(value); form.setValue('approxWeight', undefined); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]);}} value={field.value ?? ''} disabled={loadingCountries || availableCountries.length === 0}>
+                      <Select onValueChange={(value) => {field.onChange(value); form.setValue('approxWeight', '' as any); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]);}} value={field.value ?? ''} disabled={loadingCountries || availableCountries.length === 0}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={ loadingCountries ? "Loading countries..." : availableCountries.length === 0 ? "No countries available" : "Select country" } />
@@ -505,14 +505,14 @@ export default function BookingPage() {
                   <FormField control={form.control} name="approxWeight" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Approximate Weight (KG)</FormLabel>
-                      <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseFloat(e.target.value) || undefined)} /></FormControl>
+                      <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 2.5" {...field} value={field.value ?? ''} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="approxValue" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Approximate Value of Goods (USD)</FormLabel>
-                      <FormControl><Input type="number" step="0.01" min="1" placeholder="e.g., 50.00" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseFloat(e.target.value) || undefined)} /></FormControl>
+                      <FormControl><Input type="number" step="0.01" min="1" placeholder="e.g., 50.00" {...field} value={field.value ?? ''} /></FormControl>
                       <FormDescription>For customs clearance purposes only.</FormDescription>
                       <FormMessage />
                     </FormItem>
