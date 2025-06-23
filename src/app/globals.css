@@ -5,50 +5,50 @@
 
 @layer base {
   :root {
-    /* FlyCargo Light Theme (Default) */
-    --background: 45 67% 94%; /* #FAF5E7 (Very light tint of gold) */
-    --foreground: 209 47% 11%; /* #0D1B2A (Dark navy blue for text) */
+    /* FlyCargo New Dark Blue Theme */
+    --background: 220 60% 97%; /* Very light, cool gray/blue */
+    --foreground: 224 71% 15%; /* Dark blue for text */
 
     --card: 0 0% 100%; /* White */
-    --card-foreground: 209 47% 11%; /* Dark navy blue */
+    --card-foreground: 224 71% 15%; /* Dark blue */
 
     --popover: 0 0% 100%; /* White */
-    --popover-foreground: 209 47% 11%; /* Dark navy blue */
+    --popover-foreground: 224 71% 15%; /* Dark blue */
 
     --primary: 45 79% 51%; /* #D4AF37 (Gold) */
-    --primary-foreground: 209 47% 11%; /* Dark navy blue (text on gold) */
+    --primary-foreground: 224 71% 15%; /* Dark blue (text on gold) */
     
-    --secondary: 45 60% 88%; /* #F7F0DF (Lighter gold/beige) */
-    --secondary-foreground: 209 47% 11%; /* Dark navy blue */
+    --secondary: 220 60% 92%; /* Light blue-gray */
+    --secondary-foreground: 224 71% 15%; /* Dark blue */
 
-    --muted: 45 60% 92%; /* #F9F5ED (Even lighter gold/beige) */
-    --muted-foreground: 209 47% 25%; /* #2A3B4D (Slightly lighter navy for muted text) */
+    --muted: 220 60% 95%; /* Even lighter blue-gray */
+    --muted-foreground: 224 71% 35%; /* Medium-dark blue */
 
-    --accent: 209 47% 11%; /* #0D1B2A (Dark navy blue) */
-    --accent-foreground: 0 0% 100%; /* White (text on navy accent) */
+    --accent: 224 71% 22%; /* Dark Blue */
+    --accent-foreground: 0 0% 100%; /* White (text on blue accent) */
 
     --destructive: 0 84% 60%; /* Standard Red */
     --destructive-foreground: 0 0% 100%; /* White text on red */
 
-    --border: 45 50% 80%; /* #EBE2C9 (Light gold/beige border) */
+    --border: 220 50% 85%; /* Light blue-gray border */
     --input: 0 0% 100%; /* White input background */
     --ring: 45 79% 51%; /* Gold for focus rings */
 
     --chart-1: 45 79% 45%;  /* Darker Gold */
     --chart-2: 45 79% 55%; /* Medium Gold */
     --chart-3: 35 75% 40%;  /* Orangey Gold */
-    --chart-4: 209 40% 30%; /* Darker Navy */
-    --chart-5: 209 50% 50%;  /* Brighter Navy */
+    --chart-4: 224 71% 30%; /* Darker Blue */
+    --chart-5: 224 71% 50%;  /* Brighter Blue */
     --radius: 0.5rem;
 
-    /* Sidebar light theme */
-    --sidebar-background: 45 60% 96%; /* #FCF8F1 (Slightly off-white goldish) */
-    --sidebar-foreground: 209 47% 11%; /* Dark navy */
+    /* Sidebar theme */
+    --sidebar-background: 220 60% 96%; /* Very light blue */
+    --sidebar-foreground: 224 71% 15%; /* Dark blue */
     --sidebar-primary: 45 79% 51%; /* Gold */
-    --sidebar-primary-foreground: 209 47% 11%; /* Dark navy */
-    --sidebar-accent: 209 47% 11%; /* Dark navy */
+    --sidebar-primary-foreground: 224 71% 15%; /* Dark blue */
+    --sidebar-accent: 224 71% 22%; /* Dark Blue */
     --sidebar-accent-foreground: 0 0% 100%; /* White */
-    --sidebar-border: 45 50% 80%; /* Light gold/beige border */
+    --sidebar-border: 220 50% 85%; /* Light blue-gray border */
     --sidebar-ring: 45 79% 51%; /* Gold */
   }
 
