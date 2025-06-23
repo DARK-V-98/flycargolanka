@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
@@ -49,13 +50,13 @@ export default function Home() {
               </h1>
               
               <div className="flex flex-wrap justify-center items-center gap-4 opacity-0 animate-fadeInUp delay-400">
-                <Button asChild className="bg-white/20 text-white backdrop-blur-sm border border-white/30 rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-white/30 hover:scale-105 transition-all duration-300">
+                <Button asChild className="bg-accent text-accent-foreground rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-accent/90 hover:scale-105 transition-all duration-300">
                   <Link href="/book">Book Courier &amp; Fee Calculator</Link>
                 </Button>
-                <Button asChild className="bg-white/20 text-white backdrop-blur-sm border border-white/30 rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-white/30 hover:scale-105 transition-all duration-300">
+                <Button asChild className="bg-accent text-accent-foreground rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-accent/90 hover:scale-105 transition-all duration-300">
                   <Link href="/#shipping-calculator-section">Fee Calculator</Link>
                 </Button>
-                 <Button asChild className="bg-white/20 text-white backdrop-blur-sm border border-white/30 rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-white/30 hover:scale-105 transition-all duration-300">
+                 <Button asChild className="bg-accent text-accent-foreground rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-accent/90 hover:scale-105 transition-all duration-300">
                   <Link href="/track-package">Track Package</Link>
                 </Button>
               </div>
