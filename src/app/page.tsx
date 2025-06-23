@@ -46,18 +46,21 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
             
             <div className="md:text-left text-center space-y-6 order-1">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-[hsl(var(--chart-1))] mb-6 opacity-0 animate-fadeInUp text-glow-primary text-shadow-3d-navy">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-[hsl(var(--chart-1))] mb-6 opacity-0 animate-fadeInUp text-shadow-3d-navy">
                 <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
               </h1>
               <p className="text-xl md:text-2xl text-white/90 mb-8 opacity-0 animate-fadeInUp delay-200">
                 Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
               </p>
-              <div className="space-x-0 md:space-x-4 space-y-4 md:space-y-0 flex flex-col sm:flex-row justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
-                 <Button asChild variant="default" size="lg" className="transition-transform duration-300 hover:scale-105">
-                  <Link href="/book">Book a Courier & Estimate Cost</Link>
+              <div className="space-y-4 sm:space-x-4 sm:space-y-0 flex flex-col sm:flex-row sm:flex-wrap justify-center md:justify-start items-center opacity-0 animate-fadeInUp delay-400">
+                <Button asChild variant="secondary" size="lg" className="transition-transform duration-300 hover:scale-105">
+                  <Link href="/book">Book Courier & Fee Calculator</Link>
+                </Button>
+                <Button asChild variant="secondary" size="lg" className="transition-transform duration-300 hover:scale-105">
+                  <Link href="/#shipping-calculator-section">Fee Calculator</Link>
                 </Button>
                  <Button asChild variant="secondary" size="lg" className="transition-transform duration-300 hover:scale-105">
-                  <Link href="/#shipping-calculator-section">Estimate Shipping Cost</Link>
+                  <Link href="/track-package">Track Package</Link>
                 </Button>
               </div>
             </div>
@@ -215,4 +218,3 @@ export default function Home() {
     </div>
   );
 }
-
