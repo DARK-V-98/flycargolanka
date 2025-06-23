@@ -38,7 +38,7 @@ export default function FlyCargoLogo({ hideText = false, showSpinner = true }: F
           priority
         />
       </div>
-      {!hideText && <span className="text-glow-primary text-[hsl(var(--chart-1))] hover:text-[hsl(var(--chart-1))]/80">FlyCargo Lanka</span>}
+      {!hideText && <span className="text-[hsl(var(--chart-1))] hover:text-[hsl(var(--chart-1))]/80">FlyCargo Lanka</span>}
     </div>
   );
 }

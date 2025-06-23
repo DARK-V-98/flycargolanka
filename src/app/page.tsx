@@ -49,10 +49,8 @@ export default function Home() {
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-[hsl(var(--chart-1))] mb-6 opacity-0 animate-fadeInUp">
                 <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
               </h1>
-              <p className="text-xl md:text-2xl text-white/90 mb-8 opacity-0 animate-fadeInUp delay-200">
-                Your trusted partner for fast, reliable, and secure courier services. We connect you to the world.
-              </p>
-              <div className="flex flex-col sm:flex-row flex-wrap justify-center md:justify-start items-center gap-4 opacity-0 animate-fadeInUp delay-400">
+              
+              <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 opacity-0 animate-fadeInUp delay-400">
                 <Button asChild variant="secondary" size="lg" className="transition-transform duration-300 hover:scale-105">
                   <Link href="/book">Book Courier &amp; Fee Calculator</Link>
                 </Button>
