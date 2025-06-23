@@ -6,32 +6,39 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, type Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import type { CountryRate, WeightRate } from '@/types/shippingRates';
+import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, Package, FileText, Clock, Zap, Globe, Weight, Loader2, AlertTriangle, DollarSign } from 'lucide-react';
+import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap } from 'lucide-react';
 
 const calculatorSchema = z.object({
-  shipmentType: z.enum(['parcel', 'document'], { required_error: "Please select a shipment type." }),
-  serviceType: z.enum(['economy', 'express'], { required_error: "Please select a service type." }),
   destinationCountry: z.string().min(1, "Please select a destination country."),
   weight: z.coerce.number().positive("Weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."),
 });
 
 type CalculatorFormValues = z.infer<typeof calculatorSchema>;
 
+interface RateOption {
+  shipmentType: 'Parcel' | 'Document';
+  serviceType: 'Economy' | 'Express';
+  price: number;
+  icon: React.ElementType;
+  typeIcon: React.ElementType;
+}
+
 export default function ShippingCalculatorForm() {
   const { toast } = useToast();
   const [isCalculating, setIsCalculating] = useState(false);
-  const [calculatedCost, setCalculatedCost] = useState<string | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
+  const [rateOptions, setRateOptions] = useState<RateOption[]>([]);
 
   const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
@@ -41,8 +48,6 @@ export default function ShippingCalculatorForm() {
   const form = useForm<CalculatorFormValues>({
     resolver: zodResolver(calculatorSchema),
     defaultValues: {
-      shipmentType: undefined,
-      serviceType: undefined,
       destinationCountry: '',
       weight: '' as any,
     },
@@ -83,9 +88,9 @@ export default function ShippingCalculatorForm() {
         return;
       }
       setLoadingWeights(true);
-      setAvailableWeights([]); // Reset weights when country changes
-      setCalculatedCost(null); // Reset cost
-      setCalculationError(null); // Reset error
+      setAvailableWeights([]);
+      setRateOptions([]);
+      setCalculationError(null);
 
       const selectedCountry = availableCountries.find(c => c.name === watchedDestinationCountryName);
       if (!selectedCountry) {
@@ -123,7 +128,7 @@ export default function ShippingCalculatorForm() {
 
   const onSubmit: SubmitHandler<CalculatorFormValues> = async (data) => {
     setIsCalculating(true);
-    setCalculatedCost(null);
+    setRateOptions([]);
     setCalculationError(null);
 
     if (availableWeights.length === 0) {
@@ -148,10 +153,13 @@ export default function ShippingCalculatorForm() {
       }
     }
 
-    // If weight is greater than the max band, use the max band.
-    if(!selectedWeightBand && sortedWeights.length > 0) {
+    if (!selectedWeightBand && sortedWeights.length > 0) {
         selectedWeightBand = sortedWeights[sortedWeights.length - 1];
-        setCalculationError(`Entered weight exceeds max configured band. Using rate for ${selectedWeightBand.weightLabel}.`);
+        toast({
+          title: "Weight Exceeds Maximum",
+          description: `Entered weight exceeds max configured band. Using rate for ${selectedWeightBand.weightLabel}.`,
+          variant: "default",
+        })
     }
 
     if (!selectedWeightBand) {
@@ -160,36 +168,32 @@ export default function ShippingCalculatorForm() {
       return;
     }
 
-    let price: number | null | undefined = null;
-    let serviceAvailable = false;
-    const currency = "LKR";
+    const options: RateOption[] = [];
+    const {
+        isNdEconomyEnabled, ndEconomyPrice,
+        isNdExpressEnabled, ndExpressPrice,
+        isDocEconomyEnabled, docEconomyPrice,
+        isDocExpressEnabled, docExpressPrice,
+    } = selectedWeightBand;
 
-    if (data.shipmentType === 'parcel') { // 'parcel' matches 'non-document'
-      if (data.serviceType === 'economy') {
-        serviceAvailable = selectedWeightBand.isNdEconomyEnabled ?? false;
-        price = selectedWeightBand.ndEconomyPrice;
-      } else if (data.serviceType === 'express') {
-        serviceAvailable = selectedWeightBand.isNdExpressEnabled ?? false;
-        price = selectedWeightBand.ndExpressPrice;
-      }
-    } else if (data.shipmentType === 'document') {
-      if (data.serviceType === 'economy') {
-        serviceAvailable = selectedWeightBand.isDocEconomyEnabled ?? false;
-        price = selectedWeightBand.docEconomyPrice;
-      } else if (data.serviceType === 'express') {
-        serviceAvailable = selectedWeightBand.isDocExpressEnabled ?? false;
-        price = selectedWeightBand.docExpressPrice;
-      }
+    if (isNdEconomyEnabled && ndEconomyPrice != null) {
+      options.push({ shipmentType: 'Parcel', serviceType: 'Economy', price: ndEconomyPrice, icon: Clock, typeIcon: Package });
+    }
+    if (isNdExpressEnabled && ndExpressPrice != null) {
+      options.push({ shipmentType: 'Parcel', serviceType: 'Express', price: ndExpressPrice, icon: Zap, typeIcon: Package });
+    }
+    if (isDocEconomyEnabled && docEconomyPrice != null) {
+      options.push({ shipmentType: 'Document', serviceType: 'Economy', price: docEconomyPrice, icon: Clock, typeIcon: FileText });
+    }
+    if (isDocExpressEnabled && docExpressPrice != null) {
+      options.push({ shipmentType: 'Document', serviceType: 'Express', price: docExpressPrice, icon: Zap, typeIcon: FileText });
+    }
+
+    if (options.length === 0) {
+      setCalculationError("No services are available for the selected weight and destination.");
     }
     
-    if (!serviceAvailable) {
-      setCalculationError(`The selected ${data.serviceType} service for ${data.shipmentType} is not available for this weight/destination.`);
-    } else if (price === null || price === undefined) {
-      setCalculationError(`Price not configured for ${data.shipmentType} ${data.serviceType} service at ${selectedWeightBand.weightLabel}.`);
-    } else {
-      setCalculatedCost(`Estimated Cost: ${price.toLocaleString()} ${currency}`);
-    }
-
+    setRateOptions(options);
     setIsCalculating(false);
   };
   
@@ -204,105 +208,114 @@ export default function ShippingCalculatorForm() {
     });
   };
 
-
   return (
-    <Card className="max-w-2xl mx-auto shadow-xl border-border/50">
-      <CardHeader>
-        <CardTitle className="text-2xl font-headline text-accent flex items-center">
-          <Calculator className="mr-3 h-7 w-7 text-primary" /> Estimate Your Shipping Cost
-        </CardTitle>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="shipmentType"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel className="text-base font-semibold flex items-center"><Package className="mr-2 h-5 w-5 text-muted-foreground"/>Shipment Type</FormLabel>
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="parcel" id="calc_parcel" /></FormControl><FormLabel htmlFor="calc_parcel" className="font-normal">Parcel</FormLabel></FormItem>
-                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="document" id="calc_document" /></FormControl><FormLabel htmlFor="calc_document" className="font-normal">Document</FormLabel></FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="serviceType"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel className="text-base font-semibold flex items-center"><Clock className="mr-2 h-5 w-5 text-muted-foreground"/>Service Type</FormLabel>
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="economy" id="calc_economy" /></FormControl><FormLabel htmlFor="calc_economy" className="font-normal">Economy</FormLabel></FormItem>
-                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="express" id="calc_express" /></FormControl><FormLabel htmlFor="calc_express" className="font-normal flex items-center"><Zap className="mr-1.5 h-4 w-4 text-muted-foreground"/>Express</FormLabel></FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="destinationCountry"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
-                  <Select onValueChange={(value) => { field.onChange(value); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]);}} defaultValue={field.value} disabled={loadingCountries || availableCountries.length === 0}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={ loadingCountries ? "Loading countries..." : (availableCountries.length === 0 ? "No countries available" : "Select destination country") } />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availableCountries.map(country => (
-                        <SelectItem key={country.id} value={country.name}>
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="weight"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><Weight className="mr-2 h-5 w-5 text-muted-foreground"/>Package Weight (KG)</FormLabel>
-                  <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 1.5" {...field} value={field.value ?? ''} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" size="lg" disabled={isCalculating || loadingCountries || loadingWeights}>
-              {isCalculating ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Calculating...</>
-              ) : (
-                "Calculate Cost"
-              )}
-            </Button>
-            {(calculatedCost || calculationError) && (
-              <div className={`mt-4 p-4 rounded-md w-full text-center ${calculationError ? 'bg-destructive/10' : 'bg-primary/10'}`}>
-                {calculationError ? (
-                  <p className="text-destructive flex items-center justify-center"><AlertTriangle className="mr-2 h-5 w-5"/> {calculationError}</p>
-                ) : calculatedCost ? (
-                  <h3 className="text-lg font-semibold text-accent flex items-center justify-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>{calculatedCost}</h3>
-                ) : null}
-              </div>
-            )}
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+    <div className="space-y-6">
+      <Card className="max-w-2xl mx-auto shadow-xl border-border/50">
+        <CardHeader>
+          <CardTitle className="text-2xl font-headline text-accent flex items-center">
+            <Calculator className="mr-3 h-7 w-7 text-primary" /> Estimate Your Shipping Cost
+          </CardTitle>
+        </CardHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="destinationCountry"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
+                    <Select onValueChange={(value) => { field.onChange(value); setRateOptions([]); setCalculationError(null); setAvailableWeights([]);}} defaultValue={field.value} disabled={loadingCountries || availableCountries.length === 0}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={ loadingCountries ? "Loading countries..." : (availableCountries.length === 0 ? "No countries available" : "Select destination country") } />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableCountries.map(country => (
+                          <SelectItem key={country.id} value={country.name}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="weight"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Weight className="mr-2 h-5 w-5 text-muted-foreground"/>Package Weight (KG)</FormLabel>
+                    <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 1.5" {...field} value={field.value ?? ''} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button type="submit" className="w-full" size="lg" disabled={isCalculating || loadingCountries || (loadingWeights && !!watchedDestinationCountryName)}>
+                {isCalculating || (loadingWeights && !!watchedDestinationCountryName) ? (
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Calculating...</>
+                ) : (
+                  "Calculate Cost"
+                )}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+      
+      {isCalculating && (
+        <div className="flex justify-center items-center mt-6">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2 text-muted-foreground">Finding best rates...</p>
+        </div>
+      )}
+
+      {calculationError && (
+        <Alert variant="destructive" className="max-w-2xl mx-auto mt-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{calculationError}</AlertDescription>
+        </Alert>
+      )}
+
+      {rateOptions.length > 0 && !calculationError && (
+        <div className="max-w-4xl mx-auto mt-8 opacity-0 animate-fadeInUp">
+            <h3 className="text-2xl sm:text-3xl font-bold text-center mb-6 font-headline text-accent">Available Services</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {rateOptions.map((option, index) => {
+                  const TypeIcon = option.typeIcon;
+                  const ServiceIcon = option.icon;
+                  return (
+                    <Card key={index} className="flex flex-col text-center shadow-lg hover:shadow-2xl transition-shadow duration-300 hover:scale-105">
+                        <CardHeader>
+                            <CardTitle className="flex items-center justify-center gap-2 text-xl font-semibold">
+                                <TypeIcon className="h-6 w-6 text-primary"/>
+                                {option.shipmentType}
+                            </CardTitle>
+                             <p className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                                <ServiceIcon className="h-4 w-4"/>
+                                {option.serviceType} Service
+                             </p>
+                        </CardHeader>
+                        <CardContent className="flex-grow flex flex-col items-center justify-center">
+                            <p className="text-sm text-muted-foreground">Estimated Cost</p>
+                            <p className="text-4xl font-bold text-primary mt-1">{option.price.toLocaleString()} <span className="text-lg font-medium text-muted-foreground">LKR</span></p>
+                        </CardContent>
+                        <CardFooter>
+                            <Button asChild className="w-full">
+                                <Link href="/book">Book Now</Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                )})}
+            </div>
+        </div>
+      )}
+    </div>
   );
 }
