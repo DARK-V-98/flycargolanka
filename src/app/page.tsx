@@ -43,14 +43,14 @@ export default function Home() {
         
         
         <div className="container mx-auto px-4 relative z-20"> {/* Content on top */}
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
+          <div className="grid grid-cols-1 gap-x-8 items-center">
             
-            <div className="md:text-left text-center space-y-6 order-1">
+            <div className="text-center space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-[hsl(var(--chart-1))] text-shadow-black mb-6 opacity-0 animate-fadeInUp">
                 <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
               </h1>
               
-              <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 opacity-0 animate-fadeInUp delay-400">
+              <div className="flex flex-wrap justify-center items-center gap-4 opacity-0 animate-fadeInUp delay-400">
                 <Button asChild variant="secondary" size="lg" className="transition-transform duration-300 hover:scale-105">
                   <Link href="/book">Book Courier &amp; Fee Calculator</Link>
                 </Button>
@@ -63,11 +63,6 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative w-full h-full flex items-center justify-center opacity-0 animate-fadeInUp delay-500 order-3 mt-8 md:mt-0 py-12">
-              <div className="transform scale-[3] sm:scale-[4] md:scale-[5]">
-                <FlyCargoLogo hideText showSpinner={false} />
-              </div>
-            </div>
           </div>
         </div>
       </section>
