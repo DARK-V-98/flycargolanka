@@ -17,13 +17,13 @@ export default function FlyCargoLogo({ hideText = false, showSpinner = true }: F
             <div
               className="absolute inset-0 rounded-full animate-spin-logo"
               style={{
-                background: `conic-gradient(hsl(var(--primary)) 0% 25%, hsl(var(--background)) 25% 100%)`,
+                background: `conic-gradient(hsl(var(--primary)) 0% 25%, hsl(var(--accent)) 25% 100%)`,
               }}
               aria-hidden="true"
             />
             {/* Mask to create the ring effect - 44px diameter, centered, with page background color */}
             <div
-              className="absolute w-11 h-11 rounded-full bg-background"
+              className="absolute w-11 h-11 rounded-full bg-accent"
               aria-hidden="true"
             />
           </>
@@ -38,7 +38,7 @@ export default function FlyCargoLogo({ hideText = false, showSpinner = true }: F
           priority
         />
       </div>
-      {!hideText && <span className="text-[hsl(var(--chart-1))] hover:text-[hsl(var(--chart-1))]/80">FlyCargo Lanka</span>}
+      {!hideText && <span className="text-primary hover:text-primary/80">FlyCargo Lanka</span>}
     </div>
   );
 }
