@@ -43,7 +43,7 @@ export default function Header() {
   const navItemsToDisplay = getNavItems();
 
   return (
-    <header className="bg-background/80 backdrop-blur-md sticky top-0 z-50 shadow-md">
+    <header className="bg-accent text-accent-foreground sticky top-0 z-50 shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/">
           <FlyCargoLogo />
@@ -68,7 +68,7 @@ export default function Header() {
           ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/10">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={userProfile?.photoURL || undefined} alt={userProfile?.displayName || user.email || 'User'} />
                     <AvatarFallback>
@@ -108,7 +108,7 @@ export default function Header() {
           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="ghost" size="icon" className="hover:bg-white/10">
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Open menu</span>
                 </Button>

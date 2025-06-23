@@ -17,7 +17,7 @@ export default function NavLink<T extends string>({
   href,
   children,
   className,
-  activeClassName = "bg-primary/30 backdrop-blur-md text-primary font-semibold border-primary",
+  activeClassName = "bg-primary/20 text-primary font-semibold",
 }: NavLinkProps<T>) {
   const pathname = usePathname();
   const isActive = pathname === href.toString();
@@ -30,7 +30,7 @@ export default function NavLink<T extends string>({
         className, // Allows passing additional classes like text-lg
         isActive
           ? activeClassName // Active state styles
-          : "bg-card/50 backdrop-blur-md border-transparent text-foreground hover:text-primary hover:bg-card/60 hover:border-primary/70" // Default and hover styles
+          : "border-transparent hover:text-primary/80" // Default and hover styles for dark header
       )}
       aria-current={isActive ? "page" : undefined}
     >
