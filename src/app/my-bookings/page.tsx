@@ -197,7 +197,7 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <div className="opacity-0 animate-fadeInUp space-y-8">
+    <div className="opacity-0 animate-fadeInUp space-y-8 container mx-auto px-4 py-8">
       <PageHeader
         title="My Bookings"
         description="Review your past and current shipments, and check their status."

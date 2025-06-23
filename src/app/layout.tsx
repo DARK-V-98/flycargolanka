@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Metadata } from 'next';
@@ -41,7 +42,7 @@ export default function RootLayout({
               {children}
             </div>
           ) : (
-            <main className="flex-grow container mx-auto px-4 py-8">
+            <main className="flex-grow">
               {children}
             </main>
           )}

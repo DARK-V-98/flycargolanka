@@ -98,7 +98,7 @@ export default function TrackPackagePage() {
 
 
   return (
-    <div className="opacity-0 animate-fadeInUp space-y-8">
+    <div className="opacity-0 animate-fadeInUp space-y-8 container mx-auto px-4 py-8">
       <PageHeader
         title="Track Your Package"
         description="Enter your tracking number below to see the current status of your shipment."

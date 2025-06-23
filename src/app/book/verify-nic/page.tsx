@@ -188,7 +188,7 @@ export default function VerifyNicPage() {
 
 
   return (
-    <div className="opacity-0 animate-fadeInUp">
+    <div className="opacity-0 animate-fadeInUp container mx-auto px-4 py-8">
       <PageHeader
         title="Verify Your NIC"
         description="Please upload clear images of the front and back of your National Identity Card."

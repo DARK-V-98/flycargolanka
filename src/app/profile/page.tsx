@@ -129,7 +129,7 @@ export default function ProfilePage() {
 
 
   return (
-    <div className="opacity-0 animate-fadeInUp">
+    <div className="opacity-0 animate-fadeInUp container mx-auto px-4 py-8">
       <PageHeader title="Your Profile" description="View and manage your account details." />
       <Card className="max-w-2xl mx-auto shadow-xl opacity-0 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
         <CardHeader className="items-center text-center">

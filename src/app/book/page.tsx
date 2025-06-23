@@ -423,7 +423,7 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="opacity-0 animate-fadeInUp">
+    <div className="opacity-0 animate-fadeInUp container mx-auto px-4 py-8">
       <PageHeader
         title="Submit Your Shipment Details"
         description="Fill in all required information to process your shipment. An estimated cost will be shown below."

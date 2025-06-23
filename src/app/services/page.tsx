@@ -5,7 +5,7 @@ import { Building2, Eye, Target } from 'lucide-react';
 
 export default function AboutUsPage() {
   return (
-    <div className="space-y-12 opacity-0 animate-fadeInUp">
+    <div className="space-y-12 opacity-0 animate-fadeInUp container mx-auto px-4 py-8">
       <PageHeader
         title="About FlyCargo Lanka"
         description="Learn more about our company, values, and commitment to serving you."
