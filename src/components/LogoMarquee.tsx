@@ -31,10 +31,10 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = '40s' }) => {
             <Image
               src={logo.src}
               alt={logo.name}
-              width={150} 
-              height={75}
+              fill
+              sizes="(max-width: 768px) 100px, 150px"
               className={cn(
-                "object-contain",
+                "object-contain p-2",
                 logo.removeBg && "logo-remove-bg"
               )}
             />
