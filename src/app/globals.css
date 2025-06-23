@@ -82,6 +82,10 @@
       4px 4px 2px hsl(var(--accent) / 0.3);
   }
 
+  .text-shadow-black {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
   .marquee-container {
     @apply w-full overflow-hidden py-4;
   }

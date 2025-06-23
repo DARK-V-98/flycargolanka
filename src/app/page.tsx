@@ -46,7 +46,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,_2fr)_minmax(0,_3fr)] gap-x-8 items-center">
             
             <div className="md:text-left text-center space-y-6 order-1">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-[hsl(var(--chart-1))] mb-6 opacity-0 animate-fadeInUp">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-[hsl(var(--chart-1))] text-shadow-black mb-6 opacity-0 animate-fadeInUp">
                 <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
               </h1>
               
