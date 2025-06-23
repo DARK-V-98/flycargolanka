@@ -1,10 +1,8 @@
-
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target, Calculator } from 'lucide-react';
-import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
 import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
@@ -30,7 +28,7 @@ export default function Home() {
 
   return (
     <div>
-      <section className="py-12 md:py-20 shadow-lg overflow-hidden relative">
+      <section className="py-12 md:py-20 shadow-lg overflow-hidden relative min-h-screen flex items-center">
         <video
           autoPlay
           loop
