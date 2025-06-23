@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -32,7 +31,6 @@ const LogoMarquee: React.FC<LogoMarqueeProps> = ({ logos, speed = '40s' }) => {
               src={logo.src}
               alt={logo.name}
               fill
-              sizes="(max-width: 768px) 100px, 150px"
               className={cn(
                 "object-contain p-2",
                 logo.removeBg && "logo-remove-bg"
