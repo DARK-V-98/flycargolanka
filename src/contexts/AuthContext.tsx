@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -185,10 +184,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       router.push('/');
     } catch (error) {
        if (error instanceof FirebaseError && error.code === 'auth/account-exists-with-different-credential') {
-        // This specific error means the email from Google is already in use with another provider (e.g., password).
-        // The robust solution is to prompt the user for their original password to link the accounts.
-        // Since we can't add a password prompt here, we'll guide the user with a clear error message.
-        throw new Error("An account already exists with this email address. Please sign in with your password to continue.");
+        throw new Error("An account with this email already exists. Please sign in with your password to link your Google account.");
       }
       console.error("Error signing in with Google:", error);
       throw error;
