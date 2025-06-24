@@ -192,25 +192,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.8s'}}>
-          <div className="container mx-auto px-4">
-            <PageHeader 
-                title="Secure & Trusted Payments"
-                description="We partner with industry-leading payment gateways to ensure your transactions are safe."
-            />
-            <div className="mt-10 flex justify-center">
-              <a href="https://www.payhere.lk" target="_blank" rel="noopener noreferrer" className="inline-block transition-transform duration-300 hover:scale-105">
-                  <Image 
-                      src="https://www.payhere.lk/downloads/images/payhere_long_banner.png" 
-                      alt="PayHere Secure Payment Gateway" 
-                      width={400}
-                      height={75}
-                      className="h-auto"
-                  />
-              </a>
-            </div>
-          </div>
-        </section>
       </div>
 
 
