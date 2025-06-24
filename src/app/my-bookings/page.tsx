@@ -137,15 +137,8 @@ export default function MyBookingsPage() {
     }
   };
 
-  const handleProceedToPayment = (bookingId: string, cost?: number | null) => {
-    console.log(`Proceeding to payment for booking: ${bookingId}. Cost: ${cost ? `${cost} LKR` : 'N/A'}`);
-    // Placeholder: Implement actual payment navigation/logic here
-    // router.push(`/payment?bookingId=${bookingId}`); // Example
-     toast({
-        title: "Payment Gateway",
-        description: `Payment gateway integration is pending. Booking ID: ${bookingId}, Cost: ${cost || 'N/A'} LKR.`,
-        duration: 5000,
-      });
+  const handleProceedToPayment = (bookingId: string) => {
+    router.push(`/payment/${bookingId}`);
   };
 
   const handleConfirmCancelBooking = async () => {
@@ -302,10 +295,10 @@ export default function MyBookingsPage() {
                       <p><span className="font-semibold">Type:</span> <span className="capitalize">{booking.shipmentType}</span></p>
                       <p><span className="font-semibold">Weight:</span> {booking.approxWeight} kg</p>
                       {booking.estimatedCostLKR !== undefined && booking.estimatedCostLKR !== null && (
-                          <p className="md:col-span-2 font-semibold text-primary">
+                          <div className="md:col-span-2 font-semibold text-primary">
                               <CreditCard className="inline-block mr-1 h-4 w-4" />
                               Estimated Cost: {booking.estimatedCostLKR.toLocaleString()} LKR
-                          </p>
+                          </div>
                       )}
                   </div>
                 </CardContent>
@@ -348,7 +341,7 @@ export default function MyBookingsPage() {
                   )}
                   <Button 
                     size="sm" 
-                    onClick={() => handleProceedToPayment(booking.id, booking.estimatedCostLKR)}
+                    onClick={() => handleProceedToPayment(booking.id)}
                     className="w-full sm:w-auto"
                     disabled={
                         booking.estimatedCostLKR === undefined || 
@@ -374,5 +367,3 @@ export default function MyBookingsPage() {
     </div>
   );
 }
-
-    
