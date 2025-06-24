@@ -19,19 +19,6 @@ export default function Footer() {
             <p className="text-base">&copy; {new Date().getFullYear()} FlyCargo Lanka. All rights reserved.</p>
             <p className="text-sm mt-2 opacity-80">Powered by esystemlk</p>
           </div>
-          
-          <div className="mt-4">
-            <p className="font-semibold text-lg">Secure Online Payments</p>
-            <a href="https://www.payhere.lk" target="_blank" rel="noopener noreferrer" className="inline-block mt-2">
-              <Image 
-                src="https://www.payhere.lk/downloads/images/payhere_long_banner.png" 
-                alt="PayHere Secure Payment Gateway" 
-                width={300}
-                height={56}
-                className="h-auto"
-              />
-            </a>
-          </div>
         </div>
 
         {/* Right Column */}
