@@ -29,7 +29,7 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <section className="py-12 md:py-20 shadow-lg overflow-hidden relative min-h-screen flex items-center">
+      <section className="shadow-lg overflow-hidden relative h-[85vh] lg:min-h-screen flex items-center justify-center">
         <video
           autoPlay
           loop
@@ -39,24 +39,24 @@ export default function Home() {
           src="/bg.mp4"
           type="video/mp4"
         />
-        
+        <div className="absolute inset-0 bg-black/50 z-10" />
         
         <div className="container mx-auto px-4 relative z-20"> {/* Content on top */}
           <div className="grid grid-cols-1 gap-x-8 items-center">
             
             <div className="text-center space-y-6">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-[hsl(var(--chart-1))] text-shadow-3d-navy mb-6 opacity-0 animate-fadeInUp">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-white text-shadow-black mb-6 opacity-0 animate-fadeInUp">
                 <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
               </h1>
               
               <div className="flex flex-wrap justify-center items-center gap-4 opacity-0 animate-fadeInUp delay-400">
-                <Button asChild className="bg-accent text-accent-foreground rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-accent/90 hover:scale-105 transition-all duration-300">
-                  <Link href="/book">Book Courier &amp; Fee Calculator</Link>
+                <Button asChild size="lg" className="rounded-full px-8 font-semibold shadow-lg hover:scale-105 transition-transform duration-300">
+                  <Link href="/book">Book Now</Link>
                 </Button>
-                <Button asChild className="bg-accent text-accent-foreground rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-accent/90 hover:scale-105 transition-all duration-300">
+                <Button asChild size="lg" className="rounded-full px-8 font-semibold shadow-lg hover:scale-105 transition-transform duration-300">
                   <Link href="/#shipping-calculator-section">Fee Calculator</Link>
                 </Button>
-                 <Button asChild className="bg-accent text-accent-foreground rounded-full h-12 px-8 font-semibold shadow-lg hover:bg-accent/90 hover:scale-105 transition-all duration-300">
+                 <Button asChild size="lg" className="rounded-full px-8 font-semibold shadow-lg hover:scale-105 transition-transform duration-300">
                   <Link href="/track-package">Track Package</Link>
                 </Button>
               </div>
