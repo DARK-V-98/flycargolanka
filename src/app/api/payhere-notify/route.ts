@@ -8,6 +8,11 @@ import { db } from '@/lib/firebase-admin'; // Using admin SDK for server-side op
  * This endpoint is crucial for reliably updating payment status.
  */
 export async function POST(req: NextRequest) {
+  if (!db) {
+    console.error("Firestore Admin SDK is not initialized. Check server configuration for FIREBASE_SERVICE_ACCOUNT.");
+    return new NextResponse("Server configuration error: Firestore not available.", { status: 500 });
+  }
+
   try {
     const formData = await req.formData();
     

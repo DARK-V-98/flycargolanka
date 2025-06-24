@@ -3,6 +3,7 @@
 // It uses the Firebase Admin SDK for elevated privileges.
 
 import admin from 'firebase-admin';
+import type { Firestore } from 'firebase-admin/firestore';
 
 // Ensure these environment variables are set in your hosting environment (e.g., Vercel, Netlify).
 // They should be JSON strings.
@@ -24,6 +25,6 @@ if (!admin.apps.length) {
   }
 }
 
-const db = admin.firestore();
+const db: Firestore | null = admin.apps.length ? admin.firestore() : null;
 
 export { db };
