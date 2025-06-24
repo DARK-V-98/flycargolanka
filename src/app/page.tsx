@@ -186,14 +186,14 @@ export default function Home() {
                     description="We use PayHere, a trusted payment gateway, for all online transactions."
                 />
              </div>
-             <div className="mt-8 inline-block transition-transform duration-300 hover:scale-105">
+             <div className="mt-8 mx-auto w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl transition-transform duration-300 hover:scale-105">
                  <a href="https://www.payhere.lk" target="_blank" rel="noopener noreferrer">
                     <Image 
                         src="/pay.png" 
                         alt="PayHere Secure Payment Gateway" 
                         width={400}
                         height={74}
-                        className="h-auto"
+                        className="w-full h-auto"
                     />
                  </a>
              </div>
