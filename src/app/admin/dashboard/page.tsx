@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, Users, Package, Settings2, BadgeCheck, ArrowRight } from "lucide-react";
+import { ShieldCheck, Users, Package, Settings2, BadgeCheck, ArrowRight, DatabaseZap } from "lucide-react";
 import PageHeader from '@/components/PageHeader';
 
 const adminNavItems = [
@@ -31,6 +31,12 @@ const adminNavItems = [
     description: "Approve or reject user NIC submissions.",
     icon: BadgeCheck 
   },
+  {
+    href: '/admin/import-rates',
+    label: 'Import Rates',
+    description: "Bulk upload shipping rates from a CSV file.",
+    icon: DatabaseZap
+  },
 ];
 
 
@@ -42,7 +48,7 @@ export default function AdminDashboardPage() {
         description="Select a task below to manage your application."
       />
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {adminNavItems.map((item) => (
             <Link href={item.href} key={item.href} className="group">
                 <Card className="shadow-lg hover:shadow-xl hover:border-primary/50 transition-all duration-300 h-full flex flex-col">
