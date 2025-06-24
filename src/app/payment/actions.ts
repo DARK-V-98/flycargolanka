@@ -10,7 +10,8 @@ const MERCHANT_ID = process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID || '1230954';
 const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET || 'MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA=';
 
 // Determine Payhere URL based on environment variable. Use 'live' for production.
-const isLive = process.env.PAYHERE_MODE?.trim().replace(/["']/g, '') === 'live';
+// In your .env.local file, set PAYHERE_MODE=live for production. Otherwise, it defaults to sandbox.
+const isLive = process.env.PAYHERE_MODE?.trim() === 'live';
 const PAYHERE_URL = isLive
   ? 'https://www.payhere.lk/pay/checkout' // Live URL
   : 'https://sandbox.payhere.lk/pay/checkout'; // Sandbox URL for testing
