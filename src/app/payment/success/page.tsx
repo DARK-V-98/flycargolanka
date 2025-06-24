@@ -3,13 +3,14 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function PaymentSuccessPage() {
-    const searchParams = useSearchParams();
-    const bookingId = searchParams.get('bookingId');
+function SuccessContent() {
+  const searchParams = useSearchParams();
+  const bookingId = searchParams.get('bookingId');
 
   return (
     <div className="flex flex-col items-center justify-center flex-grow py-12 px-4 opacity-0 animate-fadeInUp">
@@ -35,4 +36,18 @@ export default function PaymentSuccessPage() {
       </Card>
     </div>
   );
+}
+
+
+export default function PaymentSuccessPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center flex-grow py-12 px-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="mt-4 text-muted-foreground">Loading page...</p>
+            </div>
+        }>
+            <SuccessContent />
+        </Suspense>
+    );
 }

@@ -3,11 +3,12 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { XCircle, ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { XCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function PaymentCancelPage() {
+function CancelContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get('bookingId');
 
@@ -34,5 +35,18 @@ export default function PaymentCancelPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function PaymentCancelPage() {
+  return (
+    <Suspense fallback={
+        <div className="flex flex-col items-center justify-center flex-grow py-12 px-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-4 text-muted-foreground">Loading page...</p>
+        </div>
+    }>
+        <CancelContent />
+    </Suspense>
   );
 }
