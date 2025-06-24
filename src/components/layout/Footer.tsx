@@ -39,7 +39,7 @@ export default function Footer() {
             <p className="text-sm font-semibold mb-4">Secure Payments By</p>
             <a href="https://www.payhere.lk" target="_blank" rel="noopener noreferrer" className="inline-block transition-transform duration-300 hover:scale-105">
                 <Image 
-                    src="https://www.payhere.lk/downloads/images/payhere_long_banner.png" 
+                    src="/pay.png" 
                     alt="PayHere Secure Payment Gateway" 
                     width={300}
                     height={56}

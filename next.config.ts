@@ -27,12 +27,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'www.payhere.lk',
-        port: '',
-        pathname: '/**',
-      }
     ],
   },
 };
