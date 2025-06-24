@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2, UserCog, Mail, ShieldAlert, Loader2 } from 'lucide-react'; // Changed UsersCog to UserCog
-import { useAuth, type UserRole } from '@/contexts/AuthContext'; // Import UserRole type
+import { AlertTriangle, CheckCircle2, UserCog, Mail, ShieldAlert, Loader2, ArrowLeft } from 'lucide-react'; 
+import { useAuth, type UserRole } from '@/contexts/AuthContext'; 
 import { useState } from 'react';
+import Link from 'next/link';
 
 
 const manageRoleSchema = z.object({
@@ -24,7 +25,7 @@ type ManageRoleFormValues = z.infer<typeof manageRoleSchema>;
 
 export default function ManageRolesPage() {
   const { toast } = useToast();
-  const { user, role: currentUserRole, updateUserRoleByEmail } = useAuth(); // Assuming updateUserRoleByEmail exists
+  const { user, role: currentUserRole, updateUserRoleByEmail } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ManageRoleFormValues>({
@@ -41,8 +42,7 @@ export default function ManageRolesPage() {
   } else if (currentUserRole === 'admin') {
     availableRoles.push('admin', 'user');
   }
-  // 'user' role typically cannot manage roles, so they won't see this page due to AdminLayout
-
+  
   const onSubmit: SubmitHandler<ManageRoleFormValues> = async (data) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -53,7 +53,6 @@ export default function ManageRolesPage() {
       return;
     }
     
-    // Prevent self-role change through this form for simplicity, could be enhanced
     if (data.email === user?.email) {
         toast({ title: "Cannot Change Own Role", description: "You cannot change your own role using this form.", variant: "destructive"});
         setIsSubmitting(false);
@@ -95,7 +94,14 @@ export default function ManageRolesPage() {
 
 
   return (
-    <div className="opacity-0 animate-fadeInUp">
+    <div className="opacity-0 animate-fadeInUp space-y-6">
+       <Button asChild variant="outline">
+          <Link href="/admin/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
+
       <Card className="shadow-xl border-border/50 max-w-lg mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center text-2xl font-headline text-accent">

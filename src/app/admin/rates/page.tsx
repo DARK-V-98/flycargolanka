@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, getDocs, deleteDoc, doc, writeBatch, updateDoc, where } from 'firebase/firestore';
 import type { CountryRate, WeightRate } from '@/types/shippingRates';
@@ -487,6 +488,12 @@ export default function ManageRatesPage() {
 
   return (
     <div className="space-y-6 opacity-0 animate-fadeInUp">
+        <Button asChild variant="outline">
+          <Link href="/admin/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
       <Card className="shadow-xl border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center text-xl sm:text-2xl font-headline text-accent">

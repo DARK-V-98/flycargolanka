@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, type Timestamp } from 'firebase/firestore';
 import type { UserProfile, NicVerificationStatus } from '@/contexts/AuthContext';
@@ -26,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, BadgeCheck, User, Mail, Phone, Fingerprint, Book, AlertTriangle, Filter, Image as ImageIcon, Search } from 'lucide-react';
+import { Loader2, BadgeCheck, User, Mail, Phone, Fingerprint, Book, AlertTriangle, Filter, Image as ImageIcon, Search, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface BookingStub {
@@ -165,6 +166,12 @@ export default function VerifyNicPage() {
 
   return (
     <div className="space-y-6 opacity-0 animate-fadeInUp">
+        <Button asChild variant="outline">
+          <Link href="/admin/dashboard">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </Button>
       <Card className="shadow-xl border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center text-xl sm:text-2xl font-headline text-accent">
