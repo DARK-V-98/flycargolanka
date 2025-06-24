@@ -69,8 +69,6 @@ function MyBookingsPageContent() {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
-  const searchParams = useSearchParams();
-  const justPaidBookingId = searchParams.get('booking_id');
 
 
   const fetchUserBookings = useCallback(async () => {
@@ -277,15 +275,6 @@ function MyBookingsPageContent() {
                   )}
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                   {justPaidBookingId === booking.id && booking.paymentStatus === 'Pending' && (
-                        <Alert variant="default" className="bg-blue-500/10 border-blue-500/30">
-                            <Loader2 className="h-5 w-5 text-blue-600 animate-spin"/>
-                            <AlertTitle className="text-blue-700">Verifying Payment</AlertTitle>
-                            <AlertDescription>
-                                We are confirming your payment. The status will update here automatically once the notification from the bank is received.
-                            </AlertDescription>
-                        </Alert>
-                    )}
                   {showProcessingAlert && (
                       <Alert variant="default" className="bg-green-500/10 border-green-500/30">
                           <BellRing className="h-5 w-5 text-green-600"/>
