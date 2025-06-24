@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, type UserProfile } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
@@ -61,7 +61,7 @@ interface Booking {
   declaration2?: boolean;
 }
 
-export default function MyBookingsPage() {
+function MyBookingsPageContent() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -69,6 +69,8 @@ export default function MyBookingsPage() {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const searchParams = useSearchParams();
+  const justPaidBookingId = searchParams.get('booking_id');
 
 
   const fetchUserBookings = useCallback(async () => {
@@ -275,6 +277,15 @@ export default function MyBookingsPage() {
                   )}
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
+                   {justPaidBookingId === booking.id && booking.paymentStatus === 'Pending' && (
+                        <Alert variant="default" className="bg-blue-500/10 border-blue-500/30">
+                            <Loader2 className="h-5 w-5 text-blue-600 animate-spin"/>
+                            <AlertTitle className="text-blue-700">Verifying Payment</AlertTitle>
+                            <AlertDescription>
+                                We are confirming your payment. The status will update here automatically once the notification from the bank is received.
+                            </AlertDescription>
+                        </Alert>
+                    )}
                   {showProcessingAlert && (
                       <Alert variant="default" className="bg-green-500/10 border-green-500/30">
                           <BellRing className="h-5 w-5 text-green-600"/>
@@ -366,4 +377,17 @@ export default function MyBookingsPage() {
       </div>
     </div>
   );
+}
+
+
+export default function MyBookingsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading your bookings...</p>
+            </div>
+        }>
+            <MyBookingsPageContent />
+        </Suspense>
+    );
 }
