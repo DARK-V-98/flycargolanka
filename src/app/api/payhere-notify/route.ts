@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
     const payhere_currency = formData.get('payhere_currency') as string;
     const status_code = formData.get('status_code') as string;
     const md5sig = formData.get('md5sig') as string;
+
+    console.log(`Received Payhere notification for order ${order_id} with status code ${status_code}`);
     
     // IMPORTANT: Use the same Merchant Secret as in your Payhere account settings.
     // It's recommended to store this in environment variables.
@@ -42,23 +44,25 @@ export async function POST(req: NextRequest) {
       .toUpperCase();
 
     if (localMd5sig !== md5sig) {
-      console.warn(`Payhere notification signature mismatch for order ${order_id}`);
+      console.warn(`Payhere notification signature mismatch for order ${order_id}. Received: ${md5sig}, Expected: ${localMd5sig}`);
       return new NextResponse("Signature mismatch.", { status: 400 });
     }
+
+    console.log(`Signature verified for order ${order_id}.`);
 
     const bookingDocRef = db.collection('bookings').doc(order_id);
 
     // Status code '2' means a successful payment.
     // Other codes: 0 (Pending), -1 (Canceled), -2 (Failed), -3 (Charged Back).
     if (status_code === '2') {
+      console.log(`Attempting to update booking ${order_id} to 'Paid'.`);
       await bookingDocRef.update({
         paymentStatus: 'Paid',
         updatedAt: new Date(), // Use server timestamp from admin SDK
       });
-      console.log(`Payment status for booking ${order_id} updated to Paid.`);
+      console.log(`Successfully updated payment status for booking ${order_id} to 'Paid'.`);
     } else {
-      console.log(`Received non-successful payment status (${status_code}) for booking ${order_id}.`);
-       // Optionally handle other statuses, e.g., 'Failed'
+      console.log(`Received non-successful payment status (${status_code}) for booking ${order_id}. No status change will be made.`);
     }
 
     return new NextResponse("OK", { status: 200 });
