@@ -1,11 +1,10 @@
 
 "use client";
 
-import { useState, type ChangeEvent, type FC } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import Link from 'next/link';
-import Papa from 'papaparse';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -70,47 +69,53 @@ export default function ImportRatesPage() {
     setError(null);
     setParsedData([]);
 
-    Papa.parse<any>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        if (results.errors.length) {
-          setError(`Error parsing CSV: ${results.errors[0].message}`);
-          setIsParsing(false);
-          return;
+    import('papaparse').then(Papa => {
+        Papa.parse<any>(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+            if (results.errors.length) {
+            setError(`Error parsing CSV: ${results.errors[0].message}`);
+            setIsParsing(false);
+            return;
+            }
+            
+            const data = results.data.map((row, index) => {
+            const rowNumber = index + 2; // 1 for header, 1 for 0-index
+            const country = row.Country?.trim();
+            const weightLabel = row.WeightLabel?.trim();
+            const weightValue = parseFloat(row.WeightValue);
+
+            let validationError: string | undefined;
+            if (!country) validationError = "Country is missing.";
+            else if (!weightLabel) validationError = "WeightLabel is missing.";
+            else if (isNaN(weightValue) || weightValue <= 0) validationError = "WeightValue must be a positive number.";
+
+            return {
+                country: country || '',
+                weightLabel: weightLabel || '',
+                weightValue: weightValue || 0,
+                ndEconomyPrice: row.ND_EconomyPrice ? parseFloat(row.ND_EconomyPrice) : null,
+                ndExpressPrice: row.ND_ExpressPrice ? parseFloat(row.ND_ExpressPrice) : null,
+                docEconomyPrice: row.Doc_EconomyPrice ? parseFloat(row.Doc_EconomyPrice) : null,
+                docExpressPrice: row.Doc_ExpressPrice ? parseFloat(row.Doc_ExpressPrice) : null,
+                _rowNumber: rowNumber,
+                _error: validationError,
+            };
+            });
+
+            setParsedData(data);
+            setIsParsing(false);
+        },
+        error: (err) => {
+            setError(err.message);
+            setIsParsing(false);
         }
-        
-        const data = results.data.map((row, index) => {
-          const rowNumber = index + 2; // 1 for header, 1 for 0-index
-          const country = row.Country?.trim();
-          const weightLabel = row.WeightLabel?.trim();
-          const weightValue = parseFloat(row.WeightValue);
-
-          let validationError: string | undefined;
-          if (!country) validationError = "Country is missing.";
-          else if (!weightLabel) validationError = "WeightLabel is missing.";
-          else if (isNaN(weightValue) || weightValue <= 0) validationError = "WeightValue must be a positive number.";
-
-          return {
-            country: country || '',
-            weightLabel: weightLabel || '',
-            weightValue: weightValue || 0,
-            ndEconomyPrice: row.ND_EconomyPrice ? parseFloat(row.ND_EconomyPrice) : null,
-            ndExpressPrice: row.ND_ExpressPrice ? parseFloat(row.ND_ExpressPrice) : null,
-            docEconomyPrice: row.Doc_EconomyPrice ? parseFloat(row.Doc_EconomyPrice) : null,
-            docExpressPrice: row.Doc_ExpressPrice ? parseFloat(row.Doc_ExpressPrice) : null,
-            _rowNumber: rowNumber,
-            _error: validationError,
-          };
         });
-
-        setParsedData(data);
+    }).catch(importError => {
+        console.error("Error loading papaparse:", importError);
+        setError("Failed to load file parser. Please refresh and try again.");
         setIsParsing(false);
-      },
-      error: (err) => {
-        setError(err.message);
-        setIsParsing(false);
-      }
     });
   };
 

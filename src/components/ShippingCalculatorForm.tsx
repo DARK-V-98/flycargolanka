@@ -14,14 +14,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap, CheckCircle } from 'lucide-react';
+import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap, CheckCircle, Box } from 'lucide-react';
 
 const calculatorSchema = z.object({
   destinationCountry: z.string().min(1, "Please select a destination country."),
   weight: z.coerce.number().positive("Weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."),
+  length: z.union([z.coerce.number().positive("Length must be a positive number."), z.literal('')]).optional(),
+  width: z.union([z.coerce.number().positive("Width must be a positive number."), z.literal('')]).optional(),
+  height: z.union([z.coerce.number().positive("Height must be a positive number."), z.literal('')]).optional(),
+}).refine((data) => {
+    const dims = [data.length, data.width, data.height];
+    const providedCount = dims.filter(d => d !== undefined && d !== '').length;
+    return providedCount === 0 || providedCount === 3;
+}, {
+    message: "Please enter all three dimensions or leave them all blank.",
+    path: ['length'],
 });
 
 
@@ -40,7 +50,7 @@ export default function ShippingCalculatorForm() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculationError, setCalculationError] = useState<string | null>(null);
   const [rateOptions, setRateOptions] = useState<RateOption[]>([]);
-
+  const [chargeableWeight, setChargeableWeight] = useState<number | null>(null);
 
   const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
@@ -52,6 +62,9 @@ export default function ShippingCalculatorForm() {
     defaultValues: {
       destinationCountry: '',
       weight: '' as any,
+      length: '',
+      width: '',
+      height: '',
     },
   });
 
@@ -92,6 +105,7 @@ export default function ShippingCalculatorForm() {
       setLoadingWeights(true);
       setAvailableWeights([]);
       setRateOptions([]);
+      setChargeableWeight(null);
       setCalculationError(null);
 
       const selectedCountry = availableCountries.find(c => c.name === watchedDestinationCountryName);
@@ -132,6 +146,7 @@ export default function ShippingCalculatorForm() {
     setIsCalculating(true);
     setRateOptions([]);
     setCalculationError(null);
+    setChargeableWeight(null);
 
     if (availableWeights.length === 0) {
       setCalculationError(`No weight rates available for ${data.destinationCountry}. Cannot calculate cost.`);
@@ -145,12 +160,21 @@ export default function ShippingCalculatorForm() {
         return;
     }
     
-    const { weight } = data;
-    const finalChargeableWeight = weight;
+    const { weight, length, width, height } = data;
+    let finalChargeableWeight = weight;
+
+    if (length && width && height) {
+        const volumetricWeight = (Number(length) * Number(width) * Number(height)) / 5000;
+        finalChargeableWeight = Math.max(weight, volumetricWeight);
+        setChargeableWeight(finalChargeableWeight);
+    } else {
+        setChargeableWeight(weight);
+    }
 
     const sortedWeights = [...availableWeights].sort((a, b) => a.weightValue - b.weightValue);
     let selectedWeightBand: WeightRate | undefined = undefined;
 
+    // Find the first band that the chargeable weight fits into (rounding up).
     for (const band of sortedWeights) {
       if (finalChargeableWeight <= band.weightValue) {
         selectedWeightBand = band;
@@ -230,7 +254,7 @@ export default function ShippingCalculatorForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
-                    <Select onValueChange={(value) => { field.onChange(value); setRateOptions([]); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} disabled={loadingCountries || availableCountries.length === 0}>
+                    <Select onValueChange={(value) => { field.onChange(value); setRateOptions([]); setChargeableWeight(null); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} disabled={loadingCountries || availableCountries.length === 0}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={ loadingCountries ? "Loading countries..." : (availableCountries.length === 0 ? "No countries available" : "Select destination country") } />
@@ -259,6 +283,36 @@ export default function ShippingCalculatorForm() {
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-4 pt-4 border-t">
+                  <FormLabel className="flex items-center"><Box className="mr-2 h-5 w-5 text-muted-foreground"/>Package Dimensions (cm) (Optional)</FormLabel>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <FormField control={form.control} name="length" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel className="text-xs text-muted-foreground">Length</FormLabel>
+                          <FormControl><Input type="number" step="0.01" min="0.01" placeholder="L" {...field} value={field.value ?? ''} /></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )} />
+                      <FormField control={form.control} name="width" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel className="text-xs text-muted-foreground">Width</FormLabel>
+                          <FormControl><Input type="number" step="0.01" min="0.01" placeholder="W" {...field} value={field.value ?? ''} /></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )} />
+                      <FormField control={form.control} name="height" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel className="text-xs text-muted-foreground">Height</FormLabel>
+                          <FormControl><Input type="number" step="0.01" min="0.01" placeholder="H" {...field} value={field.value ?? ''} /></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                      )} />
+                  </div>
+                  <FormDescription className="text-xs">
+                      Provide dimensions to calculate volumetric weight. The greater of actual vs. volumetric weight (L×W×H/5000) will be used for rate calculation.
+                  </FormDescription>
+              </div>
 
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
@@ -292,7 +346,9 @@ export default function ShippingCalculatorForm() {
       {rateOptions.length > 0 && !calculationError && (
         <div className="max-w-4xl mx-auto mt-8 opacity-0 animate-fadeInUp">
             <h3 className="text-2xl sm:text-3xl font-bold text-center mb-2 font-headline text-accent">Available Services</h3>
-            <p className="text-center text-muted-foreground mb-6">Rates based on package weight of <strong>{form.getValues('weight')} kg</strong>.</p>
+            <p className="text-center text-muted-foreground mb-6">
+                Rates based on a chargeable weight of <strong>{chargeableWeight?.toFixed(2)} kg</strong>.
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {rateOptions.map((option, index) => {
                   const TypeIcon = option.typeIcon;
