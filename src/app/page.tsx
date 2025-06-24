@@ -178,7 +178,29 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="shipping-calculator-section" className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.7s'}}>
+        <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.7s'}}>
+           <div className="container mx-auto px-4 text-center">
+             <div className="opacity-0 animate-fadeInUp">
+                <PageHeader 
+                    title="Secure & Trusted Payments"
+                    description="We use PayHere, a trusted payment gateway, for all online transactions."
+                />
+             </div>
+             <div className="mt-8 inline-block transition-transform duration-300 hover:scale-105">
+                 <a href="https://www.payhere.lk" target="_blank" rel="noopener noreferrer">
+                    <Image 
+                        src="/pay.png" 
+                        alt="PayHere Secure Payment Gateway" 
+                        width={400}
+                        height={74}
+                        className="h-auto"
+                    />
+                 </a>
+             </div>
+           </div>
+        </section>
+
+        <section id="shipping-calculator-section" className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.8s'}}>
           <div className="container mx-auto px-4">
             <div className="opacity-0 animate-fadeInUp">
               <PageHeader 
@@ -195,15 +217,15 @@ export default function Home() {
       </div>
 
 
-      <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground shadow-lg overflow-hidden opacity-0 animate-fadeInUp mt-16" style={{animationDelay: '0.7s'}}>
+      <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground shadow-lg overflow-hidden opacity-0 animate-fadeInUp mt-16" style={{animationDelay: '0.9s'}}>
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp" style={{animationDelay: '0.8s'}}>
+          <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp" style={{animationDelay: '1.0s'}}>
             Ready to Ship?
           </h2>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-0 animate-fadeInUp" style={{animationDelay: '0.9s'}}>
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-0 animate-fadeInUp" style={{animationDelay: '1.1s'}}>
             Get started today with FlyCargo Lanka. We make shipping simple and efficient.
           </p>
-          <Button asChild size="lg" className="bg-background hover:bg-background/90 text-foreground transition-transform duration-300 hover:scale-105 opacity-0 animate-fadeInUp" style={{animationDelay: '1s'}}>
+          <Button asChild size="lg" className="bg-background hover:bg-background/90 text-foreground transition-transform duration-300 hover:scale-105 opacity-0 animate-fadeInUp" style={{animationDelay: '1.2s'}}>
             <Link href="/book">Book Your Shipment Now</Link>
           </Button>
         </div>

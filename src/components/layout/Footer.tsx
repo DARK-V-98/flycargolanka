@@ -33,20 +33,6 @@ export default function Footer() {
             </address>
           </div>
         </div>
-        
-        {/* Payhere Banner Section */}
-        <div className="border-t border-accent-foreground/20 py-8 flex flex-col items-center justify-center text-center">
-            <p className="text-sm font-semibold mb-4">Secure Payments By</p>
-            <a href="https://www.payhere.lk" target="_blank" rel="noopener noreferrer" className="inline-block transition-transform duration-300 hover:scale-105">
-                <Image 
-                    src="/pay.png" 
-                    alt="PayHere Secure Payment Gateway" 
-                    width={300}
-                    height={56}
-                    className="h-auto"
-                />
-            </a>
-        </div>
       </div>
     </footer>
   );
