@@ -9,9 +9,11 @@ import type { PayhereData } from '@/types/payhere';
 const MERCHANT_ID = process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID || '1230954';
 const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET || 'MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA=';
 
-// Use sandbox URL for testing, switch to live URL for production
-const PAYHERE_URL = 'https://sandbox.payhere.lk/pay/checkout'; // Switched to sandbox
-// const PAYHERE_URL = 'https://www.payhere.lk/pay/checkout'; // Live URL
+// Determine Payhere URL based on environment variable
+const isLive = process.env.NEXT_PUBLIC_PAYHERE_ENV === 'live';
+const PAYHERE_URL = isLive
+  ? 'https://www.payhere.lk/pay/checkout' // Live URL
+  : 'https://sandbox.payhere.lk/pay/checkout'; // Sandbox URL for testing
 
 // This function generates the necessary data for a Payhere payment form, including the secure hash.
 // It is a server action and runs only on the server, protecting the MERCHANT_SECRET.
