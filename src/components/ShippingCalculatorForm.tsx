@@ -22,16 +22,6 @@ import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package,
 const calculatorSchema = z.object({
   destinationCountry: z.string().min(1, "Please select a destination country."),
   weight: z.coerce.number().positive("Weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."),
-  length: z.union([z.coerce.number().positive("Length must be a positive number."), z.literal('')]).optional(),
-  width: z.union([z.coerce.number().positive("Width must be a positive number."), z.literal('')]).optional(),
-  height: z.union([z.coerce.number().positive("Height must be a positive number."), z.literal('')]).optional(),
-}).refine((data) => {
-    const dims = [data.length, data.width, data.height];
-    const providedCount = dims.filter(d => d !== undefined && d !== '').length;
-    return providedCount === 0 || providedCount === 3;
-}, {
-    message: "Please enter all three dimensions or leave them all blank.",
-    path: ['length'],
 });
 
 
@@ -62,9 +52,6 @@ export default function ShippingCalculatorForm() {
     defaultValues: {
       destinationCountry: '',
       weight: '' as any,
-      length: '',
-      width: '',
-      height: '',
     },
   });
 
@@ -160,16 +147,9 @@ export default function ShippingCalculatorForm() {
         return;
     }
     
-    const { weight, length, width, height } = data;
+    const { weight } = data;
     let finalChargeableWeight = weight;
-
-    if (length && width && height) {
-        const volumetricWeight = (Number(length) * Number(width) * Number(height)) / 5000;
-        finalChargeableWeight = Math.max(weight, volumetricWeight);
-        setChargeableWeight(finalChargeableWeight);
-    } else {
-        setChargeableWeight(weight);
-    }
+    setChargeableWeight(weight);
 
     const sortedWeights = [...availableWeights].sort((a, b) => a.weightValue - b.weightValue);
     let selectedWeightBand: WeightRate | undefined = undefined;
@@ -277,43 +257,12 @@ export default function ShippingCalculatorForm() {
                 name="weight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center"><Weight className="mr-2 h-5 w-5 text-muted-foreground"/>Actual Package Weight (KG)</FormLabel>
+                    <FormLabel className="flex items-center"><Weight className="mr-2 h-5 w-5 text-muted-foreground"/>Approximate Package Weight (KG)</FormLabel>
                     <FormControl><Input type="number" step="0.01" min="0.01" placeholder="e.g., 1.5" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <div className="space-y-4 pt-4 border-t">
-                  <FormLabel className="flex items-center"><Box className="mr-2 h-5 w-5 text-muted-foreground"/>Package Dimensions (cm) (Optional)</FormLabel>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <FormField control={form.control} name="length" render={({ field }) => (
-                      <FormItem>
-                          <FormLabel className="text-xs text-muted-foreground">Length</FormLabel>
-                          <FormControl><Input type="number" step="0.01" min="0.01" placeholder="L" {...field} value={field.value ?? ''} /></FormControl>
-                          <FormMessage />
-                      </FormItem>
-                      )} />
-                      <FormField control={form.control} name="width" render={({ field }) => (
-                      <FormItem>
-                          <FormLabel className="text-xs text-muted-foreground">Width</FormLabel>
-                          <FormControl><Input type="number" step="0.01" min="0.01" placeholder="W" {...field} value={field.value ?? ''} /></FormControl>
-                          <FormMessage />
-                      </FormItem>
-                      )} />
-                      <FormField control={form.control} name="height" render={({ field }) => (
-                      <FormItem>
-                          <FormLabel className="text-xs text-muted-foreground">Height</FormLabel>
-                          <FormControl><Input type="number" step="0.01" min="0.01" placeholder="H" {...field} value={field.value ?? ''} /></FormControl>
-                          <FormMessage />
-                      </FormItem>
-                      )} />
-                  </div>
-                  <FormDescription className="text-xs">
-                      Provide dimensions to calculate volumetric weight. The greater of actual vs. volumetric weight (L×W×H/5000) will be used for rate calculation.
-                  </FormDescription>
-              </div>
-
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button type="submit" className="w-full" size="lg" disabled={isCalculating || loadingCountries || (loadingWeights && !!watchedDestinationCountryName)}>
@@ -347,7 +296,7 @@ export default function ShippingCalculatorForm() {
         <div className="max-w-4xl mx-auto mt-8 opacity-0 animate-fadeInUp">
             <h3 className="text-2xl sm:text-3xl font-bold text-center mb-2 font-headline text-accent">Available Services</h3>
             <p className="text-center text-muted-foreground mb-6">
-                Rates based on a chargeable weight of <strong>{chargeableWeight?.toFixed(2)} kg</strong>.
+                Rates based on a weight of <strong>{chargeableWeight?.toFixed(2)} kg</strong>.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {rateOptions.map((option, index) => {

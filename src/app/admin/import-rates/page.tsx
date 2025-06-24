@@ -222,7 +222,7 @@ export default function ImportRatesPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            1. Download the CSV template. The headers are: <code className="font-mono bg-muted p-1 rounded">{CSV_TEMPLATE_HEADERS}</code>
+            1. Download the CSV template. The headers are: <code className="font-mono bg-muted p-1 rounded block overflow-x-auto whitespace-nowrap">{CSV_TEMPLATE_HEADERS}</code>
           </p>
           <p className="text-sm text-muted-foreground">
             2. Fill the template with your data. Leave price fields blank for services that are not available.
