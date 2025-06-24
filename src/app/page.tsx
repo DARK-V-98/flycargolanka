@@ -191,8 +191,9 @@ export default function Home() {
                     <Image 
                         src="/pay.png" 
                         alt="PayHere Secure Payment Gateway" 
-                        width={400}
-                        height={74}
+                        width={800}
+                        height={148}
+                        quality={100}
                         className="w-full h-auto"
                     />
                  </a>
