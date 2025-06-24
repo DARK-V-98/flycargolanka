@@ -29,7 +29,7 @@ const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 const bookingSchema = z.object({
   shipmentType: z.enum(['parcel', 'document'], { required_error: "Please select a shipment type." }),
   serviceType: z.enum(['economy', 'express'], { required_error: "Please select a service type." }),
-  locationType: z.enum(['pickup', 'dropoff_maharagama', 'dropoff_galle'], { required_error: "Please select a location type." }),
+  locationType: z.enum(['pickup', 'dropoff_katunayake'], { required_error: "Please select a location type." }),
 
   receiverCountry: z.string().min(1, "Receiver country is required."),
   approxWeight: z.coerce.number().positive("Approximate weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."),
@@ -246,9 +246,10 @@ export default function BookingPage() {
         return;
       }
       
-      const { approxWeight, length, width, height } = form.getValues();
+      const approxWeightValue = Number(form.getValues('approxWeight'));
+      const { length, width, height } = form.getValues();
       
-      if (!approxWeight || Number(approxWeight) <= 0) {
+      if (!approxWeightValue || approxWeightValue <= 0) {
         setCalculationError("Approximate weight must be positive.");
         return;
       }
@@ -272,7 +273,7 @@ export default function BookingPage() {
         return;
       }
       
-      let finalChargeableWeight = Number(approxWeight);
+      let finalChargeableWeight = approxWeightValue;
       const l = Number(length);
       const w = Number(width);
       const h = Number(height);
@@ -465,7 +466,7 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="opacity-0 animate-fadeInUp container mx-auto px-4 py-8">
+    <div className="opacity-0 animate-fadeInUp">
       <PageHeader
         title="Submit Your Shipment Details"
         description="Fill in all required information to process your shipment. An estimated cost will be shown below."
@@ -520,8 +521,7 @@ export default function BookingPage() {
                     <FormControl>
                       <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-2">
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="pickup" id="pickup" /></FormControl><FormLabel htmlFor="pickup" className="font-normal flex items-center"><Home className="mr-1.5 h-4 w-4 text-muted-foreground"/>Pickup</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="dropoff_maharagama" id="dropoff_maharagama" /></FormControl><FormLabel htmlFor="dropoff_maharagama" className="font-normal flex items-center"><Building className="mr-1.5 h-4 w-4 text-muted-foreground"/>Drop Off – Maharagama</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="dropoff_galle" id="dropoff_galle" /></FormControl><FormLabel htmlFor="dropoff_galle" className="font-normal flex items-center"><Navigation className="mr-1.5 h-4 w-4 text-muted-foreground"/>Drop Off – Galle</FormLabel></FormItem>
+                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="dropoff_katunayake" id="dropoff_katunayake" /></FormControl><FormLabel htmlFor="dropoff_katunayake" className="font-normal flex items-center"><Building className="mr-1.5 h-4 w-4 text-muted-foreground"/>Drop Off – Katunayake</FormLabel></FormItem>
                       </RadioGroup>
                     </FormControl><FormMessage />
                   </FormItem>

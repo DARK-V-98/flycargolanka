@@ -41,7 +41,7 @@ interface Booking {
 
   shipmentType: 'parcel' | 'document';
   serviceType: 'economy' | 'express';
-  locationType: 'pickup' | 'dropoff_maharagama' | 'dropoff_galle';
+  locationType: 'pickup' | 'dropoff_katunayake';
 
   receiverCountry: string;
   approxWeight: number; // same as packageWeight
