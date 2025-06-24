@@ -49,7 +49,7 @@ export default function AboutUsPage() {
                   <h2 className="text-3xl font-bold font-headline text-accent">Our Vision</h2>
               </div>
               <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
-                "To be Sri Lanka's most trusted air cargo partner, enabling seamless international connections for businesses and individuals with reliability and innovation."
+                To inspire meaningful connections across the globe by becoming the most caring and dependable logistics partner — bringing joy, comfort, and opportunity to every doorstep we reach.
               </p>
             </div>
             <div className="opacity-0 animate-fadeInUp delay-400">
@@ -72,7 +72,7 @@ export default function AboutUsPage() {
                   <h2 className="text-3xl font-bold font-headline text-accent">Our Mission</h2>
               </div>
               <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
-                "To deliver customer-centric air cargo services for e-commerce entrepreneurs, offering free insurance, competitive rates, and cutting-edge technology to ensure fast, secure, and affordable global deliveries, empowering Sri Lankan businesses to succeed."
+                At Fly Cargo Lanka, we go beyond delivery — we carry emotions, memories, and dreams. With a deep understanding of what every shipment means, we offer smart, secure, and heart-driven logistics solutions for individuals and businesses. From thoughtful family packages to professional exports, we deliver with care, speed, and a promise to always go the extra mile — delivering beyond borders, and beyond expectations.
               </p>
             </div>
           </div>
