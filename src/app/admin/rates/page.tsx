@@ -35,8 +35,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
 
 const addCountrySchema = z.object({
   name: z.string().min(2, "Country name must be at least 2 characters.").max(50, "Country name too long."),
@@ -334,7 +332,6 @@ export default function ManageRatesPage() {
                             </FormItem>
                         )} />
                       </div>
-                      {/* Price fields for new entry can be added here if needed, or kept simple */}
                       <Button type="submit" disabled={isSubmittingNewWeight}>
                           {isSubmittingNewWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
                           Add New Rate
@@ -349,42 +346,42 @@ export default function ManageRatesPage() {
                   ) : currentWeights.length === 0 ? (
                       <p className="text-muted-foreground text-center py-6">No weight rates added for this country yet.</p>
                   ) : (
-                      <ScrollArea className="h-[60vh] w-full border rounded-md">
-                      <Table className="min-w-[1200px]">
-                          <TableHeader className="sticky top-0 bg-card z-10">
+                    <div className="border rounded-md">
+                      <Table>
+                          <TableHeader>
                           <TableRow>
-                              <TableHead className="w-[150px]">Label</TableHead>
-                              <TableHead className="w-[100px]">Value (kg)</TableHead>
-                              <TableHead>ND Econ.</TableHead>
-                              <TableHead>ND Exp.</TableHead>
-                              <TableHead>Doc Econ.</TableHead>
-                              <TableHead>Doc Exp.</TableHead>
-                              <TableHead className="w-[200px] text-center">Actions</TableHead>
+                              <TableHead className="p-2 min-w-[150px]">Label</TableHead>
+                              <TableHead className="p-2 min-w-[100px]">Value (kg)</TableHead>
+                              <TableHead className="p-2 min-w-[110px]">ND Econ.</TableHead>
+                              <TableHead className="p-2 min-w-[110px]">ND Exp.</TableHead>
+                              <TableHead className="p-2 min-w-[110px]">Doc Econ.</TableHead>
+                              <TableHead className="p-2 min-w-[110px]">Doc Exp.</TableHead>
+                              <TableHead className="p-2 min-w-[120px] text-center sticky right-0 bg-card">Actions</TableHead>
                           </TableRow>
                           </TableHeader>
                           <TableBody>{currentWeights.map((wr, index) => (
                           <TableRow key={wr.id}>
-                              <TableCell><Input value={wr.weightLabel ?? ''} onChange={e => handleInlineWeightChange(index, 'weightLabel', e.target.value)}/></TableCell>
-                              <TableCell><Input type="number" step="0.01" value={wr.weightValue ?? ''} onChange={e => handleInlineWeightChange(index, 'weightValue', e.target.value)} /></TableCell>
+                              <TableCell className="p-2 align-middle"><Input value={wr.weightLabel ?? ''} onChange={e => handleInlineWeightChange(index, 'weightLabel', e.target.value)} className="h-9"/></TableCell>
+                              <TableCell className="p-2 align-middle"><Input type="number" step="0.01" value={wr.weightValue ?? ''} onChange={e => handleInlineWeightChange(index, 'weightValue', e.target.value)} className="h-9 w-24" /></TableCell>
                               
-                              <TableCell className="space-y-2">
+                              <TableCell className="space-y-2 p-2 align-top">
                                 <Switch checked={wr.isNdEconomyEnabled} onCheckedChange={c => handleInlineWeightChange(index, 'isNdEconomyEnabled', c)} />
-                                <Input type="number" step="0.01" disabled={!wr.isNdEconomyEnabled} placeholder="Price" value={wr.ndEconomyPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'ndEconomyPrice', e.target.value)} />
+                                <Input type="number" step="0.01" disabled={!wr.isNdEconomyEnabled} placeholder="Price" value={wr.ndEconomyPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'ndEconomyPrice', e.target.value)} className="h-9 w-24" />
                               </TableCell>
-                              <TableCell className="space-y-2">
+                              <TableCell className="space-y-2 p-2 align-top">
                                 <Switch checked={wr.isNdExpressEnabled} onCheckedChange={c => handleInlineWeightChange(index, 'isNdExpressEnabled', c)} />
-                                <Input type="number" step="0.01" disabled={!wr.isNdExpressEnabled} placeholder="Price" value={wr.ndExpressPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'ndExpressPrice', e.target.value)} />
+                                <Input type="number" step="0.01" disabled={!wr.isNdExpressEnabled} placeholder="Price" value={wr.ndExpressPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'ndExpressPrice', e.target.value)} className="h-9 w-24" />
                               </TableCell>
-                              <TableCell className="space-y-2">
+                              <TableCell className="space-y-2 p-2 align-top">
                                 <Switch checked={wr.isDocEconomyEnabled} onCheckedChange={c => handleInlineWeightChange(index, 'isDocEconomyEnabled', c)} />
-                                <Input type="number" step="0.01" disabled={!wr.isDocEconomyEnabled} placeholder="Price" value={wr.docEconomyPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'docEconomyPrice', e.target.value)} />
+                                <Input type="number" step="0.01" disabled={!wr.isDocEconomyEnabled} placeholder="Price" value={wr.docEconomyPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'docEconomyPrice', e.target.value)} className="h-9 w-24" />
                               </TableCell>
-                              <TableCell className="space-y-2">
+                              <TableCell className="space-y-2 p-2 align-top">
                                 <Switch checked={wr.isDocExpressEnabled} onCheckedChange={c => handleInlineWeightChange(index, 'isDocExpressEnabled', c)} />
-                                <Input type="number" step="0.01" disabled={!wr.isDocExpressEnabled} placeholder="Price" value={wr.docExpressPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'docExpressPrice', e.target.value)} />
+                                <Input type="number" step="0.01" disabled={!wr.isDocExpressEnabled} placeholder="Price" value={wr.docExpressPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'docExpressPrice', e.target.value)} className="h-9 w-24" />
                               </TableCell>
 
-                              <TableCell className="text-center space-x-1">
+                              <TableCell className="text-center space-x-1 p-2 align-middle sticky right-0 bg-card/95 backdrop-blur-sm">
                                 <Button size="sm" onClick={() => handleSaveWeight(wr)} disabled={savingRowId === wr.id}>
                                     {savingRowId === wr.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Save className="h-4 w-4"/>}
                                     <span className="ml-2 hidden sm:inline">Save</span>
@@ -411,7 +408,7 @@ export default function ManageRatesPage() {
                           </TableRow>
                           ))}</TableBody>
                       </Table>
-                      </ScrollArea>
+                    </div>
                   )}
                   </div>
               </CardContent>
