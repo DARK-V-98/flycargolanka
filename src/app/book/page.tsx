@@ -593,7 +593,7 @@ export default function BookingPage() {
             </CardContent>
              {(calculatedCost || calculationError || (showRateCalculationFields && (loadingWeights || (loadingCountries && !watchedReceiverCountryName)))) && (
                 <CardFooter className={`mt-0 p-4 rounded-b-md ${calculationError ? 'bg-destructive/10' : 'bg-primary/10'}`}>
-                    <div className="text-center w-full">
+                    <div className="text-center w-full space-y-2">
                         {(loadingWeights || (loadingCountries && !watchedReceiverCountryName && showRateCalculationFields)) ? (
                             <div className="flex items-center justify-center text-muted-foreground">
                                 <Loader2 className="mr-2 h-5 w-5 animate-spin"/> {(loadingCountries && !watchedReceiverCountryName) ? "Loading countries..." : "Loading rates..."}
@@ -606,6 +606,22 @@ export default function BookingPage() {
                                 {chargeableWeight && Math.abs(chargeableWeight - Number(form.getValues('approxWeight'))) > 0.001 && (
                                     <p className="text-xs text-muted-foreground mt-1">Based on chargeable weight of {chargeableWeight.toFixed(2)} kg.</p>
                                 )}
+                                <div className="mt-4 text-left text-xs text-muted-foreground space-y-2">
+                                    {watchedServiceType === 'express' && (
+                                        <ul className="space-y-1.5">
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 3-5 working days</span></li>
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End-to-end updates. (The tracking number will be provided to you within the day of delivery of the parcel.)</span></li>
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance</span></li>
+                                        </ul>
+                                    )}
+                                    {watchedServiceType === 'economy' && (
+                                        <ul className="space-y-1.5">
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 14 to 16 working days</span></li>
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End To End traking update. (You will be provided with a tracking number within 10 days of the parcel being delivered.)</span></li>
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance</span></li>
+                                        </ul>
+                                    )}
+                                </div>
                             </div>
                         ) : null}
                     </div>
