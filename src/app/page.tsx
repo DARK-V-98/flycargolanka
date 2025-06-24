@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe2, MapPin, Truck, ShoppingCart, Globe, Building2, Eye, Target, Calculator } from 'lucide-react';
+import { Globe2, MapPin, Truck, ShoppingCart, Building2, Eye, Target, Calculator, Globe } from 'lucide-react';
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
 import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
@@ -28,7 +28,7 @@ export default function Home() {
   ];
 
   return (
-    <div>
+    <div className="flex-1 flex flex-col">
       <section className="py-12 md:py-20 shadow-lg overflow-hidden relative min-h-screen flex items-center">
         <video
           autoPlay
