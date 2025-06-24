@@ -30,7 +30,7 @@ export async function generatePayhereData(
 ): Promise<PayhereData> {
   const domain = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   
-  const returnUrl = `${domain}/payment/success?bookingId=${bookingId}`;
+  const returnUrl = `${domain}/my-bookings`;
   const cancelUrl = `${domain}/payment/cancel?bookingId=${bookingId}`;
   const notifyUrl = `${domain}/api/payhere-notify`;
 
