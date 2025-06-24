@@ -9,8 +9,8 @@ import type { PayhereData } from '@/types/payhere';
 const MERCHANT_ID = process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID || '1230954';
 const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET || 'MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA=';
 
-// Determine Payhere URL based on environment variable
-const isLive = process.env.NEXT_PUBLIC_PAYHERE_ENV === 'live';
+// Determine Payhere URL based on environment variable. Use 'live' for production.
+const isLive = process.env.PAYHERE_MODE === 'live';
 const PAYHERE_URL = isLive
   ? 'https://www.payhere.lk/pay/checkout' // Live URL
   : 'https://sandbox.payhere.lk/pay/checkout'; // Sandbox URL for testing
