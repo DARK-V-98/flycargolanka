@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign, Landmark } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign, Landmark, Box } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, setDoc, doc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where } from 'firebase/firestore';
@@ -33,6 +33,9 @@ const bookingSchema = z.object({
 
   receiverCountry: z.string().min(1, "Receiver country is required."),
   approxWeight: z.coerce.number().positive("Approximate weight must be a positive number.").min(0.01, "Weight must be at least 0.01 KG."),
+  length: z.union([z.coerce.number().positive("Length must be a positive number."), z.literal('')]).optional(),
+  width: z.union([z.coerce.number().positive("Width must be a positive number."), z.literal('')]).optional(),
+  height: z.union([z.coerce.number().positive("Height must be a positive number."), z.literal('')]).optional(),
   approxValue: z.coerce.number().positive("Approximate value of goods must be a positive number.").min(1, "Value must be at least 1 USD."),
 
   receiverFullName: z.string().min(2, "Receiver full name is required (as per passport).").max(100),
@@ -51,6 +54,13 @@ const bookingSchema = z.object({
 
   declaration1: z.boolean().refine(val => val === true, { message: "You must agree to the first declaration." }),
   declaration2: z.boolean().refine(val => val === true, { message: "You must agree to the second declaration." }),
+}).refine((data) => {
+    const dims = [data.length, data.width, data.height];
+    const providedCount = dims.filter(d => d !== undefined && d !== '').length;
+    return providedCount === 0 || providedCount === 3;
+}, {
+    message: "Please enter all three dimensions or leave them all blank.",
+    path: ['length'],
 });
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
@@ -83,6 +93,8 @@ export default function BookingPage() {
   const [loadingWeights, setLoadingWeights] = useState(false);
   const [calculatedCost, setCalculatedCost] = useState<string | null>(null);
   const [calculationError, setCalculationError] = useState<string | null>(null);
+  const [chargeableWeight, setChargeableWeight] = useState<number | null>(null);
+
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -92,6 +104,9 @@ export default function BookingPage() {
       locationType: undefined,
       receiverCountry: '',
       approxWeight: '' as any,
+      length: '',
+      width: '',
+      height: '',
       approxValue: '' as any,
       receiverFullName: '',
       receiverEmail: '',
@@ -114,6 +129,9 @@ export default function BookingPage() {
   const watchedServiceType = form.watch('serviceType');
   const watchedReceiverCountryName = form.watch('receiverCountry');
   const watchedApproxWeight = form.watch('approxWeight');
+  const watchedLength = form.watch('length');
+  const watchedWidth = form.watch('width');
+  const watchedHeight = form.watch('height');
 
   const showRateCalculationFields = !!(watchedShipmentType && watchedServiceType);
 
@@ -222,8 +240,16 @@ export default function BookingPage() {
     const calculateCost = () => {
       setCalculatedCost(null);
       setCalculationError(null);
+      setChargeableWeight(null);
 
       if (!showRateCalculationFields || !watchedShipmentType || !watchedServiceType || !watchedReceiverCountryName || !watchedApproxWeight) {
+        return;
+      }
+      
+      const { approxWeight, length, width, height } = form.getValues();
+      
+      if (!approxWeight || approxWeight <= 0) {
+        setCalculationError("Approximate weight must be positive.");
         return;
       }
 
@@ -241,21 +267,26 @@ export default function BookingPage() {
           return;
       }
 
-      if (watchedApproxWeight <= 0) {
-        setCalculationError("Approximate weight must be positive.");
-        return;
-      }
-
       if (availableWeights.length === 0 && !loadingWeights) {
         setCalculationError(`No shipping weights configured for ${watchedReceiverCountryName}.`);
         return;
       }
+      
+      let finalChargeableWeight = approxWeight;
+      const l = Number(length);
+      const w = Number(width);
+      const h = Number(height);
+      if (l > 0 && w > 0 && h > 0) {
+          const volumetricWeight = (l * w * h) / 5000;
+          finalChargeableWeight = Math.max(approxWeight, volumetricWeight);
+      }
+      setChargeableWeight(finalChargeableWeight);
 
       const sortedWeights = [...availableWeights].sort((a, b) => a.weightValue - b.weightValue);
       let selectedWeightBand: WeightRate | undefined = undefined;
 
       for (const band of sortedWeights) {
-        if (watchedApproxWeight <= band.weightValue) {
+        if (finalChargeableWeight <= band.weightValue) {
           selectedWeightBand = band;
           break;
         }
@@ -267,7 +298,7 @@ export default function BookingPage() {
       }
 
       if (!selectedWeightBand) {
-        setCalculationError(`No suitable weight band found for ${watchedApproxWeight}kg.`);
+        setCalculationError(`No suitable weight band found for ${finalChargeableWeight.toFixed(2)}kg.`);
         return;
       }
 
@@ -314,6 +345,9 @@ export default function BookingPage() {
       watchedServiceType,
       watchedReceiverCountryName,
       watchedApproxWeight,
+      watchedLength,
+      watchedWidth,
+      watchedHeight,
       availableWeights,
       loadingCountries,
       loadingWeights,
@@ -324,6 +358,13 @@ export default function BookingPage() {
   const onSubmit: SubmitHandler<BookingFormValues> = async (data) => {
     if (isSubmitting || showProfileCompletionAlert || !user || !userProfile) return;
     setIsSubmitting(true);
+
+    let finalChargeableWeight = data.approxWeight;
+    const { length, width, height } = data;
+    if (length && width && height) {
+        const volumetricWeight = (Number(length) * Number(width) * Number(height)) / 5000;
+        finalChargeableWeight = Math.max(data.approxWeight, volumetricWeight);
+    }
 
     let numericCost: number | null = null;
     if (calculatedCost && !calculationError) {
@@ -344,6 +385,7 @@ export default function BookingPage() {
         createdAt: serverTimestamp(),
         packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`,
         packageWeight: data.approxWeight,
+        chargeableWeight: finalChargeableWeight,
         senderName: data.senderFullName,
         receiverName: data.receiverFullName,
         estimatedCostLKR: numericCost,
@@ -509,6 +551,35 @@ export default function BookingPage() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <div className="space-y-4 pt-4 border-t">
+                      <FormLabel className="flex items-center"><Box className="mr-2 h-5 w-5 text-muted-foreground"/>Package Dimensions (cm) (Optional)</FormLabel>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <FormField control={form.control} name="length" render={({ field }) => (
+                          <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Length</FormLabel>
+                              <FormControl><Input type="number" step="0.01" min="0.01" placeholder="L" {...field} value={field.value ?? ''} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                          )} />
+                          <FormField control={form.control} name="width" render={({ field }) => (
+                          <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Width</FormLabel>
+                              <FormControl><Input type="number" step="0.01" min="0.01" placeholder="W" {...field} value={field.value ?? ''} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                          )} />
+                          <FormField control={form.control} name="height" render={({ field }) => (
+                          <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Height</FormLabel>
+                              <FormControl><Input type="number" step="0.01" min="0.01" placeholder="H" {...field} value={field.value ?? ''} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                          )} />
+                      </div>
+                      <FormDescription className="text-xs">
+                          Provide dimensions to calculate volumetric weight. The greater of actual vs. volumetric weight (L×W×H/5000) will be used for rate calculation.
+                      </FormDescription>
+                  </div>
                   <FormField control={form.control} name="approxValue" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Approximate Value of Goods (USD)</FormLabel>
@@ -520,18 +591,23 @@ export default function BookingPage() {
                 </div>
               )}
             </CardContent>
-            {(calculatedCost || calculationError || (showRateCalculationFields && (loadingWeights || (loadingCountries && !watchedReceiverCountryName)))) && (
+             {(calculatedCost || calculationError || (showRateCalculationFields && (loadingWeights || (loadingCountries && !watchedReceiverCountryName)))) && (
                 <CardFooter className={`mt-0 p-4 rounded-b-md ${calculationError ? 'bg-destructive/10' : 'bg-primary/10'}`}>
                     <div className="text-center w-full">
-                    {(loadingWeights || (loadingCountries && !watchedReceiverCountryName && showRateCalculationFields)) ? (
-                        <div className="flex items-center justify-center text-muted-foreground">
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin"/> {(loadingCountries && !watchedReceiverCountryName) ? "Loading countries..." : "Loading rates..."}
-                        </div>
-                    ) : calculationError ? (
-                        <p className="text-destructive flex items-center justify-center"><AlertTriangle className="mr-2 h-5 w-5"/> {calculationError}</p>
-                    ) : calculatedCost ? (
-                        <h3 className="text-lg font-semibold text-accent flex items-center justify-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>{calculatedCost}</h3>
-                    ) : null}
+                        {(loadingWeights || (loadingCountries && !watchedReceiverCountryName && showRateCalculationFields)) ? (
+                            <div className="flex items-center justify-center text-muted-foreground">
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin"/> {(loadingCountries && !watchedReceiverCountryName) ? "Loading countries..." : "Loading rates..."}
+                            </div>
+                        ) : calculationError ? (
+                            <p className="text-destructive flex items-center justify-center"><AlertTriangle className="mr-2 h-5 w-5"/> {calculationError}</p>
+                        ) : calculatedCost ? (
+                            <div>
+                                <h3 className="text-lg font-semibold text-accent flex items-center justify-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>{calculatedCost}</h3>
+                                {chargeableWeight && Number(chargeableWeight.toFixed(2)) !== form.getValues('approxWeight') && (
+                                    <p className="text-xs text-muted-foreground mt-1">Based on chargeable weight of {chargeableWeight.toFixed(2)} kg.</p>
+                                )}
+                            </div>
+                        ) : null}
                     </div>
                 </CardFooter>
             )}
