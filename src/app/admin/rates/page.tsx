@@ -44,7 +44,6 @@ const addCountrySchema = z.object({
 type AddCountryFormValues = z.infer<typeof addCountrySchema>;
 
 const weightRateSchema = z.object({
-  id: z.string().optional(),
   weightLabel: z.string().min(1, "Weight label is required (e.g., '0.5 kg', '1-2 kg').").max(50,"Label too long."),
   weightValue: z.coerce.number().positive("Weight value must be a positive number (for sorting)."),
 
@@ -72,10 +71,11 @@ export default function ManageRatesPage() {
   const [selectedCountryForWeights, setSelectedCountryForWeights] = useState<CountryRate | null>(null);
   const [currentWeights, setCurrentWeights] = useState<WeightRate[]>([]);
   const [loadingWeights, setLoadingWeights] = useState(false);
-  const [editingWeightRate, setEditingWeightRate] = useState<WeightRateFormValues | null>(null);
-  const [isSubmittingWeight, setIsSubmittingWeight] = useState(false);
+  const [isSubmittingNewWeight, setIsSubmittingNewWeight] = useState(false);
   const [weightRateToDelete, setWeightRateToDelete] = useState<WeightRate | null>(null);
   const [isDeletingWeight, setIsDeletingWeight] = useState(false);
+  const [savingRowId, setSavingRowId] = useState<string | null>(null);
+
 
   const { toast } = useToast();
 
@@ -197,92 +197,87 @@ export default function ManageRatesPage() {
   const handleManageWeightsClick = (country: CountryRate) => {
     setSelectedCountryForWeights(country);
     fetchWeightsForCountry(country.id);
-    setEditingWeightRate(null);
-    weightRateForm.reset({
-        weightLabel: '',
-        weightValue: '' as any,
-        ndEconomyPrice: null,
-        ndExpressPrice: null,
-        isNdEconomyEnabled: true,
-        isNdExpressEnabled: true,
-        docEconomyPrice: null,
-        docExpressPrice: null,
-        isDocEconomyEnabled: true,
-        isDocExpressEnabled: true,
-    });
     setCurrentView('weights');
   };
-
-  const onAddEditWeightSubmit: SubmitHandler<WeightRateFormValues> = async (data) => {
+  
+  const onAddWeightSubmit: SubmitHandler<WeightRateFormValues> = async (data) => {
     if (!selectedCountryForWeights) return;
-    setIsSubmittingWeight(true);
+    setIsSubmittingNewWeight(true);
 
     const processedData = {
-      ...data,
-      weightValue: Number(data.weightValue),
-      ndEconomyPrice: (data.ndEconomyPrice === '' || data.ndEconomyPrice === undefined || data.ndEconomyPrice === null || isNaN(Number(data.ndEconomyPrice))) ? null : Number(data.ndEconomyPrice),
-      ndExpressPrice: (data.ndExpressPrice === '' || data.ndExpressPrice === undefined || data.ndExpressPrice === null || isNaN(Number(data.ndExpressPrice))) ? null : Number(data.ndExpressPrice),
-      docEconomyPrice: (data.docEconomyPrice === '' || data.docEconomyPrice === undefined || data.docEconomyPrice === null || isNaN(Number(data.docEconomyPrice))) ? null : Number(data.docEconomyPrice),
-      docExpressPrice: (data.docExpressPrice === '' || data.docExpressPrice === undefined || data.docExpressPrice === null || isNaN(Number(data.docExpressPrice))) ? null : Number(data.docExpressPrice),
+        ...data,
+        weightValue: Number(data.weightValue),
+        ndEconomyPrice: (data.ndEconomyPrice === '' || data.ndEconomyPrice === undefined || data.ndEconomyPrice === null || isNaN(Number(data.ndEconomyPrice))) ? null : Number(data.ndEconomyPrice),
+        ndExpressPrice: (data.ndExpressPrice === '' || data.ndExpressPrice === undefined || data.ndExpressPrice === null || isNaN(Number(data.ndExpressPrice))) ? null : Number(data.ndExpressPrice),
+        docEconomyPrice: (data.docEconomyPrice === '' || data.docEconomyPrice === undefined || data.docEconomyPrice === null || isNaN(Number(data.docEconomyPrice))) ? null : Number(data.docEconomyPrice),
+        docExpressPrice: (data.docExpressPrice === '' || data.docExpressPrice === undefined || data.docExpressPrice === null || isNaN(Number(data.docExpressPrice))) ? null : Number(data.docExpressPrice),
     };
     
     const dataToSave: Partial<WeightRate> = { 
         ...processedData,
+        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
     };
-    if (!editingWeightRate?.id) {
-        dataToSave.createdAt = serverTimestamp();
-    }
 
     try {
-      if (editingWeightRate && editingWeightRate.id) {
-        const weightDocRef = doc(db, 'shipping_rates', selectedCountryForWeights.id, 'weights', editingWeightRate.id);
-        await updateDoc(weightDocRef, dataToSave);
-        toast({ title: "Success", description: "Weight rate updated.", variant: "default" });
-      } else {
         const weightsColRef = collection(db, 'shipping_rates', selectedCountryForWeights.id, 'weights');
         await addDoc(weightsColRef, dataToSave);
-        toast({ title: "Success", description: "Weight rate added.", variant: "default" });
-      }
-      weightRateForm.reset({
+        toast({ title: "Success", description: "New weight rate added.", variant: "default" });
+        weightRateForm.reset({
           weightLabel: '', weightValue: '' as any,
           ndEconomyPrice: null, ndExpressPrice: null, isNdEconomyEnabled: true, isNdExpressEnabled: true,
           docEconomyPrice: null, docExpressPrice: null, isDocEconomyEnabled: true, isDocExpressEnabled: true
-      });
-      setEditingWeightRate(null);
-      fetchWeightsForCountry(selectedCountryForWeights.id);
+        });
+        fetchWeightsForCountry(selectedCountryForWeights.id);
     } catch (error) {
-      console.error("Error saving weight rate:", error);
-      toast({ title: "Error", description: "Could not save weight rate.", variant: "destructive" });
+        console.error("Error adding weight rate:", error);
+        toast({ title: "Error", description: "Could not add weight rate.", variant: "destructive" });
     } finally {
-      setIsSubmittingWeight(false);
+        setIsSubmittingNewWeight(false);
     }
   };
 
-  const handleEditWeightClick = (weightRate: WeightRate) => {
-    const formData = {
-        id: weightRate.id,
-        weightLabel: weightRate.weightLabel,
-        weightValue: weightRate.weightValue,
-        ndEconomyPrice: weightRate.ndEconomyPrice,
-        ndExpressPrice: weightRate.ndExpressPrice,
-        isNdEconomyEnabled: weightRate.isNdEconomyEnabled === undefined ? true : weightRate.isNdEconomyEnabled,
-        isNdExpressEnabled: weightRate.isNdExpressEnabled === undefined ? true : weightRate.isNdExpressEnabled,
-        docEconomyPrice: weightRate.docEconomyPrice,
-        docExpressPrice: weightRate.docExpressPrice,
-        isDocEconomyEnabled: weightRate.isDocEconomyEnabled === undefined ? true : weightRate.isDocEconomyEnabled,
-        isDocExpressEnabled: weightRate.isDocExpressEnabled === undefined ? true : weightRate.isDocExpressEnabled,
-    };
-    setEditingWeightRate(formData);
-    weightRateForm.reset({
-        ...formData,
-        weightValue: formData.weightValue !== null && formData.weightValue !== undefined ? String(formData.weightValue) : '',
-        ndEconomyPrice: formData.ndEconomyPrice !== null && formData.ndEconomyPrice !== undefined ? formData.ndEconomyPrice : null,
-        ndExpressPrice: formData.ndExpressPrice !== null && formData.ndExpressPrice !== undefined ? formData.ndExpressPrice : null,
-        docEconomyPrice: formData.docEconomyPrice !== null && formData.docEconomyPrice !== undefined ? formData.docEconomyPrice : null,
-        docExpressPrice: formData.docExpressPrice !== null && formData.docExpressPrice !== undefined ? formData.docExpressPrice : null,
-    });
+  const handleInlineWeightChange = (index: number, field: keyof WeightRate, value: string | number | boolean) => {
+    const updatedWeights = [...currentWeights];
+    const weightToUpdate = { ...updatedWeights[index] };
+    (weightToUpdate as any)[field] = value;
+    updatedWeights[index] = weightToUpdate;
+    setCurrentWeights(updatedWeights);
   };
+
+
+  const handleSaveWeight = async (weightRate: WeightRate) => {
+    if (!selectedCountryForWeights || !weightRate.id) return;
+    setSavingRowId(weightRate.id);
+    try {
+        const weightDocRef = doc(db, 'shipping_rates', selectedCountryForWeights.id, 'weights', weightRate.id);
+        
+        const dataToSave = {
+            weightLabel: weightRate.weightLabel,
+            weightValue: Number(weightRate.weightValue),
+            isNdEconomyEnabled: weightRate.isNdEconomyEnabled,
+            ndEconomyPrice: (weightRate.ndEconomyPrice === '' || weightRate.ndEconomyPrice === undefined || weightRate.ndEconomyPrice === null || isNaN(Number(weightRate.ndEconomyPrice))) ? null : Number(weightRate.ndEconomyPrice),
+            isNdExpressEnabled: weightRate.isNdExpressEnabled,
+            ndExpressPrice: (weightRate.ndExpressPrice === '' || weightRate.ndExpressPrice === undefined || weightRate.ndExpressPrice === null || isNaN(Number(weightRate.ndExpressPrice))) ? null : Number(weightRate.ndExpressPrice),
+            isDocEconomyEnabled: weightRate.isDocEconomyEnabled,
+            docEconomyPrice: (weightRate.docEconomyPrice === '' || weightRate.docEconomyPrice === undefined || weightRate.docEconomyPrice === null || isNaN(Number(weightRate.docEconomyPrice))) ? null : Number(weightRate.docEconomyPrice),
+            isDocExpressEnabled: weightRate.isDocExpressEnabled,
+            docExpressPrice: (weightRate.docExpressPrice === '' || weightRate.docExpressPrice === undefined || weightRate.docExpressPrice === null || isNaN(Number(weightRate.docExpressPrice))) ? null : Number(weightRate.docExpressPrice),
+            updatedAt: serverTimestamp(),
+        };
+
+        await updateDoc(weightDocRef, dataToSave as any);
+        toast({ title: "Success", description: `Weight rate for ${weightRate.weightLabel} updated.`, variant: "default" });
+    } catch (error) {
+        console.error("Error updating weight rate:", error);
+        toast({ title: "Error", description: "Could not save weight rate.", variant: "destructive" });
+        // Optional: refetch data to revert optimistic UI change on failure
+        fetchWeightsForCountry(selectedCountryForWeights.id);
+    } finally {
+        setSavingRowId(null);
+    }
+  };
+
 
   const handleDeleteWeightRate = async () => {
     if (!selectedCountryForWeights || !weightRateToDelete) return;
@@ -304,12 +299,6 @@ export default function ManageRatesPage() {
     setCurrentView('countries');
     setSelectedCountryForWeights(null);
     setCurrentWeights([]);
-    setEditingWeightRate(null);
-    weightRateForm.reset({
-        weightLabel: '', weightValue: '' as any,
-        ndEconomyPrice: null, ndExpressPrice: null, isNdEconomyEnabled: true, isNdExpressEnabled: true,
-        docEconomyPrice: null, docExpressPrice: null, isDocEconomyEnabled: true, isDocExpressEnabled: true
-    });
   };
 
   if (currentView === 'weights' && selectedCountryForWeights) {
@@ -318,109 +307,38 @@ export default function ManageRatesPage() {
         <Button variant="outline" onClick={handleBackToCountries} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Countries
         </Button>
-        <div className="max-w-5xl mx-auto w-full">
+        <div className="w-full">
           <Card className="shadow-xl border-border/50">
               <CardHeader>
                   <CardTitle className="flex items-center text-2xl font-headline text-accent">
-                      <BookOpen className="mr-3 h-7 w-7 text-primary" /> Manage Weights & Prices for {selectedCountryForWeights.name}
+                      <BookOpen className="mr-3 h-7 w-7 text-primary" /> Manage Weights for {selectedCountryForWeights.name}
                   </CardTitle>
-                  <CardDescription>Add, edit, or delete weight rates. Specify prices for Non-Document and Document types.</CardDescription>
+                  <CardDescription>Add new rates using the form or edit existing rates directly in the table below.</CardDescription>
               </CardHeader>
               <CardContent>
                   <Form {...weightRateForm}>
-                  <form onSubmit={weightRateForm.handleSubmit(onAddEditWeightSubmit)} className="space-y-6 border p-4 rounded-md mt-4">
-                      <h3 className="text-lg font-medium">{editingWeightRate ? "Edit Weight Rate" : "Add New Weight Rate"}</h3>
+                  <form onSubmit={weightRateForm.handleSubmit(onAddWeightSubmit)} className="space-y-6 border p-4 rounded-md mt-4">
+                      <h3 className="text-lg font-medium">Add New Weight Rate</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField control={weightRateForm.control} name="weightLabel" render={({ field }) => (
-                          <FormItem> <FormLabel>Weight Label</FormLabel> <FormControl><Input placeholder="e.g., 1 kg, 2-3 kg" {...field} /></FormControl> <FormMessage /> </FormItem>
-                      )} />
-                      <FormField control={weightRateForm.control} name="weightValue" render={({ field }) => (
-                          <FormItem>
-                          <FormLabel>Weight Value (kg)</FormLabel>
-                          <FormControl>
-                              <Input type="number" step="0.01" placeholder="e.g., 1 or 2.5" {...field} value={field.value ?? ''}/>
-                          </FormControl>
-                          <ShadFormDescription>Numeric value for sorting (e.g., 0.5 for 500g).</ShadFormDescription>
-                          <FormMessage />
-                          </FormItem>
-                      )} />
+                        <FormField control={weightRateForm.control} name="weightLabel" render={({ field }) => (
+                            <FormItem> <FormLabel>Weight Label</FormLabel> <FormControl><Input placeholder="e.g., 1 kg, 2-3 kg" {...field} /></FormControl> <FormMessage /> </FormItem>
+                        )} />
+                        <FormField control={weightRateForm.control} name="weightValue" render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Weight Value (kg)</FormLabel>
+                            <FormControl>
+                                <Input type="number" step="0.01" placeholder="e.g., 1 or 2.5" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <ShadFormDescription>Numeric value for sorting (e.g., 0.5 for 500g).</ShadFormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )} />
                       </div>
-
-                      <div className="space-y-4 border p-4 rounded-md">
-                      <h4 className="font-semibold flex items-center"><PackageOpen className="mr-2 h-5 w-5 text-primary"/>Non-Document Rates</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField control={weightRateForm.control} name="ndEconomyPrice" render={({ field }) => (
-                          <FormItem> <FormLabel>Economy Price (LKR)</FormLabel> <FormControl>
-                              <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''}
-                              onChange={e => { const valStr = e.target.value; field.onChange(valStr === '' ? null : (isNaN(parseFloat(valStr)) ? null : parseFloat(valStr))); }}/>
-                          </FormControl> <FormMessage /> </FormItem>
-                          )} />
-                          <FormField control={weightRateForm.control} name="ndExpressPrice" render={({ field }) => (
-                          <FormItem> <FormLabel>Express Price (LKR)</FormLabel> <FormControl>
-                              <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''}
-                              onChange={e => { const valStr = e.target.value; field.onChange(valStr === '' ? null : (isNaN(parseFloat(valStr)) ? null : parseFloat(valStr))); }}/>
-                          </FormControl> <FormMessage /> </FormItem>
-                          )} />
-                      </div>
-                      <div className="flex items-center gap-6">
-                          <FormField control={weightRateForm.control} name="isNdEconomyEnabled" render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-1">
-                                  <div className="space-y-0.5 mr-4"> <FormLabel>Enable Economy</FormLabel> <ShadFormDescription>Non-doc economy.</ShadFormDescription> </div>
-                                  <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                              </FormItem>
-                          )} />
-                          <FormField control={weightRateForm.control} name="isNdExpressEnabled" render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-1">
-                                  <div className="space-y-0.5 mr-4"> <FormLabel>Enable Express</FormLabel> <ShadFormDescription>Non-doc express.</ShadFormDescription> </div>
-                                  <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                              </FormItem>
-                          )} />
-                      </div>
-                      </div>
-
-                      <div className="space-y-4 border p-4 rounded-md">
-                      <h4 className="font-semibold flex items-center"><FileArchive className="mr-2 h-5 w-5 text-primary"/>Document Rates</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField control={weightRateForm.control} name="docEconomyPrice" render={({ field }) => (
-                          <FormItem> <FormLabel>Economy Price (LKR)</FormLabel> <FormControl>
-                              <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''}
-                              onChange={e => { const valStr = e.target.value; field.onChange(valStr === '' ? null : (isNaN(parseFloat(valStr)) ? null : parseFloat(valStr))); }}/>
-                          </FormControl> <FormMessage /> </FormItem>
-                          )} />
-                          <FormField control={weightRateForm.control} name="docExpressPrice" render={({ field }) => (
-                          <FormItem> <FormLabel>Express Price (LKR)</FormLabel> <FormControl>
-                              <Input type="number" step="0.01" placeholder="Optional" {...field} value={field.value ?? ''}
-                              onChange={e => { const valStr = e.target.value; field.onChange(valStr === '' ? null : (isNaN(parseFloat(valStr)) ? null : parseFloat(valStr))); }}/>
-                          </FormControl> <FormMessage /> </FormItem>
-                          )} />
-                      </div>
-                      <div className="flex items-center gap-6">
-                          <FormField control={weightRateForm.control} name="isDocEconomyEnabled" render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-1">
-                                  <div className="space-y-0.5 mr-4"> <FormLabel>Enable Economy</FormLabel> <ShadFormDescription>Doc economy.</ShadFormDescription> </div>
-                                  <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                              </FormItem>
-                          )} />
-                          <FormField control={weightRateForm.control} name="isDocExpressEnabled" render={({ field }) => (
-                              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-1">
-                                  <div className="space-y-0.5 mr-4"> <FormLabel>Enable Express</FormLabel> <ShadFormDescription>Doc express.</ShadFormDescription> </div>
-                                  <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                              </FormItem>
-                          )} />
-                      </div>
-                      </div>
-
-                      <div className="flex justify-end space-x-2">
-                      {editingWeightRate && <Button type="button" variant="outline" onClick={() => { setEditingWeightRate(null); weightRateForm.reset({
-                          weightLabel: '', weightValue: '' as any,
-                          ndEconomyPrice: null, ndExpressPrice: null, isNdEconomyEnabled: true, isNdExpressEnabled: true,
-                          docEconomyPrice: null, docExpressPrice: null, isDocEconomyEnabled: true, isDocExpressEnabled: true
-                      }); }}>Cancel Edit</Button>}
-                      <Button type="submit" disabled={isSubmittingWeight}>
-                          {isSubmittingWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                          {editingWeightRate ? "Update Rate" : "Add Rate"}
+                      {/* Price fields for new entry can be added here if needed, or kept simple */}
+                      <Button type="submit" disabled={isSubmittingNewWeight}>
+                          {isSubmittingNewWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+                          Add New Rate
                       </Button>
-                      </div>
                   </form>
                   </Form>
 
@@ -431,48 +349,64 @@ export default function ManageRatesPage() {
                   ) : currentWeights.length === 0 ? (
                       <p className="text-muted-foreground text-center py-6">No weight rates added for this country yet.</p>
                   ) : (
-                      <ScrollArea className="h-[50vh] w-full border rounded-md">
-                      <Table>
-                          <TableHeader className="sticky top-0 bg-card">
+                      <ScrollArea className="h-[60vh] w-full border rounded-md">
+                      <Table className="min-w-[1200px]">
+                          <TableHeader className="sticky top-0 bg-card z-10">
                           <TableRow>
-                              <TableHead>Label</TableHead>
-                              <TableHead>Value (kg)</TableHead>
-                              <TableHead>ND Econ. (LKR)</TableHead>
-                              <TableHead>ND Exp. (LKR)</TableHead>
-                              <TableHead>Doc Econ. (LKR)</TableHead>
-                              <TableHead>Doc Exp. (LKR)</TableHead>
-                              <TableHead className="text-right">Actions</TableHead>
+                              <TableHead className="w-[150px]">Label</TableHead>
+                              <TableHead className="w-[100px]">Value (kg)</TableHead>
+                              <TableHead>ND Econ.</TableHead>
+                              <TableHead>ND Exp.</TableHead>
+                              <TableHead>Doc Econ.</TableHead>
+                              <TableHead>Doc Exp.</TableHead>
+                              <TableHead className="w-[200px] text-center">Actions</TableHead>
                           </TableRow>
                           </TableHeader>
-                          <TableBody>{currentWeights.map((wr) => (
+                          <TableBody>{currentWeights.map((wr, index) => (
                           <TableRow key={wr.id}>
-                              <TableCell className="font-medium">{wr.weightLabel}</TableCell>
-                              <TableCell>{wr.weightValue}</TableCell>
-                              <TableCell>{wr.isNdEconomyEnabled ? (wr.ndEconomyPrice ?? <XCircle className="h-4 w-4 text-muted-foreground"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell>
-                              <TableCell>{wr.isNdExpressEnabled ? (wr.ndExpressPrice ?? <XCircle className="h-4 w-4 text-muted-foreground"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell>
-                              <TableCell>{wr.isDocEconomyEnabled ? (wr.docEconomyPrice ?? <XCircle className="h-4 w-4 text-muted-foreground"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell>
-                              <TableCell>{wr.isDocExpressEnabled ? (wr.docExpressPrice ?? <XCircle className="h-4 w-4 text-muted-foreground"/>) : <span className="text-xs text-muted-foreground">Off</span>}</TableCell>
-                              <TableCell className="text-right space-x-1">
-                              <Button variant="ghost" size="icon" onClick={() => handleEditWeightClick(wr)}><Edit3 className="h-4 w-4"/></Button>
+                              <TableCell><Input value={wr.weightLabel ?? ''} onChange={e => handleInlineWeightChange(index, 'weightLabel', e.target.value)}/></TableCell>
+                              <TableCell><Input type="number" step="0.01" value={wr.weightValue ?? ''} onChange={e => handleInlineWeightChange(index, 'weightValue', e.target.value)} /></TableCell>
                               
-                              <AlertDialog open={!!weightRateToDelete && weightRateToDelete.id === wr.id} onOpenChange={(isOpen) => !isOpen && setWeightRateToDelete(null)}>
+                              <TableCell className="space-y-2">
+                                <Switch checked={wr.isNdEconomyEnabled} onCheckedChange={c => handleInlineWeightChange(index, 'isNdEconomyEnabled', c)} />
+                                <Input type="number" step="0.01" disabled={!wr.isNdEconomyEnabled} placeholder="Price" value={wr.ndEconomyPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'ndEconomyPrice', e.target.value)} />
+                              </TableCell>
+                              <TableCell className="space-y-2">
+                                <Switch checked={wr.isNdExpressEnabled} onCheckedChange={c => handleInlineWeightChange(index, 'isNdExpressEnabled', c)} />
+                                <Input type="number" step="0.01" disabled={!wr.isNdExpressEnabled} placeholder="Price" value={wr.ndExpressPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'ndExpressPrice', e.target.value)} />
+                              </TableCell>
+                              <TableCell className="space-y-2">
+                                <Switch checked={wr.isDocEconomyEnabled} onCheckedChange={c => handleInlineWeightChange(index, 'isDocEconomyEnabled', c)} />
+                                <Input type="number" step="0.01" disabled={!wr.isDocEconomyEnabled} placeholder="Price" value={wr.docEconomyPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'docEconomyPrice', e.target.value)} />
+                              </TableCell>
+                              <TableCell className="space-y-2">
+                                <Switch checked={wr.isDocExpressEnabled} onCheckedChange={c => handleInlineWeightChange(index, 'isDocExpressEnabled', c)} />
+                                <Input type="number" step="0.01" disabled={!wr.isDocExpressEnabled} placeholder="Price" value={wr.docExpressPrice ?? ''} onChange={e => handleInlineWeightChange(index, 'docExpressPrice', e.target.value)} />
+                              </TableCell>
+
+                              <TableCell className="text-center space-x-1">
+                                <Button size="sm" onClick={() => handleSaveWeight(wr)} disabled={savingRowId === wr.id}>
+                                    {savingRowId === wr.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Save className="h-4 w-4"/>}
+                                    <span className="ml-2 hidden sm:inline">Save</span>
+                                </Button>
+                              
+                                <AlertDialog open={!!weightRateToDelete && weightRateToDelete.id === wr.id} onOpenChange={(isOpen) => !isOpen && setWeightRateToDelete(null)}>
                                   <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setWeightRateToDelete(wr)}><Trash2 className="h-4 w-4"/></Button>
+                                    <Button variant="destructive" size="sm" onClick={() => setWeightRateToDelete(wr)}><Trash2 className="h-4 w-4"/><span className="ml-2 hidden sm:inline">Del</span></Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                      <AlertDialogTitle>Confirm Delete Weight Rate</AlertDialogTitle>
-                                      <AlertDialogDescription>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong> for <strong>{selectedCountryForWeights?.name}</strong>? This is irreversible.</AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                      <AlertDialogCancel onClick={() => setWeightRateToDelete(null)}>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={handleDeleteWeightRate} disabled={isDeletingWeight} className={buttonVariants({variant: "destructive"})}>
-                                      {isDeletingWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete Rate
-                                      </AlertDialogAction>
-                                  </AlertDialogFooter>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirm Delete Weight Rate</AlertDialogTitle>
+                                        <AlertDialogDescription>Are you sure you want to delete the weight rate: <strong>{weightRateToDelete?.weightLabel}</strong>? This is irreversible.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel onClick={() => setWeightRateToDelete(null)}>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDeleteWeightRate} disabled={isDeletingWeight} className={buttonVariants({variant: "destructive"})}>
+                                            {isDeletingWeight ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete Rate
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
                                   </AlertDialogContent>
-                              </AlertDialog>
-
+                                </AlertDialog>
                               </TableCell>
                           </TableRow>
                           ))}</TableBody>
@@ -500,7 +434,7 @@ export default function ManageRatesPage() {
           <CardTitle className="flex items-center text-2xl font-headline text-accent">
             <Settings2 className="mr-3 h-7 w-7 text-primary" /> Manage Shipping Rates
           </CardTitle>
-          <CardDescription>Add countries, then manage their specific shipping weight rates and prices for both document and non-document types.</CardDescription>
+          <CardDescription>Add countries, then manage their specific shipping weight rates and prices.</CardDescription>
         </CardHeader>
       </Card>
 
@@ -522,7 +456,7 @@ export default function ManageRatesPage() {
                       <FormItem className="flex-grow w-full">
                         <FormLabel className="sr-only">Country Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter country name (e.g., Sri Lanka)" {...field} />
+                          <Input placeholder="Enter country name (e.g., United States)" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -601,5 +535,3 @@ export default function ManageRatesPage() {
     </div>
   );
 }
-
-    
