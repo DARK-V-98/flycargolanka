@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
@@ -343,17 +342,17 @@ export default function AdminOrdersPage() {
                 <section>
                   <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Shipment Overview</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
-                    <p><strong className="text-muted-foreground">ID:</strong> {viewingBooking.id}</p>
-                    <p><strong className="text-muted-foreground">Status:</strong> <Badge variant={getStatusVariant(viewingBooking.status)} className="text-xs">{viewingBooking.status}</Badge></p>
-                    <p><strong className="text-muted-foreground">Booked On:</strong> {viewingBooking.createdAt ? format(viewingBooking.createdAt.toDate(), 'PPp') : 'N/A'}</p>
-                    {viewingBooking.updatedAt && <p><strong className="text-muted-foreground">Last Updated:</strong> {format(viewingBooking.updatedAt.toDate(), 'PPp')}</p>}
-                    <p><strong className="text-muted-foreground">Shipment Type:</strong> <span className="capitalize">{viewingBooking.shipmentType}</span></p>
-                    <p><strong className="text-muted-foreground">Service Type:</strong> <span className="capitalize">{viewingBooking.serviceType}</span></p>
-                    <p><strong className="text-muted-foreground">Location Type:</strong> <span className="capitalize">{viewingBooking.locationType.replace('_', ' ')}</span></p>
-                    <p><strong className="text-muted-foreground">Destination:</strong> {viewingBooking.receiverCountry}</p>
-                    <p><strong className="text-muted-foreground">Weight:</strong> {viewingBooking.approxWeight} kg</p>
-                    <p><strong className="text-muted-foreground">Value (USD):</strong> {viewingBooking.approxValue?.toLocaleString() || 'N/A'}</p>
-                    <p><strong className="text-muted-foreground">Est. Cost (LKR):</strong> {viewingBooking.estimatedCostLKR?.toLocaleString() || 'N/A'}</p>
+                    <div><strong className="text-muted-foreground">ID:</strong> {viewingBooking.id}</div>
+                    <div className="flex items-center gap-2"><strong className="text-muted-foreground">Status:</strong> <Badge variant={getStatusVariant(viewingBooking.status)} className="text-xs">{viewingBooking.status}</Badge></div>
+                    <div><strong className="text-muted-foreground">Booked On:</strong> {viewingBooking.createdAt ? format(viewingBooking.createdAt.toDate(), 'PPp') : 'N/A'}</div>
+                    {viewingBooking.updatedAt && <div><strong className="text-muted-foreground">Last Updated:</strong> {format(viewingBooking.updatedAt.toDate(), 'PPp')}</div>}
+                    <div><strong className="text-muted-foreground">Shipment Type:</strong> <span className="capitalize">{viewingBooking.shipmentType}</span></div>
+                    <div><strong className="text-muted-foreground">Service Type:</strong> <span className="capitalize">{viewingBooking.serviceType}</span></div>
+                    <div><strong className="text-muted-foreground">Location Type:</strong> <span className="capitalize">{viewingBooking.locationType.replace('_', ' ')}</span></div>
+                    <div><strong className="text-muted-foreground">Destination:</strong> {viewingBooking.receiverCountry}</div>
+                    <div><strong className="text-muted-foreground">Weight:</strong> {viewingBooking.approxWeight} kg</div>
+                    <div><strong className="text-muted-foreground">Value (USD):</strong> {viewingBooking.approxValue?.toLocaleString() || 'N/A'}</div>
+                    <div><strong className="text-muted-foreground">Est. Cost (LKR):</strong> {viewingBooking.estimatedCostLKR?.toLocaleString() || 'N/A'}</div>
                   </div>
                 </section>
 
@@ -361,14 +360,14 @@ export default function AdminOrdersPage() {
                 <section>
                   <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Receiver Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
-                    <p><strong className="text-muted-foreground">Full Name:</strong> {viewingBooking.receiverFullName}</p>
-                    <p><strong className="text-muted-foreground">Email:</strong> {viewingBooking.receiverEmail}</p>
-                    <p className="md:col-span-2"><strong className="text-muted-foreground">Address:</strong> {viewingBooking.receiverAddress}</p>
-                    <p><strong className="text-muted-foreground">Door Code:</strong> {viewingBooking.receiverDoorCode || 'N/A'}</p>
-                    <p><strong className="text-muted-foreground">ZIP/Postal:</strong> {viewingBooking.receiverZipCode}</p>
-                    <p><strong className="text-muted-foreground">City:</strong> {viewingBooking.receiverCity}</p>
-                    <p><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.receiverContactNo}</p>
-                    <p><strong className="text-muted-foreground">WhatsApp No:</strong> {viewingBooking.receiverWhatsAppNo || 'N/A'}</p>
+                    <div><strong className="text-muted-foreground">Full Name:</strong> {viewingBooking.receiverFullName}</div>
+                    <div><strong className="text-muted-foreground">Email:</strong> {viewingBooking.receiverEmail}</div>
+                    <div className="md:col-span-2"><strong className="text-muted-foreground">Address:</strong> {viewingBooking.receiverAddress}</div>
+                    <div><strong className="text-muted-foreground">Door Code:</strong> {viewingBooking.receiverDoorCode || 'N/A'}</div>
+                    <div><strong className="text-muted-foreground">ZIP/Postal:</strong> {viewingBooking.receiverZipCode}</div>
+                    <div><strong className="text-muted-foreground">City:</strong> {viewingBooking.receiverCity}</div>
+                    <div><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.receiverContactNo}</div>
+                    <div><strong className="text-muted-foreground">WhatsApp No:</strong> {viewingBooking.receiverWhatsAppNo || 'N/A'}</div>
                   </div>
                 </section>
 
@@ -376,12 +375,12 @@ export default function AdminOrdersPage() {
                 <section>
                   <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Sender Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
-                    <p><strong className="text-muted-foreground">Full Name:</strong> {viewingBooking.senderFullName}</p>
-                    <p><strong className="text-muted-foreground">Email (User):</strong> {viewingBooking.userEmail || 'N/A'}</p>
-                    <p className="md:col-span-2"><strong className="text-muted-foreground">Address:</strong> {viewingBooking.senderAddress}</p>
-                    <p><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.senderContactNo}</p>
-                    <p><strong className="text-muted-foreground">WhatsApp No:</strong> {viewingBooking.senderWhatsAppNo || 'N/A'}</p>
-                    <p><strong className="text-muted-foreground">User ID:</strong> {viewingBooking.userId}</p>
+                    <div><strong className="text-muted-foreground">Full Name:</strong> {viewingBooking.senderFullName}</div>
+                    <div><strong className="text-muted-foreground">Email (User):</strong> {viewingBooking.userEmail || 'N/A'}</div>
+                    <div className="md:col-span-2"><strong className="text-muted-foreground">Address:</strong> {viewingBooking.senderAddress}</div>
+                    <div><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.senderContactNo}</div>
+                    <div><strong className="text-muted-foreground">WhatsApp No:</strong> {viewingBooking.senderWhatsAppNo || 'N/A'}</div>
+                    <div><strong className="text-muted-foreground">User ID:</strong> {viewingBooking.userId}</div>
                   </div>
                 </section>
 
@@ -389,8 +388,8 @@ export default function AdminOrdersPage() {
                 <section>
                   <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Declarations</h3>
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
-                    <p><strong className="text-muted-foreground">Declaration 1 Agreed:</strong> {viewingBooking.declaration1 ? 'Yes' : 'No'}</p>
-                    <p><strong className="text-muted-foreground">Declaration 2 Agreed:</strong> {viewingBooking.declaration2 ? 'Yes' : 'No'}</p>
+                    <div><strong className="text-muted-foreground">Declaration 1 Agreed:</strong> {viewingBooking.declaration1 ? 'Yes' : 'No'}</div>
+                    <div><strong className="text-muted-foreground">Declaration 2 Agreed:</strong> {viewingBooking.declaration2 ? 'Yes' : 'No'}</div>
                    </div>
                 </section>
 
