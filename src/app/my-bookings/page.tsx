@@ -23,11 +23,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle, BellRing } from 'lucide-react';
+import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle, BellRing, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 export type BookingStatus = 'Pending' | 'Confirmed' | 'Collecting' | 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled' | 'Rejected';
+export type PaymentStatus = 'Pending' | 'Paid' | 'Refunded';
 
 interface Booking {
   id: string;
@@ -52,6 +53,7 @@ interface Booking {
   senderContactNo: string;
   senderWhatsAppNo?: string;
   status: BookingStatus;
+  paymentStatus?: PaymentStatus;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
   estimatedCostLKR?: number | null;
@@ -76,10 +78,14 @@ export default function MyBookingsPage() {
       const bookingsCol = collection(db, 'bookings');
       const q = query(bookingsCol, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
-      const bookingsData = querySnapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      } as Booking));
+      const bookingsData = querySnapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+            id: docSnap.id,
+            ...data,
+            paymentStatus: data.paymentStatus || 'Pending' // Default to pending
+        } as Booking;
+      });
       setBookings(bookingsData);
     } catch (error) {
       console.error("Error fetching bookings: ", error);
@@ -304,6 +310,9 @@ export default function MyBookingsPage() {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row justify-end items-center gap-2">
+                  <Badge variant={booking.paymentStatus === 'Paid' ? 'default' : booking.paymentStatus === 'Refunded' ? 'destructive' : 'secondary' } className="text-xs mr-auto capitalize">
+                    Payment: {booking.paymentStatus || 'Pending'}
+                  </Badge>
                   {booking.status === 'Pending' && (
                     <AlertDialog open={!!bookingToCancel && bookingToCancel.id === booking.id} onOpenChange={(isOpen) => !isOpen && setBookingToCancel(null)}>
                       <AlertDialogTrigger asChild>
@@ -341,9 +350,20 @@ export default function MyBookingsPage() {
                     size="sm" 
                     onClick={() => handleProceedToPayment(booking.id, booking.estimatedCostLKR)}
                     className="w-full sm:w-auto"
-                    disabled={booking.estimatedCostLKR === undefined || booking.estimatedCostLKR === null || booking.status === 'Cancelled' || booking.status === 'Rejected' || booking.status === 'Delivered'}
+                    disabled={
+                        booking.estimatedCostLKR === undefined || 
+                        booking.estimatedCostLKR === null || 
+                        booking.status === 'Cancelled' || 
+                        booking.status === 'Rejected' || 
+                        booking.status === 'Delivered' ||
+                        booking.paymentStatus === 'Paid'
+                    }
                   >
-                    <CreditCard className="mr-2 h-4 w-4"/> Continue to Payment
+                    {booking.paymentStatus === 'Paid' ? (
+                        <><CheckCircle2 className="mr-2 h-4 w-4" /> Paid</>
+                    ) : (
+                        <><CreditCard className="mr-2 h-4 w-4"/> Continue to Payment</>
+                    )}
                   </Button>
                 </CardFooter>
               </Card>
@@ -354,3 +374,5 @@ export default function MyBookingsPage() {
     </div>
   );
 }
+
+    

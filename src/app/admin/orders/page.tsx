@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft } from "lucide-react";
+import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -33,6 +33,8 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export type BookingStatus = 'Pending' | 'Confirmed' | 'Collecting' | 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled' | 'Rejected';
+export type PaymentStatus = 'Pending' | 'Paid' | 'Refunded';
+
 
 // Expanded Booking interface to include all fields from the booking form
 interface Booking {
@@ -63,6 +65,7 @@ interface Booking {
   senderWhatsAppNo?: string | null;
 
   status: BookingStatus;
+  paymentStatus?: PaymentStatus;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
   packageDescription: string; // Derived description (already present)
@@ -79,6 +82,7 @@ interface Booking {
 
 
 const ALL_STATUSES: BookingStatus[] = ['Pending', 'Confirmed', 'Collecting', 'Processing', 'In Transit', 'Delivered', 'On Hold', 'Cancelled', 'Rejected'];
+const ALL_PAYMENT_STATUSES: PaymentStatus[] = ['Pending', 'Paid', 'Refunded'];
 
 export default function AdminOrdersPage() {
   const [allBookings, setAllBookings] = useState<Booking[]>([]);
@@ -87,6 +91,8 @@ export default function AdminOrdersPage() {
   const { toast } = useToast();
   const [updatingStatus, setUpdatingStatus] = useState<Record<string, boolean>>({});
   const [selectedStatusMap, setSelectedStatusMap] = useState<Record<string, BookingStatus>>({});
+  const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState<Record<string, boolean>>({});
+  const [selectedPaymentStatusMap, setSelectedPaymentStatusMap] = useState<Record<string, PaymentStatus>>({});
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,17 +105,26 @@ export default function AdminOrdersPage() {
         const bookingsCol = collection(db, 'bookings');
         const q = query(bookingsCol, orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
-        const bookingsData = querySnapshot.docs.map(docSnap => ({
-          id: docSnap.id,
-          ...docSnap.data()
-        } as Booking));
+        const bookingsData = querySnapshot.docs.map(docSnap => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            ...data,
+            paymentStatus: data.paymentStatus || 'Pending', // Default to pending
+          } as Booking;
+        });
+
         setAllBookings(bookingsData);
         
         const initialStatuses: Record<string, BookingStatus> = {};
+        const initialPaymentStatuses: Record<string, PaymentStatus> = {};
+
         bookingsData.forEach(b => {
             initialStatuses[b.id] = b.status;
+            initialPaymentStatuses[b.id] = b.paymentStatus || 'Pending';
         });
         setSelectedStatusMap(initialStatuses);
+        setSelectedPaymentStatusMap(initialPaymentStatuses);
 
       } catch (error) {
         console.error("Error fetching bookings: ", error);
@@ -157,6 +172,15 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const getPaymentStatusVariant = (status: PaymentStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
+      switch (status) {
+          case 'Pending': return 'secondary';
+          case 'Paid': return 'default';
+          case 'Refunded': return 'destructive';
+          default: return 'secondary';
+      }
+  };
+
   const handleStatusChange = (bookingId: string, newStatus: BookingStatus) => {
     setSelectedStatusMap(prev => ({ ...prev, [bookingId]: newStatus }));
   };
@@ -192,6 +216,43 @@ export default function AdminOrdersPage() {
       });
     } finally {
       setUpdatingStatus(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
+  const handlePaymentStatusChange = (bookingId: string, newStatus: PaymentStatus) => {
+    setSelectedPaymentStatusMap(prev => ({ ...prev, [bookingId]: newStatus }));
+  };
+
+  const handleSavePaymentStatus = async (bookingId: string) => {
+    const newStatus = selectedPaymentStatusMap[bookingId];
+    if (!newStatus) return;
+
+    setUpdatingPaymentStatus(prev => ({ ...prev, [bookingId]: true }));
+    try {
+      const bookingDocRef = doc(db, 'bookings', bookingId);
+      await updateDoc(bookingDocRef, {
+        paymentStatus: newStatus,
+        updatedAt: serverTimestamp()
+      });
+      setAllBookings(prevAllBookings =>
+        prevAllBookings.map(b =>
+          b.id === bookingId ? { ...b, paymentStatus: newStatus, updatedAt: { seconds: Date.now()/1000, nanoseconds: 0 } as unknown as Timestamp } : b
+        )
+      );
+      toast({
+        title: "Payment Status Updated",
+        description: `Booking ${bookingId} payment status changed to ${newStatus}.`,
+        variant: "default"
+      });
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      toast({
+        title: "Update Failed",
+        description: `Could not update payment status for booking ${bookingId}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingPaymentStatus(prev => ({ ...prev, [bookingId]: false }));
     }
   };
 
@@ -253,7 +314,7 @@ export default function AdminOrdersPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-            <Table className="min-w-[1000px]">
+            <Table className="min-w-[1200px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[100px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">ID</TableHead>
@@ -264,7 +325,8 @@ export default function AdminOrdersPage() {
                   <TableHead className="text-center px-1 py-2 text-xs sm:text-sm whitespace-nowrap">Cost (LKR)</TableHead>
                   <TableHead className="text-center px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
                   <TableHead className="text-right min-w-[140px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Booked On</TableHead>
-                  <TableHead className="text-center min-w-[210px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Actions</TableHead>
+                  <TableHead className="text-center min-w-[210px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Order Status</TableHead>
+                  <TableHead className="text-center min-w-[210px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Payment</TableHead>
                   <TableHead className="text-center px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Details</TableHead>
                 </TableRow>
               </TableHeader>
@@ -319,6 +381,38 @@ export default function AdminOrdersPage() {
                         </Button>
                        </div>
                     </TableCell>
+                     <TableCell className="text-center px-2 py-2.5">
+                       <div className="flex items-center justify-center space-x-1 sm:space-x-2">
+                        <Select
+                            value={selectedPaymentStatusMap[booking.id] || 'Pending'}
+                            onValueChange={(value) => handlePaymentStatusChange(booking.id, value as PaymentStatus)}
+                            disabled={updatingPaymentStatus[booking.id]}
+                        >
+                            <SelectTrigger className="h-8 text-xs w-auto min-w-[100px] sm:min-w-[110px] flex-grow-0">
+                               <SelectValue placeholder="Payment" />
+                            </SelectTrigger>
+                            <SelectContent>
+                            {ALL_PAYMENT_STATUSES.map(s => (
+                                <SelectItem key={s} value={s} className="capitalize text-xs">
+                                {s}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <Button
+                            size="sm"
+                            onClick={() => handleSavePaymentStatus(booking.id)}
+                            disabled={updatingPaymentStatus[booking.id] || selectedPaymentStatusMap[booking.id] === (booking.paymentStatus || 'Pending')}
+                            className="h-8 text-xs px-2 sm:px-3"
+                        >
+                            {updatingPaymentStatus[booking.id] ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                            <Save className="h-3.5 w-3.5" />
+                            )}
+                        </Button>
+                       </div>
+                    </TableCell>
                     <TableCell className="text-center px-2 py-2.5">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewingBooking(booking)}>
                             <Eye className="h-4 w-4 text-primary" />
@@ -351,7 +445,13 @@ export default function AdminOrdersPage() {
                   <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Shipment Overview</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
                     <div><strong className="text-muted-foreground">ID:</strong> {viewingBooking.id}</div>
-                    <div className="flex items-center gap-2"><strong className="text-muted-foreground">Status:</strong> <Badge variant={getStatusVariant(viewingBooking.status)} className="text-xs">{viewingBooking.status}</Badge></div>
+                    <div className="flex items-center gap-2"><strong className="text-muted-foreground">Order Status:</strong> <Badge variant={getStatusVariant(viewingBooking.status)} className="text-xs">{viewingBooking.status}</Badge></div>
+                    <div className="flex items-center gap-2">
+                        <strong className="text-muted-foreground">Payment Status:</strong> 
+                        <Badge variant={getPaymentStatusVariant(viewingBooking.paymentStatus || 'Pending')} className="text-xs">
+                            {viewingBooking.paymentStatus || 'Pending'}
+                        </Badge>
+                    </div>
                     <div><strong className="text-muted-foreground">Booked On:</strong> {viewingBooking.createdAt ? format(viewingBooking.createdAt.toDate(), 'PPp') : 'N/A'}</div>
                     {viewingBooking.updatedAt && <div><strong className="text-muted-foreground">Last Updated:</strong> {format(viewingBooking.updatedAt.toDate(), 'PPp')}</div>}
                     <div><strong className="text-muted-foreground">Shipment Type:</strong> <span className="capitalize">{viewingBooking.shipmentType}</span></div>
@@ -414,3 +514,5 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
+
+    
