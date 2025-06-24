@@ -140,7 +140,7 @@ export default function Home() {
                     <div>
                       <h3 className="text-2xl font-semibold text-accent mb-2 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>Solutions for E-Commerce and Logistics</h3>
                       <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
-                        Colombo mail is your e-commerce logistics specialist, connecting sellers to buyers across the globe.
+                        FlyCargo Lanka is your e-commerce logistics specialist, connecting sellers to buyers across the globe.
                       </p>
                     </div>
                   </div>
