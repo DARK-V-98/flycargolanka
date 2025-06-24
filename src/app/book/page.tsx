@@ -248,7 +248,7 @@ export default function BookingPage() {
       
       const { approxWeight, length, width, height } = form.getValues();
       
-      if (!approxWeight || approxWeight <= 0) {
+      if (!approxWeight || Number(approxWeight) <= 0) {
         setCalculationError("Approximate weight must be positive.");
         return;
       }
@@ -272,13 +272,13 @@ export default function BookingPage() {
         return;
       }
       
-      let finalChargeableWeight = approxWeight;
+      let finalChargeableWeight = Number(approxWeight);
       const l = Number(length);
       const w = Number(width);
       const h = Number(height);
       if (l > 0 && w > 0 && h > 0) {
           const volumetricWeight = (l * w * h) / 5000;
-          finalChargeableWeight = Math.max(approxWeight, volumetricWeight);
+          finalChargeableWeight = Math.max(finalChargeableWeight, volumetricWeight);
       }
       setChargeableWeight(finalChargeableWeight);
 
@@ -603,7 +603,7 @@ export default function BookingPage() {
                         ) : calculatedCost ? (
                             <div>
                                 <h3 className="text-lg font-semibold text-accent flex items-center justify-center"><DollarSign className="mr-2 h-5 w-5 text-primary"/>{calculatedCost}</h3>
-                                {chargeableWeight && Number(chargeableWeight.toFixed(2)) !== form.getValues('approxWeight') && (
+                                {chargeableWeight && Math.abs(chargeableWeight - Number(form.getValues('approxWeight'))) > 0.001 && (
                                     <p className="text-xs text-muted-foreground mt-1">Based on chargeable weight of {chargeableWeight.toFixed(2)} kg.</p>
                                 )}
                             </div>
