@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap } from 'lucide-react';
+import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap, CheckCircle } from 'lucide-react';
 
 const calculatorSchema = z.object({
   destinationCountry: z.string().min(1, "Please select a destination country."),
@@ -309,9 +309,27 @@ export default function ShippingCalculatorForm() {
                                 {option.serviceType} Service
                              </p>
                         </CardHeader>
-                        <CardContent className="flex-grow flex flex-col items-center justify-center">
-                            <p className="text-sm text-muted-foreground">Estimated Cost</p>
-                            <p className="text-4xl font-bold text-primary mt-1">{option.price.toLocaleString()} <span className="text-lg font-medium text-muted-foreground">LKR</span></p>
+                        <CardContent className="flex-grow flex flex-col items-center justify-center p-4 text-left">
+                            <div className="text-center mb-4">
+                                <p className="text-sm text-muted-foreground">Estimated Cost</p>
+                                <p className="text-4xl font-bold text-primary mt-1">{option.price.toLocaleString()} <span className="text-lg font-medium text-muted-foreground">LKR</span></p>
+                            </div>
+                            
+                            <ul className="space-y-2 text-sm text-muted-foreground w-full">
+                                {option.serviceType === 'Express' ? (
+                                    <>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 3-5 working days</span></li>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End-to-end updates. (The tracking number will be provided to you within the day of delivery of the parcel.)</span></li>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance</span></li>
+                                    </>
+                                ) : (
+                                    <>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 14 to 16 working days</span></li>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End To End traking update (You will be provided with a tracking number within 10 days of the parcel being delivered.)</span></li>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance</span></li>
+                                    </>
+                                )}
+                            </ul>
                         </CardContent>
                         <CardFooter>
                             <Button asChild className="w-full">
