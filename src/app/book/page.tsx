@@ -60,6 +60,10 @@ const bookingSchema = z.object({
   senderContactNo: z.string().regex(phoneRegex, "Invalid sender contact number (include country code)."),
   senderWhatsAppNo: z.string().regex(phoneRegex, "Invalid WhatsApp number (include country code).").optional().or(z.literal('')),
 
+  packageContents: z.string().min(3, "Please briefly describe the contents of your package.").max(200),
+  courierPurpose: z.enum(['gift', 'commercial', 'personal', 'sample', 'return_for_repair', 'return_after_repair', 'custom'], { required_error: "Please select the purpose of this shipment." }),
+  customPurpose: z.string().max(100).optional().or(z.literal('')),
+
   agreedToTerms: z.boolean().refine(val => val === true, {
     message: "You must read and agree to the Terms and Conditions to proceed.",
   }),
@@ -70,6 +74,14 @@ const bookingSchema = z.object({
 }, {
     message: "Please enter all three dimensions or leave them all blank.",
     path: ['length'],
+}).refine((data) => {
+    if (data.courierPurpose === 'custom') {
+        return data.customPurpose && data.customPurpose.trim().length > 2;
+    }
+    return true;
+}, {
+    message: "Please specify the custom purpose.",
+    path: ['customPurpose'],
 });
 
 type BookingFormValues = z.infer<typeof bookingSchema>;
@@ -169,6 +181,9 @@ export default function BookingPage() {
       senderAddress: '',
       senderContactNo: '',
       senderWhatsAppNo: '',
+      packageContents: '',
+      courierPurpose: undefined,
+      customPurpose: '',
       agreedToTerms: false,
     },
   });
@@ -180,6 +195,7 @@ export default function BookingPage() {
   const watchedLength = form.watch('length');
   const watchedWidth = form.watch('width');
   const watchedHeight = form.watch('height');
+  const watchedCourierPurpose = form.watch('courierPurpose');
 
   const showRateCalculationFields = !!(watchedShipmentType && watchedServiceType);
 
@@ -426,22 +442,22 @@ export default function BookingPage() {
     try {
       const newBookingId = generateBookingId();
       const bookingData = {
-        id: newBookingId,
         ...data,
+        id: newBookingId,
         userId: user.uid,
         userEmail: user.email,
         status: 'Pending' as 'Pending' | 'In Transit' | 'Delivered' | 'Cancelled',
         createdAt: serverTimestamp(),
-        packageDescription: `Shipment of ${data.shipmentType}, approx ${data.approxWeight}kg, value $${data.approxValue}`,
+        packageDescription: `${data.courierPurpose}: ${data.packageContents.substring(0, 100)}`,
         packageWeight: data.approxWeight,
         chargeableWeight: finalChargeableWeight,
         senderName: data.senderFullName,
         receiverName: data.receiverFullName,
         estimatedCostLKR: numericCost,
+        nicVerificationStatus: userProfile?.nicVerificationStatus || 'none',
       };
       
-      delete (bookingData as any).declaration1;
-      delete (bookingData as any).declaration2;
+      delete (bookingData as any).agreedToTerms;
 
 
       const bookingDocRef = doc(db, 'bookings', newBookingId);
@@ -717,12 +733,66 @@ export default function BookingPage() {
                   </div>
                 </div>
               </div>
+
+               <hr className="my-6 border-border/50" />
+
+                <div>
+                    <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><Box className="mr-2 h-5 w-5"/>Package Information</h3>
+                    <div className="space-y-4">
+                        <FormField control={form.control} name="packageContents" render={({ field }) => ( 
+                            <FormItem>
+                                <FormLabel>What is inside the box?</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="e.g., Cotton T-shirts, books, documents" {...field} />
+                                </FormControl>
+                                <FormDescription>Briefly describe the contents for customs purposes.</FormDescription>
+                                <FormMessage />
+                            </FormItem> 
+                        )} />
+
+                        <FormField control={form.control} name="courierPurpose" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Purpose of Courier</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select the purpose of the shipment" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="gift">Gift</SelectItem>
+                                        <SelectItem value="commercial">Commercial</SelectItem>
+                                        <SelectItem value="personal">Personal</SelectItem>
+                                        <SelectItem value="sample">Sample</SelectItem>
+                                        <SelectItem value="return_for_repair">Return for Repair</SelectItem>
+                                        <SelectItem value="return_after_repair">Return after Repair</SelectItem>
+                                        <SelectItem value="custom">Custom</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                        
+                        {watchedCourierPurpose === 'custom' && (
+                            <FormField control={form.control} name="customPurpose" render={({ field }) => ( 
+                                <FormItem className="opacity-0 animate-fadeInUp">
+                                    <FormLabel>Custom Purpose</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Please specify the purpose" {...field} value={field.value ?? ''} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem> 
+                            )} />
+                        )}
+                    </div>
+                </div>
+
             </CardContent>
           </Card>
 
           <Card className="shadow-lg border-border/50">
             <CardHeader>
-              <CardTitle className="text-xl font-headline text-accent flex items-center"><CheckCircle2 className="mr-2 h-6 w-6 text-primary"/>Declarations</CardTitle>
+              <CardTitle className="text-xl font-headline text-accent flex items-center"><CheckCircle2 className="mr-2 h-6 w-6 text-primary"/>Declaration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Dialog>

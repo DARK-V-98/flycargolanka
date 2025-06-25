@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard, Download } from "lucide-react";
+import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard, Download, Box, Fingerprint } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -31,6 +31,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import type { NicVerificationStatus } from '@/contexts/AuthContext';
+
 
 export type BookingStatus = 'Pending' | 'Confirmed' | 'Collecting' | 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled' | 'Rejected';
 export type PaymentStatus = 'Pending' | 'Paid' | 'Refunded';
@@ -72,8 +74,11 @@ export interface Booking {
   packageWeight: number; // Redundant with approxWeight, keeping for now for backend consistency
   estimatedCostLKR?: number | null;
 
-  declaration1?: boolean;
-  declaration2?: boolean;
+  // New fields
+  packageContents: string;
+  courierPurpose: 'gift' | 'commercial' | 'personal' | 'sample' | 'return_for_repair' | 'return_after_repair' | 'custom';
+  customPurpose?: string | null;
+  nicVerificationStatus?: NicVerificationStatus;
 
   // Fields that were in the old interface, ensure they map or are handled
   senderName: string; // Can be removed if senderFullName is primary
@@ -250,6 +255,17 @@ export default function AdminOrdersPage() {
       default: return 'secondary';
     }
   };
+  
+    const getNicStatusBadgeVariant = (status: NicVerificationStatus | undefined): 'default' | 'secondary' | 'destructive' | 'outline' => {
+        switch (status) {
+            case 'pending': return 'secondary';
+            case 'verified': return 'default';
+            case 'rejected': return 'destructive';
+            case 'none':
+            default:
+            return 'outline';
+        }
+    };
 
   const getPaymentStatusVariant = (status: PaymentStatus): 'default' | 'secondary' | 'destructive' | 'outline' => {
       switch (status) {
@@ -543,6 +559,15 @@ export default function AdminOrdersPage() {
                   </div>
                 </section>
 
+                {/* Package & Purpose Details */}
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent flex items-center"><Box className="mr-2" />Package &amp; Purpose</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                     <div className="md:col-span-2"><strong className="text-muted-foreground">Contents:</strong> {viewingBooking.packageContents || 'N/A'}</div>
+                     <div><strong className="text-muted-foreground">Purpose:</strong> <span className="capitalize">{viewingBooking.courierPurpose === 'custom' ? viewingBooking.customPurpose : viewingBooking.courierPurpose.replace(/_/g, ' ')}</span></div>
+                  </div>
+                </section>
+
                 {/* Receiver Details */}
                 <section>
                   <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Receiver Details</h3>
@@ -568,18 +593,17 @@ export default function AdminOrdersPage() {
                     <div><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.senderContactNo}</div>
                     <div><strong className="text-muted-foreground">WhatsApp No:</strong> {viewingBooking.senderWhatsAppNo || 'N/A'}</div>
                     <div><strong className="text-muted-foreground">User ID:</strong> {viewingBooking.userId}</div>
+                     <div className="flex items-center gap-2">
+                        <strong className="text-muted-foreground flex items-center"><Fingerprint className="mr-2"/>NIC Status:</strong> 
+                        <Badge 
+                            variant={getNicStatusBadgeVariant(viewingBooking.nicVerificationStatus)}
+                            className={`text-xs capitalize ${viewingBooking.nicVerificationStatus === 'verified' ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                        >
+                            {viewingBooking.nicVerificationStatus || 'None'}
+                        </Badge>
+                    </div>
                   </div>
                 </section>
-
-                 {/* Declarations */}
-                <section>
-                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Declarations</h3>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
-                    <div><strong className="text-muted-foreground">Declaration 1 Agreed:</strong> {viewingBooking.declaration1 ? 'Yes' : 'No'}</div>
-                    <div><strong className="text-muted-foreground">Declaration 2 Agreed:</strong> {viewingBooking.declaration2 ? 'Yes' : 'No'}</div>
-                   </div>
-                </section>
-
               </div>
             </ScrollArea>
             <DialogFooter className="mt-4 sm:justify-between">
