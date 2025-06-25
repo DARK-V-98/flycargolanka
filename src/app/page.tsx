@@ -67,12 +67,27 @@ export default function Home() {
       </section>
 
       <div className="container mx-auto px-4 mt-16 space-y-16">
-        <section className="overflow-hidden">
-          <div className="opacity-0 animate-fadeInUp">
+        
+        <section className="text-center opacity-0 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
+          <div className="container mx-auto px-4">
+            <Card className="max-w-4xl mx-auto p-8 bg-gradient-to-br from-primary/10 to-background shadow-2xl border-primary/20">
+              <ShieldCheck className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h2 className="text-3xl font-bold font-headline text-accent mb-4">
+                Peace of Mind with Every Parcel
+              </h2>
+              <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
+                We believe in the safety of your shipments. That's why every package you send with FlyCargo Lanka is protected by our <strong className="text-primary font-semibold">free insurance coverage</strong>, giving you complete confidence from pickup to delivery.
+              </p>
+            </Card>
+          </div>
+        </section>
+
+        <section className="overflow-hidden opacity-0 animate-fadeInUp" style={{animationDelay: '0.3s'}}>
+          <div>
             <PageHeader title="Why Choose FlyCargo Lanka?" description="Experience the difference with our commitment to excellence." />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-200">
+            <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105">
               <CardHeader>
                 <CardTitle className="text-accent flex items-center"><Truck className="mr-2 h-6 w-6 text-primary" />Reliability</CardTitle>
               </CardHeader>
@@ -80,7 +95,7 @@ export default function Home() {
                 <p className="text-foreground/90">Count on us for on-time deliveries and secure handling of your valuable packages.</p>
               </CardContent>
             </Card>
-            <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-300">
+            <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105">
               <CardHeader>
                 <CardTitle className="text-accent flex items-center"><Globe2 className="mr-2 h-6 w-6 text-primary" />Global Reach</CardTitle>
               </CardHeader>
@@ -88,7 +103,7 @@ export default function Home() {
                 <p className="text-foreground/90">We connect you to a vast network of destinations, both locally and internationally.</p>
               </CardContent>
             </Card>
-            <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-400">
+            <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105">
               <CardHeader>
                 <CardTitle className="text-accent flex items-center"><LifeBuoy className="mr-2 h-6 w-6 text-primary" />Customer Support</CardTitle>
               </CardHeader>
@@ -99,16 +114,15 @@ export default function Home() {
           </div>
         </section>
         
-        <section className="py-12 overflow-hidden">
-          <div className="opacity-0 animate-fadeInUp">
+        <section className="py-12 overflow-hidden opacity-0 animate-fadeInUp" style={{animationDelay: '0.4s'}}>
+          <div>
             <PageHeader title="Our Core Services" />
           </div>
           <div className="grid md:grid-cols-3 gap-8 text-center">
             {services.map((service, index) => (
               <Card 
                 key={service.name} 
-                className="shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 opacity-0 animate-fadeInScaleUp"
-                style={{ animationDelay: `${index * 0.1 + 0.2}s` }}
+                className="shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2"
               >
                 <CardHeader className="items-center">
                   <div className="p-4 bg-primary/10 rounded-full inline-block mb-4 transition-transform duration-300 hover:scale-110">
@@ -127,51 +141,37 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-12 text-center opacity-0 animate-fadeInUp" style={{animationDelay: '0.6s'}}>
-          <div className="container mx-auto px-4">
-            <Card className="max-w-4xl mx-auto p-8 bg-gradient-to-br from-primary/10 to-background shadow-2xl border-primary/20">
-              <ShieldCheck className="h-16 w-16 text-primary mx-auto mb-4" />
-              <h2 className="text-3xl font-bold font-headline text-accent mb-4">
-                Peace of Mind with Every Parcel
-              </h2>
-              <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-                We believe in the safety of your shipments. That's why every package you send with FlyCargo Lanka is protected by our <strong className="text-primary font-semibold">free insurance coverage</strong>, giving you complete confidence from pickup to delivery.
-              </p>
-            </Card>
-          </div>
-        </section>
-
         <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.5s'}}>
           <div className="container mx-auto px-4">
-            <div className="opacity-0 animate-fadeInUp">
+            <div>
               <PageHeader title="Why Us?" description="Key advantages of partnering with FlyCargo Lanka."/>
             </div>
             <div className="mt-10 grid md:grid-cols-2 gap-x-12 gap-y-10 items-center">
               <div className="space-y-10">
-                <div className="opacity-0 animate-fadeInUp delay-200">
+                <div className="delay-200">
                   <div className="flex items-start space-x-4">
                     <ShoppingCart size={40} className="text-primary mt-1 shrink-0" />
                     <div>
-                      <h3 className="text-2xl font-semibold text-accent mb-2 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>Solutions for E-Commerce and Logistics</h3>
-                      <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
+                      <h3 className="text-2xl font-semibold text-accent mb-2">Solutions for E-Commerce and Logistics</h3>
+                      <p className="text-lg text-foreground/80 leading-relaxed">
                         FlyCargo Lanka is your e-commerce logistics specialist, connecting sellers to buyers across the globe.
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="opacity-0 animate-fadeInUp delay-400">
+                <div className="delay-400">
                   <div className="flex items-start space-x-4">
                     <Globe size={40} className="text-primary mt-1 shrink-0" />
                     <div>
-                      <h3 className="text-2xl font-semibold text-accent mb-2 opacity-0 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>Online Fulfillment Platform</h3>
-                      <p className="text-lg text-foreground/80 leading-relaxed opacity-0 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
+                      <h3 className="text-2xl font-semibold text-accent mb-2">Online Fulfillment Platform</h3>
+                      <p className="text-lg text-foreground/80 leading-relaxed">
                         We provide an online platform for local and international fulfillment for eCommerce companies of all sizes. With access to global marketplaces and easy delivery fulfillment.
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="opacity-0 animate-fadeInUp delay-400 md:order-last order-first">
+              <div className="delay-400 md:order-last order-first">
                 <Image src="/us.png" alt="E-commerce Solutions" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team" />
               </div>
             </div>
@@ -180,7 +180,7 @@ export default function Home() {
         
         <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.6s'}}>
           <div className="container mx-auto px-4">
-            <div className="opacity-0 animate-fadeInUp">
+            <div>
               <PageHeader
                 title="Shipping Partner For Your Favorite Stores"
                 description="We deliver packages from these platforms and many more, right to your doorstep."
@@ -194,7 +194,7 @@ export default function Home() {
 
         <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.7s'}}>
            <div className="container mx-auto px-4 text-center">
-             <div className="opacity-0 animate-fadeInUp">
+             <div>
                 <PageHeader 
                     title="Secure & Trusted Payments"
                     description="We use PayHere, a trusted payment gateway, for all online transactions."
@@ -217,7 +217,7 @@ export default function Home() {
 
         <section id="shipping-calculator-section" className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.8s'}}>
           <div className="container mx-auto px-4">
-            <div className="opacity-0 animate-fadeInUp">
+            <div>
               <PageHeader 
                   title="Quick Shipping Cost Estimator"
                   description="Not ready to book? Get a quick cost estimate here."
@@ -234,13 +234,13 @@ export default function Home() {
 
       <section className="text-center py-12 md:py-20 bg-accent text-accent-foreground shadow-lg overflow-hidden opacity-0 animate-fadeInUp mt-16" style={{animationDelay: '0.9s'}}>
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6 opacity-0 animate-fadeInUp" style={{animationDelay: '1.0s'}}>
+          <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6">
             Ready to Ship?
           </h2>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-0 animate-fadeInUp" style={{animationDelay: '1.1s'}}>
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
             Get started today with FlyCargo Lanka. We make shipping simple and efficient.
           </p>
-          <Button asChild size="lg" className="bg-background hover:bg-background/90 text-foreground transition-transform duration-300 hover:scale-105 opacity-0 animate-fadeInUp" style={{animationDelay: '1.2s'}}>
+          <Button asChild size="lg" className="bg-background hover:bg-background/90 text-foreground transition-transform duration-300 hover:scale-105">
             <Link href="/book">Book Your Shipment Now</Link>
           </Button>
         </div>
