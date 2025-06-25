@@ -76,16 +76,9 @@ type BookingFormValues = z.infer<typeof bookingSchema>;
 
 const generateBookingId = (): string => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let randomLetters = '';
-  for (let i = 0; i < 3; i++) {
-    randomLetters += letters.charAt(Math.floor(Math.random() * letters.length));
-  }
-
-  let randomNumbers = '';
-  for (let i = 0; i < 10; i++) {
-    randomNumbers += Math.floor(Math.random() * 10).toString();
-  }
-  return `${randomLetters}${randomNumbers}`;
+  const randomLetter = letters.charAt(Math.floor(Math.random() * letters.length));
+  const randomNumbers = Math.floor(1000 + Math.random() * 9000).toString();
+  return `${randomLetter}${randomNumbers}`;
 };
 
 const TermsContent = () => (
