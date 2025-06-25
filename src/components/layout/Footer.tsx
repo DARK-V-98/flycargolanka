@@ -39,7 +39,6 @@ export default function Footer() {
               <p>Fly cargo lanka. No.05, avariwatta, katunayake</p>
               <p>Corporate Line: <a href="tel:+94112260310" className="hover:underline">+94 112 260 310</a></p>
               <p>Hotline: <a href="tel:+94711318725" className="hover:underline">+94 711 318 725</a></p>
-              <p>Email: <a href="mailto:info@flycargolanka.lk" className="hover:underline">info@flycargolanka.lk</a></p>
             </address>
           </div>
         </div>
