@@ -96,7 +96,6 @@ export default function AdminOrdersPage() {
   const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState<Record<string, boolean>>({});
   const [selectedPaymentStatusMap, setSelectedPaymentStatusMap] = useState<Record<string, PaymentStatus>>({});
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
-  const [bookingForInvoice, setBookingForInvoice] = useState<Booking | null>(null);
   const invoiceComponentRef = useRef<HTMLDivElement>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -104,16 +103,8 @@ export default function AdminOrdersPage() {
 
   const handlePrint = useReactToPrint({
     content: () => invoiceComponentRef.current,
-    documentTitle: `invoice-${bookingForInvoice?.id || 'booking'}`,
-    onAfterPrint: () => setBookingForInvoice(null),
+    documentTitle: `invoice-${viewingBooking?.id || 'booking'}`,
   });
-
-  useEffect(() => {
-    if (bookingForInvoice) {
-      handlePrint();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingForInvoice]);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -523,7 +514,7 @@ export default function AdminOrdersPage() {
             <DialogFooter className="mt-4 sm:justify-between">
                {viewingBooking && (
                   <Button
-                    onClick={() => setBookingForInvoice(viewingBooking)}
+                    onClick={handlePrint}
                     disabled={!viewingBooking.estimatedCostLKR}
                     title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Print Invoice"}
                   >
@@ -540,10 +531,12 @@ export default function AdminOrdersPage() {
       )}
 
       <div style={{ display: 'none' }}>
-        {bookingForInvoice && <PrintableInvoice ref={invoiceComponentRef} booking={bookingForInvoice} />}
+        {viewingBooking && <PrintableInvoice ref={invoiceComponentRef} booking={viewingBooking} />}
       </div>
     </div>
   );
 }
+
+    
 
     
