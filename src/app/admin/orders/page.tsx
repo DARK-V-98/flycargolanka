@@ -5,8 +5,6 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { useReactToPrint } from 'react-to-print';
-import PrintableInvoice from '@/components/PrintableInvoice';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
@@ -20,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard, Printer } from "lucide-react";
+import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard, Download } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -96,15 +94,61 @@ export default function AdminOrdersPage() {
   const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState<Record<string, boolean>>({});
   const [selectedPaymentStatusMap, setSelectedPaymentStatusMap] = useState<Record<string, PaymentStatus>>({});
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
-  
-  const invoiceComponentRef = useRef<HTMLDivElement>(null);
-  const handlePrint = useReactToPrint({
-    content: () => invoiceComponentRef.current,
-    documentTitle: `invoice-${viewingBooking?.id || 'booking'}`,
-  });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<BookingStatus | 'All'>('All');
+
+  const handleDownloadInvoice = async () => {
+    if (!viewingBooking) return;
+
+    try {
+      const response = await fetch('/invoice.html');
+      if (!response.ok) {
+        throw new Error("Could not load invoice template. Make sure 'public/invoice.html' exists.");
+      }
+      let template = await response.text();
+
+      const serviceDescription = `Shipping - ${viewingBooking.shipmentType} (${viewingBooking.serviceType}) - ${viewingBooking.approxWeight}kg`;
+      const totalAmount = viewingBooking.estimatedCostLKR?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
+
+      const replacements: Record<string, string> = {
+        '{{invoiceId}}': viewingBooking.id,
+        '{{invoiceDate}}': format(viewingBooking.createdAt.toDate(), 'PPP'),
+        '{{senderName}}': viewingBooking.senderFullName,
+        '{{senderAddress}}': viewingBooking.senderAddress,
+        '{{senderEmail}}': viewingBooking.userEmail || 'N/A',
+        '{{receiverName}}': viewingBooking.receiverFullName,
+        '{{receiverAddress}}': viewingBooking.receiverAddress,
+        '{{receiverLocation}}': `${viewingBooking.receiverCity}, ${viewingBooking.receiverCountry}`,
+        '{{serviceDescription}}': serviceDescription,
+        '{{serviceDestination}}': viewingBooking.receiverCountry,
+        '{{totalAmount}}': totalAmount,
+      };
+
+      for (const key in replacements) {
+        template = template.replace(new RegExp(key, 'g'), replacements[key]);
+      }
+
+      const blob = new Blob([template], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${viewingBooking.id}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+    } catch (err: any) {
+      console.error("Error downloading invoice:", err);
+      toast({
+        title: "Download Failed",
+        description: err.message,
+        variant: "destructive"
+      });
+    }
+  };
+
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -514,12 +558,12 @@ export default function AdminOrdersPage() {
             <DialogFooter className="mt-4 sm:justify-between">
                {viewingBooking && (
                   <Button
-                    onClick={handlePrint}
+                    onClick={handleDownloadInvoice}
                     disabled={!viewingBooking.estimatedCostLKR}
-                    title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Print Invoice"}
+                    title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Download Invoice"}
                   >
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print Invoice
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Invoice
                   </Button>
                 )}
                 <DialogClose asChild>
@@ -530,9 +574,6 @@ export default function AdminOrdersPage() {
         </Dialog>
       )}
 
-      <div style={{ display: 'none' }}>
-        {viewingBooking && <PrintableInvoice ref={invoiceComponentRef} booking={viewingBooking} />}
-      </div>
     </div>
   );
 }
