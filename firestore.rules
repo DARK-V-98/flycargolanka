@@ -1,0 +1,76 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions to check user authentication and roles
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function isRole(role) {
+        return isAuth() && getUserData(request.auth.uid).role == role;
+    }
+
+    function isAdminOrHigher() {
+      return isAuth() && (isRole('admin') || isRole('developer'));
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // A user can read their own profile. Admins/Developers can read any profile.
+      allow read: if isOwner(userId) || isAdminOrHigher();
+
+      // A new user can create their own profile document.
+      allow create: if isOwner(userId);
+
+      // A user can update their own profile, but cannot change their role.
+      // Admins/Developers can update any user's profile.
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdminOrHigher();
+    }
+
+    // Rules for the 'bookings' collection
+    match /bookings/{bookingId} {
+      // A user can read their own bookings. Admins/Developers can read all bookings.
+      allow read: if (isAuth() && resource.data.userId == request.auth.uid) || isAdminOrHigher();
+
+      // An authenticated user can create a booking for themselves.
+      // The initial status must be 'Pending'.
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'Pending';
+
+      // A user can only update their own booking to cancel it if it's 'Pending'.
+      // Admins/Developers can update any field.
+      allow update: if (isAuth() && resource.data.userId == request.auth.uid &&
+                       request.resource.data.status == 'Cancelled' && resource.data.status == 'Pending' &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']))
+                  || isAdminOrHigher();
+    }
+
+    // Rules for the 'shipping_rates' collection
+    match /shipping_rates/{countryId} {
+      // Allow anyone (including unauthenticated users) to read rates for the calculator.
+      allow read: if true;
+
+      // Only Admins/Developers can write rates.
+      allow write: if isAdminOrHigher();
+
+      // Rules for the 'weights' subcollection
+      match /weights/{weightId} {
+        // Allow anyone to read for the calculator.
+        allow read: if true;
+        
+        // Only Admins/Developers can write rates.
+        allow write: if isAdminOrHigher();
+      }
+    }
+  }
+}

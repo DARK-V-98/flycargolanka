@@ -1,0 +1,33 @@
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper function to get a user's role from Firestore
+    function getUserRole(userId) {
+      return get(/databases/(default)/documents/users/$(userId)).data.role;
+    }
+
+    // Helper function to check if a user is an Admin or Developer
+    function isAdminOrHigher() {
+      return request.auth != null && (getUserRole(request.auth.uid) == 'admin' || getUserRole(request.auth.uid) == 'developer');
+    }
+
+    // Rules for NIC verification images
+    match /nic_verification/{userId}/{fileName} {
+      
+      // Allow reading only by the user who owns the files or by an admin/developer.
+      allow read: if request.auth.uid == userId || isAdminOrHigher();
+
+      // Allow writing (upload, update, delete) only by the file owner.
+      // Enforce file size limit to 2MB.
+      // Enforce that the uploaded file is an image.
+      allow write: if request.auth.uid == userId
+                    && request.resource.size < 2 * 1024 * 1024
+                    && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+    
+    // Implicitly deny access to all other paths
+  }
+}
