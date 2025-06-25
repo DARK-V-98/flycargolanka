@@ -14,7 +14,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Navigation, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign, Landmark, Box } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign, Landmark, Box } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, setDoc, doc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where } from 'firebase/firestore';
@@ -52,8 +60,9 @@ const bookingSchema = z.object({
   senderContactNo: z.string().regex(phoneRegex, "Invalid sender contact number (include country code)."),
   senderWhatsAppNo: z.string().regex(phoneRegex, "Invalid WhatsApp number (include country code).").optional().or(z.literal('')),
 
-  declaration1: z.boolean().refine(val => val === true, { message: "You must agree to the first declaration." }),
-  declaration2: z.boolean().refine(val => val === true, { message: "You must agree to the second declaration." }),
+  agreedToTerms: z.boolean().refine(val => val === true, {
+    message: "You must read and agree to the Terms and Conditions to proceed.",
+  }),
 }).refine((data) => {
     const dims = [data.length, data.width, data.height];
     const providedCount = dims.filter(d => d !== undefined && d !== '').length;
@@ -78,6 +87,53 @@ const generateBookingId = (): string => {
   }
   return `${randomLetters}${randomNumbers}`;
 };
+
+const TermsContent = () => (
+  <div className="space-y-4 text-sm text-foreground/90">
+    <p className="font-semibold text-accent">
+      These conditions of carriage EXCLUDE LIABILITY on the part of Fly Cargo Lanka and its employees or agents for loss, damage and delay in certain circumstances, LIMIT LIABILITY to stated amounts where liability is accepted and REQUIRE NOTICE OF CLAIMS within strict time limits. Senders should note these conditions carefully.
+    </p>
+
+    <h3 className="text-lg font-semibold text-accent pt-2">Rates and Quotations</h3>
+    <p>
+      Rates and service quotations by employees and agents of Fly Cargo Lanka will be based upon information provided by the sender but final rates and service may vary based upon the shipment actually tendered and the application of these conditions. Fly Cargo Lanka is not liable for, nor will any adjustment, refund or credit of any kind be made, as a result of any discrepancy in any rate or service quotation made prior to the tender of the shipment and the rates, and other charges invoiced to the customer.
+    </p>
+
+    <h3 className="text-lg font-semibold text-accent pt-2">Dimensional Weight</h3>
+    <p>
+      Charges may be assessed based on dimensional weight. Dimensional weight is determined by multiplying a package's length x height x width (all in centimetres) and dividing by 5000 or such other number as specified by Fly Cargo Lanka from time to time on fedex.com. If the result exceeds the actual weight, additional charges may be assessed based on the dimensional weight. There is no limit on the aggregate weight of a multiple piece shipment provided each individual package within the shipment does not exceed the per package weight limit specified for the destination. For the bulk shipments require advance arrangement with Fly Cargo Lanka. Details are available upon request.
+    </p>
+
+    <h3 className="text-lg font-semibold text-accent pt-2">Unacceptable Items for Carriage</h3>
+    <p>The following items are not acceptable for carriage to any destination at any circumstance unless otherwise agreed to by Fly Cargo Lanka.</p>
+    <ul className="list-disc pl-6 space-y-1">
+      <li>Money (coins, cash, currency paper money and negotiable instruments equivalent to cash such as endorsed stocks, bonds and cash letters).</li>
+      <li>Explosives fireworks and other items of an incendiary or flammable nature.</li>
+      <li>Human corpses, organs or body parts, human and animal embryos, cremated or disinterred human remains.</li>
+      <li>Firearms, weaponry, ammunition and their parts.</li>
+      <li>Foodstuffs, perishable food articles and beverages requiring refrigeration or other environmental control.</li>
+      <li>Hazardous waste, including, but not limited to, used hypodermic needles and/or syringes or medical waste.</li>
+      <li>Shipments requiring to obtain any special license or permit for transportation, importation or exportation.</li>
+      <li>Shipments the carriage, importation or exportation of which is prohibited by any law, statute or regulation.</li>
+      <li>Packages that are wet, leaking or emit an odor of any kind.</li>
+    </ul>
+
+    <h3 className="text-lg font-semibold text-accent pt-2">Packaging and Marking</h3>
+     <ul className="list-disc pl-6 space-y-1">
+      <li>Packages that are wrapped in kraft paper.</li>
+      <li>Each package within a shipment must be legibly and durably marked with the full name and complete postal address with the PIN code and telephone number of both the shipper and the recipient. Fly Cargo Lanka shall not be liable for non-delivery on account of incomplete or erroneous address being furnished by the shipper. Further, customer is fully liable to inform us if any erroneous in tracking number not later than twenty-four (24) hours since receive the tracking number.</li>
+     </ul>
+
+    <h3 className="text-lg font-semibold text-accent pt-2">Additional Conditions</h3>
+    <ul className="list-disc pl-6 space-y-1">
+      <li>Rates will be updated in each month based on US dollar and Sri Lanka rupee conversion.</li>
+      <li>Non commercial items such as consumables and herbal remedies has high clearance risk in certain countries like Australia and Japan. Hence, an extra vigilance and support from the receiver end will be required.</li>
+      <li>An additional charge will be applicable for large packages & shipments exceeding either: weight/length & dimension. Maximum Weight and Size Limits (per piece): Weight 70 kg, Length 274 cm, Size 419 cm in length and girth (2 x width) + (2 x height)) combined.</li>
+      <li>Fly Cargo Lanka is not liable for any shipments that is been held at the destination country due to customs inspections and releasing them. Also, the charges shown in the calculator is only the shipping fee and does not include any duty charges or any other charges enforced in the destination country. These charges needs to be bared by the receiver of the parcel.</li>
+    </ul>
+  </div>
+);
+
 
 export default function BookingPage() {
   const { toast } = useToast();
@@ -120,8 +176,7 @@ export default function BookingPage() {
       senderAddress: '',
       senderContactNo: '',
       senderWhatsAppNo: '',
-      declaration1: false,
-      declaration2: false,
+      agreedToTerms: false,
     },
   });
 
@@ -391,6 +446,10 @@ export default function BookingPage() {
         receiverName: data.receiverFullName,
         estimatedCostLKR: numericCost,
       };
+      
+      delete (bookingData as any).declaration1;
+      delete (bookingData as any).declaration2;
+
 
       const bookingDocRef = doc(db, 'bookings', newBookingId);
       await setDoc(bookingDocRef, bookingData);
@@ -683,24 +742,42 @@ export default function BookingPage() {
               <CardTitle className="text-xl font-headline text-accent flex items-center"><CheckCircle2 className="mr-2 h-6 w-6 text-primary"/>Declarations</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField control={form.control} name="declaration1" render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                    <FormControl><Checkbox checked={field.value ?? false} onCheckedChange={field.onChange} /></FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="font-normal"> I have read and checked the Important Guide, Amendment Fees &amp; Terms-Conditions, and Remote Area Postal Codes for Economy Service – Europe, and I am fully aware of the additional charges if applicable to my parcel/document. </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-              )} />
-              <FormField control={form.control} name="declaration2" render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
-                    <FormControl><Checkbox checked={field.value ?? false} onCheckedChange={field.onChange} /></FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="font-normal"> I have read and agreed to the Terms &amp; Conditions and wish to proceed with my shipment via CFC Express. </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-              )} />
+              <Dialog>
+                <FormField
+                  control={form.control}
+                  name="agreedToTerms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="font-normal">
+                          I have read and agree to the{' '}
+                          <DialogTrigger asChild>
+                            <span className="text-primary font-semibold hover:underline cursor-pointer">
+                              Terms and Conditions
+                            </span>
+                          </DialogTrigger>
+                          .
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                <DialogContent className="sm:max-w-3xl max-h-[80vh]">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl">Terms and Conditions</DialogTitle>
+                  </DialogHeader>
+                  <ScrollArea className="pr-4 -mr-4 h-[60vh]">
+                    <TermsContent />
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
