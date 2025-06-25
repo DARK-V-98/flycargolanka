@@ -3,265 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Invoice - {{orderId}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --primary-color: #D4AF37;
-            --accent-color: #1a2c51;
-            --text-color: #333;
-            --background-color: #ffffff;
-            --border-color: #e5e7eb;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f9fafb;
-            margin: 0;
-            padding: 20px;
-            color: var(--text-color);
-            -webkit-print-color-adjust: exact;
+            background-color: #f8fafc;
+            color: #1e3a8a; /* A dark blue close to accent */
         }
-
         .invoice-container {
             max-width: 800px;
-            margin: auto;
-            background: var(--background-color);
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin: 2rem auto;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
         }
-
         .invoice-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            background-color: #1c3d5a; /* Dark blue accent color */
+            color: white;
+            padding: 2rem;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
         }
-
-        .header-left .logo {
-            width: 70px;
-            height: auto;
+        .invoice-header .logo {
+            width: 60px;
+            height: 60px;
         }
-
-        .header-right {
-            text-align: right;
-        }
-
-        .header-right h1 {
-            margin: 0;
-            font-size: 2.5em;
-            color: var(--accent-color);
+        .invoice-header h1 {
+            font-size: 2.5rem;
             font-weight: 700;
-        }
-
-        .header-right p {
-            margin: 5px 0 0;
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        .billing-details {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 40px;
-        }
-
-        .billing-details > div {
-            width: 48%;
-        }
-
-        .billing-details h3 {
-            margin: 0 0 10px;
-            font-size: 0.8em;
-            color: #888;
-            font-weight: 500;
-            letter-spacing: 1px;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
         }
-
-        .billing-details p {
-            margin: 4px 0;
+        .details-section {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .details-section h2 {
+            font-size: 0.875rem;
+            color: #64748b; /* Muted foreground */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .details-section p {
             line-height: 1.6;
         }
-
-        .items-table {
+        .invoice-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 40px;
         }
-
-        .items-table th,
-        .items-table td {
-            padding: 12px 15px;
+        .invoice-table thead th {
             text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .items-table th {
-            background-color: #f9fafb;
+            padding: 0.75rem 2rem;
+            background-color: #f1f5f9; /* Light gray, like muted */
+            color: #1e3a8a;
             font-weight: 500;
-            color: #555;
             text-transform: uppercase;
-            font-size: 0.8em;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
         }
-
-        .items-table td {
-            vertical-align: top;
+        .invoice-table tbody td {
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
         }
-
-        .items-table .amount {
+        .invoice-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .totals-section {
+            padding: 2rem;
             text-align: right;
-            font-weight: 500;
         }
-
-        .totals {
-            margin-left: auto;
-            width: 100%;
-            max-width: 300px;
-            text-align: right;
-            margin-bottom: 40px;
-        }
-
-        .total-row {
+        .totals-section .total-row {
             display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #D4AF37; /* Primary Gold */
         }
-
-        .total-row .label {
-            color: #666;
-        }
-
-        .grand-total {
-            font-weight: 700;
-            font-size: 1.2em;
-            border-top: 2px solid var(--border-color);
-            margin-top: 10px;
-            padding-top: 10px;
-        }
-
-        .grand-total .label {
-            color: var(--accent-color);
-        }
-
-        .grand-total .value {
-            color: var(--accent-color);
-        }
-
-        .notes {
-            margin-bottom: 50px;
-        }
-
-        .notes h4 {
-            margin-bottom: 10px;
+        .totals-section .total-row .label {
+            font-size: 1.25rem;
             font-weight: 500;
-            color: var(--accent-color);
+            color: #1e3a8a;
         }
-
-        .notes p {
-            font-size: 0.9em;
-            color: #666;
-            line-height: 1.6;
+        .totals-section .total-row .amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #D4AF37; /* Primary Gold */
+            margin-left: 2rem;
         }
-
-        .signature-section {
-            margin-top: 60px;
-            padding-top: 30px;
-            border-top: 1px solid var(--border-color);
-            text-align: right;
-        }
-
-        .signature-line {
-            width: 250px;
-            border-bottom: 1px solid #333;
-            margin-left: auto;
-            margin-bottom: 10px;
-        }
-
-        .signature-section p {
-            margin: 0;
-            font-size: 0.9em;
-            color: #555;
-        }
-
-        .invoice-footer {
+        .footer-section {
+            padding: 2rem;
+            background-color: #f1f5f9;
             text-align: center;
-            margin-top: 30px;
-            font-size: 0.8em;
-            color: #aaa;
+            font-size: 0.875rem;
+            color: #64748b;
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+        .signature-section {
+            padding: 2rem 2rem 3rem;
+            margin-top: 2rem;
+        }
+        .signature-line {
+            border-bottom: 1px solid #9ca3af;
+            margin-top: 3rem;
+            width: 250px;
+        }
+        .signature-label {
+            color: #64748b;
+            font-size: 0.875rem;
         }
     </style>
 </head>
 <body>
     <div class="invoice-container">
-        <header class="invoice-header">
-            <div class="header-left">
-                <img src="{{logoUrl}}" alt="Company Logo" class="logo">
+        <div class="invoice-header">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <img src="{{logoUrl}}" alt="Company Logo" class="logo">
+                    <div>
+                        <p class="text-2xl font-bold">FlyCargo Lanka</p>
+                        <p class="text-sm opacity-80">No.05, avariwatta, katunayake</p>
+                    </div>
+                </div>
+                <h1>Invoice</h1>
             </div>
-            <div class="header-right">
-                <h1>INVOICE</h1>
-                <p>Invoice #{{orderId}}</p>
-                <p>Issued: {{invoiceDate}}</p>
+            <div class="mt-8 grid grid-cols-2 text-sm">
+                <div>
+                    <span class="font-semibold">Invoice ID:</span> {{orderId}}
+                </div>
+                <div class="text-right">
+                    <span class="font-semibold">Date Issued:</span> {{invoiceDate}}
+                </div>
             </div>
-        </header>
+        </div>
 
-        <section class="billing-details">
-            <div class="bill-from">
-                <h3>FROM</h3>
-                <p><strong>{{senderName}}</strong></p>
+        <div class="details-section">
+            <div>
+                <h2>Bill To</h2>
+                <p class="font-semibold text-lg">{{senderName}}</p>
                 <p>{{senderAddress}}</p>
                 <p>{{senderEmail}}</p>
             </div>
-            <div class="bill-to">
-                <h3>BILL TO</h3>
-                <p><strong>{{receiverName}}</strong></p>
+            <div>
+                <h2>Ship To</h2>
+                <p class="font-semibold text-lg">{{receiverName}}</p>
                 <p>{{receiverAddress}}</p>
                 <p>{{receiverLocation}}</p>
             </div>
-        </section>
-        
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Destination</th>
-                    <th class="amount">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{serviceDescription}}</td>
-                    <td>{{serviceDestination}}</td>
-                    <td class="amount">{{totalAmount}} LKR</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <section class="totals">
-            <div class="total-row grand-total">
-                <span class="label">Total Amount</span>
-                <span class="value">{{totalAmount}} LKR</span>
-            </div>
-        </section>
-
-        <section class="notes">
-            <h4>Notes</h4>
-            <p>Thank you for choosing our services. Please ensure all details are correct. Contact us if you have any questions.</p>
-        </section>
-        
-        <div class="signature-section">
-            <div class="signature-line"></div>
-            <p>Customer Signature</p>
         </div>
 
-        <footer class="invoice-footer">
-            <p>FlyCargo Lanka &copy; 2024</p>
-        </footer>
+        <div>
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th class="text-right">Destination</th>
+                        <th class="text-right">Amount (LKR)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <p class="font-medium">{{serviceDescription}}</p>
+                            <p class="text-sm text-gray-500">International Courier Service</p>
+                        </td>
+                        <td class="text-right">{{serviceDestination}}</td>
+                        <td class="text-right font-medium">{{totalAmount}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="totals-section">
+            <div class="total-row">
+                <div class="label">Total Amount</div>
+                <div class="amount">LKR {{totalAmount}}</div>
+            </div>
+        </div>
+
+        <div class="signature-section">
+            <div class="signature-line"></div>
+            <p class="signature-label mt-2">Customer Signature</p>
+        </div>
+
+        <div class="footer-section">
+            <p>Thank you for choosing FlyCargo Lanka!</p>
+            <p>Hotline: +94 711 318 725 | Corporate Line: +94 112 260 310</p>
+        </div>
     </div>
 </body>
 </html>
