@@ -722,16 +722,6 @@ export default function BookingPage() {
 
           <Card className="shadow-lg border-border/50">
             <CardHeader>
-              <CardTitle className="text-xl font-headline text-accent flex items-center"><FileText className="mr-2 h-6 w-6 text-primary"/>Document Upload</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-foreground/80"> Please forward invoices, bills, and tracking details to the following number: </p>
-              <p className="font-semibold text-lg text-primary mt-1 flex items-center"> <Phone className="mr-2 h-5 w-5"/> +94 770 663 108 </p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-lg border-border/50">
-            <CardHeader>
               <CardTitle className="text-xl font-headline text-accent flex items-center"><CheckCircle2 className="mr-2 h-6 w-6 text-primary"/>Declarations</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
