@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe2, MapPin, Truck, ShoppingCart, Building2, Eye, Target, Calculator, Globe } from 'lucide-react';
+import { Globe2, MapPin, Truck, ShoppingCart, Building2, Eye, Target, Calculator, Globe, ShieldCheck, LifeBuoy } from 'lucide-react';
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
 import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
@@ -71,7 +71,7 @@ export default function Home() {
           <div className="opacity-0 animate-fadeInUp">
             <PageHeader title="Why Choose FlyCargo Lanka?" description="Experience the difference with our commitment to excellence." />
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-200">
               <CardHeader>
                 <CardTitle className="text-accent flex items-center"><Truck className="mr-2 h-6 w-6 text-primary" />Reliability</CardTitle>
@@ -90,10 +90,18 @@ export default function Home() {
             </Card>
             <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-400">
               <CardHeader>
-                <CardTitle className="text-accent flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 h-6 w-6"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="m9 12 2 2 4-4"></path></svg>Customer Support</CardTitle>
+                <CardTitle className="text-accent flex items-center"><LifeBuoy className="mr-2 h-6 w-6 text-primary" />Customer Support</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-foreground/90">Our dedicated team is here to assist you every step of the way.</p>
+              </CardContent>
+            </Card>
+             <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-500">
+              <CardHeader>
+                <CardTitle className="text-accent flex items-center"><ShieldCheck className="mr-2 h-6 w-6 text-primary" />Free Insurance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-foreground/90">Every package is insured, giving you peace of mind and financial protection.</p>
               </CardContent>
             </Card>
           </div>
