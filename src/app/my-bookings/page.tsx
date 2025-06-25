@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth, type UserProfile } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import PageHeader from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -71,32 +71,6 @@ function MyBookingsPageContent() {
   const [isCancelling, setIsCancelling] = useState(false);
 
 
-  const fetchUserBookings = useCallback(async () => {
-    if (!user) return;
-    setLoadingBookings(true);
-    try {
-      const bookingsCol = collection(db, 'bookings');
-      const q = query(bookingsCol, where('userId', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-      const bookingsData = querySnapshot.docs.map(docSnap => {
-        const data = docSnap.data();
-        return {
-            id: docSnap.id,
-            ...data,
-            paymentStatus: data.paymentStatus || 'Pending' // Default to pending
-        } as Booking;
-      });
-      // Sort bookings by creation date client-side
-      bookingsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-      setBookings(bookingsData);
-    } catch (error) {
-      console.error("Error fetching bookings: ", error);
-      toast({ title: "Error", description: "Could not fetch your bookings.", variant: "destructive" });
-    } finally {
-      setLoadingBookings(false);
-    }
-  }, [user, toast]);
-
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth?redirect=/my-bookings');
@@ -104,10 +78,37 @@ function MyBookingsPageContent() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) {
-      fetchUserBookings();
+    if (!user) {
+      setLoadingBookings(false);
+      return;
     }
-  }, [user, fetchUserBookings]);
+
+    setLoadingBookings(true);
+    const bookingsCol = collection(db, 'bookings');
+    const q = query(bookingsCol, where('userId', '==', user.uid));
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const bookingsData = querySnapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+            id: docSnap.id,
+            ...data,
+            paymentStatus: data.paymentStatus || 'Pending'
+        } as Booking;
+      });
+      
+      bookingsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      setBookings(bookingsData);
+      setLoadingBookings(false);
+    }, (error) => {
+      console.error("Error fetching bookings in real-time: ", error);
+      toast({ title: "Error", description: "Could not fetch your bookings.", variant: "destructive" });
+      setLoadingBookings(false);
+    });
+
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
+  }, [user, toast]);
 
   const getDisplayStatus = (status: BookingStatus): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } => {
     switch (status) {
@@ -157,11 +158,7 @@ function MyBookingsPageContent() {
         description: `Booking ID ${bookingToCancel.id} has been cancelled.`,
         variant: "default"
       });
-      setBookings(prevBookings =>
-        prevBookings.map(b =>
-          b.id === bookingToCancel.id ? { ...b, status: 'Cancelled', updatedAt: { seconds: Date.now()/1000, nanoseconds:0} as unknown as Timestamp } : b
-        )
-      );
+      // No need to manually update state, onSnapshot will handle it.
     } catch (error) {
       console.error("Error cancelling booking:", error);
       toast({
