@@ -27,6 +27,8 @@ export default function Footer() {
               <Link href="/track-package" className="hover:underline">Track Package</Link>
               <Link href="/services" className="hover:underline">About Us</Link>
               <Link href="/terms" className="hover:underline">Terms & Conditions</Link>
+              <Link href="/privacy-policy" className="hover:underline">Privacy Policy</Link>
+              <Link href="/return-policy" className="hover:underline">Return & Refund Policy</Link>
             </nav>
           </div>
 
