@@ -77,7 +77,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h3 className="text-xl font-semibold text-accent mb-2">7. Contact Us</h3>
             <p>
-              If you have any questions about this Privacy Policy, please contact us at <a href="mailto:info@flycargolanka.lk" className="text-primary underline">info@flycargolanka.lk</a>.
+              If you have any questions about this Privacy Policy, please contact us at <a href="mailto:info@flycargolanka.lk" className="text-primary underline">info@flycargolanka.lk</a> or call our corporate line at <a href="tel:+94112260310" className="text-primary underline">+94 112 260 310</a>.
             </p>
           </section>
         </CardContent>
