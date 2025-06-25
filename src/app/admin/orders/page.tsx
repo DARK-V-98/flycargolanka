@@ -110,6 +110,8 @@ export default function AdminOrdersPage() {
 
       const serviceDescription = `Shipping - ${viewingBooking.shipmentType} (${viewingBooking.serviceType}) - ${viewingBooking.approxWeight}kg`;
       const totalAmount = viewingBooking.estimatedCostLKR?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
+      const paymentStatus = viewingBooking.paymentStatus || 'Pending';
+
 
       const replacements: Record<string, string> = {
         '{{orderId}}': viewingBooking.id,
@@ -123,6 +125,8 @@ export default function AdminOrdersPage() {
         '{{serviceDescription}}': serviceDescription,
         '{{serviceDestination}}': viewingBooking.receiverCountry,
         '{{totalAmount}}': totalAmount,
+        '{{paymentStatus}}': paymentStatus,
+        '{{paymentStatusClass}}': paymentStatus.toLowerCase(),
       };
 
       for (const key in replacements) {
