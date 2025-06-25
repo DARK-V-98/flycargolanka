@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { useReactToPrint } from 'react-to-print';
+import ReactToPrint from 'react-to-print';
 import PrintableInvoice from '@/components/PrintableInvoice';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -100,11 +100,6 @@ export default function AdminOrdersPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<BookingStatus | 'All'>('All');
-
-  const handlePrint = useReactToPrint({
-    content: () => invoiceComponentRef.current,
-    documentTitle: `invoice-${viewingBooking?.id || 'booking'}`,
-  });
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -513,14 +508,19 @@ export default function AdminOrdersPage() {
             </ScrollArea>
             <DialogFooter className="mt-4 sm:justify-between">
                {viewingBooking && (
-                  <Button
-                    onClick={handlePrint}
-                    disabled={!viewingBooking.estimatedCostLKR}
-                    title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Print Invoice"}
-                  >
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print Invoice
-                  </Button>
+                  <ReactToPrint
+                    trigger={() => (
+                      <Button
+                        disabled={!viewingBooking.estimatedCostLKR}
+                        title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Print Invoice"}
+                      >
+                        <Printer className="mr-2 h-4 w-4" />
+                        Print Invoice
+                      </Button>
+                    )}
+                    content={() => invoiceComponentRef.current}
+                    documentTitle={`invoice-${viewingBooking.id || 'booking'}`}
+                  />
                 )}
                 <DialogClose asChild>
                     <Button type="button" variant="outline">Close</Button>
@@ -536,7 +536,3 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
-
-    
-
-    
