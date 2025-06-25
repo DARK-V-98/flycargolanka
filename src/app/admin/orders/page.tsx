@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import ReactToPrint from 'react-to-print';
+import { useReactToPrint } from 'react-to-print';
 import PrintableInvoice from '@/components/PrintableInvoice';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -96,7 +96,12 @@ export default function AdminOrdersPage() {
   const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState<Record<string, boolean>>({});
   const [selectedPaymentStatusMap, setSelectedPaymentStatusMap] = useState<Record<string, PaymentStatus>>({});
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
+  
   const invoiceComponentRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+    content: () => invoiceComponentRef.current,
+    documentTitle: `invoice-${viewingBooking?.id || 'booking'}`,
+  });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<BookingStatus | 'All'>('All');
@@ -508,20 +513,14 @@ export default function AdminOrdersPage() {
             </ScrollArea>
             <DialogFooter className="mt-4 sm:justify-between">
                {viewingBooking && (
-                  <ReactToPrint
-                    trigger={() => (
-                      <button
-                        className={buttonVariants()}
-                        disabled={!viewingBooking.estimatedCostLKR}
-                        title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Print Invoice"}
-                      >
-                        <Printer className="mr-2 h-4 w-4" />
-                        Print Invoice
-                      </button>
-                    )}
-                    content={() => invoiceComponentRef.current}
-                    documentTitle={`invoice-${viewingBooking.id || 'booking'}`}
-                  />
+                  <Button
+                    onClick={handlePrint}
+                    disabled={!viewingBooking.estimatedCostLKR}
+                    title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Print Invoice"}
+                  >
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Invoice
+                  </Button>
                 )}
                 <DialogClose asChild>
                     <Button type="button" variant="outline">Close</Button>
