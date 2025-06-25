@@ -47,7 +47,7 @@ const bookingSchema = z.object({
   approxValue: z.coerce.number().positive("Approximate value of goods must be a positive number.").min(1, "Value must be at least 1 USD."),
 
   receiverFullName: z.string().min(2, "Receiver full name is required (as per passport).").max(100),
-  receiverEmail: z.string().email("Invalid receiver email address.").max(100),
+  receiverEmail: z.string().email("Invalid receiver email address.").max(100).optional().or(z.literal('')),
   receiverAddress: z.string().min(5, "Receiver address is required.").max(200),
   receiverDoorCode: z.string().max(50).optional().or(z.literal('')),
   receiverZipCode: z.string().min(1, "Receiver ZIP/Postal code is required.").max(20),
@@ -706,7 +706,7 @@ export default function BookingPage() {
                 <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><User className="mr-2 h-5 w-5"/>Receiver Details</h3>
                 <div className="space-y-4">
                   <FormField control={form.control} name="receiverFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name (as per passport)</FormLabel><FormControl><Input placeholder="John Michael Doe" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
-                  <FormField control={form.control} name="receiverEmail" render={({ field }) => ( <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="receiver@example.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="receiverEmail" render={({ field }) => ( <FormItem><FormLabel>Email (Optional)</FormLabel><FormControl><Input type="email" placeholder="receiver@example.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
                   <FormField control={form.control} name="receiverAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="123 Global St, Apt 4B" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
                   <FormField control={form.control} name="receiverDoorCode" render={({ field }) => ( <FormItem><FormLabel>Door Code / Access Code / Floor Number (Optional)</FormLabel><FormControl><Input placeholder="e.g., #1234, Floor 5" {...field} value={field.value ?? ''} /></FormControl><FormDescription className="text-xs">Address without door code will be delivered to the nearest parcel point.</FormDescription><FormMessage /></FormItem> )} />
                   <div className="grid md:grid-cols-2 gap-4">
@@ -842,3 +842,5 @@ export default function BookingPage() {
     </div>
   );
 }
+
+    
