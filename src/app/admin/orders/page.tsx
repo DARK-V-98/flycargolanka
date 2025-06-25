@@ -94,64 +94,89 @@ export default function AdminOrdersPage() {
   const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState<Record<string, boolean>>({});
   const [selectedPaymentStatusMap, setSelectedPaymentStatusMap] = useState<Record<string, PaymentStatus>>({});
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<BookingStatus | 'All'>('All');
 
   const handleDownloadInvoice = async () => {
     if (!viewingBooking) return;
+    setDownloadingPdf(true);
 
     try {
-      const response = await fetch('/invoice.html');
-      if (!response.ok) {
-        throw new Error("Could not load invoice template. Make sure 'public/invoice.html' exists.");
-      }
-      let template = await response.text();
+        const response = await fetch('/invoice.html');
+        if (!response.ok) {
+            throw new Error("Could not load invoice template. Make sure 'public/invoice.html' exists.");
+        }
+        let template = await response.text();
 
-      const serviceDescription = `Shipping - ${viewingBooking.shipmentType} (${viewingBooking.serviceType}) - ${viewingBooking.approxWeight}kg`;
-      const totalAmount = viewingBooking.estimatedCostLKR?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
-      const paymentStatus = viewingBooking.paymentStatus || 'Pending';
+        const serviceDescription = `Shipping - ${viewingBooking.shipmentType} (${viewingBooking.serviceType}) - ${viewingBooking.approxWeight}kg`;
+        const totalAmount = viewingBooking.estimatedCostLKR?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
+        const paymentStatus = viewingBooking.paymentStatus || 'Pending';
 
+        const replacements: Record<string, string> = {
+            '{{orderId}}': viewingBooking.id,
+            '{{invoiceDate}}': format(viewingBooking.createdAt.toDate(), 'PPP'),
+            '{{senderName}}': viewingBooking.senderFullName,
+            '{{senderAddress}}': viewingBooking.senderAddress,
+            '{{senderEmail}}': viewingBooking.userEmail || 'N/A',
+            '{{receiverName}}': viewingBooking.receiverFullName,
+            '{{receiverAddress}}': viewingBooking.receiverAddress,
+            '{{receiverLocation}}': `${viewingBooking.receiverCity}, ${viewingBooking.receiverCountry}`,
+            '{{serviceDescription}}': serviceDescription,
+            '{{serviceDestination}}': viewingBooking.receiverCountry,
+            '{{totalAmount}}': totalAmount,
+            '{{paymentStatus}}': paymentStatus,
+            '{{paymentStatusClass}}': paymentStatus.toLowerCase(),
+        };
 
-      const replacements: Record<string, string> = {
-        '{{orderId}}': viewingBooking.id,
-        '{{invoiceDate}}': format(viewingBooking.createdAt.toDate(), 'PPP'),
-        '{{senderName}}': viewingBooking.senderFullName,
-        '{{senderAddress}}': viewingBooking.senderAddress,
-        '{{senderEmail}}': viewingBooking.userEmail || 'N/A',
-        '{{receiverName}}': viewingBooking.receiverFullName,
-        '{{receiverAddress}}': viewingBooking.receiverAddress,
-        '{{receiverLocation}}': `${viewingBooking.receiverCity}, ${viewingBooking.receiverCountry}`,
-        '{{serviceDescription}}': serviceDescription,
-        '{{serviceDestination}}': viewingBooking.receiverCountry,
-        '{{totalAmount}}': totalAmount,
-        '{{paymentStatus}}': paymentStatus,
-        '{{paymentStatusClass}}': paymentStatus.toLowerCase(),
-      };
+        for (const key in replacements) {
+            template = template.replace(new RegExp(key, 'g'), replacements[key]);
+        }
 
-      for (const key in replacements) {
-        template = template.replace(new RegExp(key, 'g'), replacements[key]);
-      }
+        const { jsPDF } = await import('jspdf');
+        const html2canvas = (await import('html2canvas')).default;
 
-      const blob = new Blob([template], { type: 'text/html' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoice-${viewingBooking.id}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+        const invoiceContainer = document.createElement('div');
+        invoiceContainer.style.position = 'fixed';
+        invoiceContainer.style.left = '-9999px';
+        invoiceContainer.style.top = '0';
+        invoiceContainer.style.width = '210mm'; 
+        invoiceContainer.style.height = 'auto';
+        invoiceContainer.innerHTML = template;
+        document.body.appendChild(invoiceContainer);
+
+        const canvas = await html2canvas(invoiceContainer, {
+            scale: 2,
+            useCORS: true,
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`invoice-${viewingBooking.id}.pdf`);
+
+        document.body.removeChild(invoiceContainer);
 
     } catch (err: any) {
-      console.error("Error downloading invoice:", err);
-      toast({
-        title: "Download Failed",
-        description: err.message,
-        variant: "destructive"
-      });
+        console.error("Error downloading PDF invoice:", err);
+        toast({
+            title: "Download Failed",
+            description: err.message,
+            variant: "destructive"
+        });
+    } finally {
+        setDownloadingPdf(false);
     }
-  };
+};
 
 
   useEffect(() => {
@@ -563,11 +588,15 @@ export default function AdminOrdersPage() {
                {viewingBooking && (
                   <Button
                     onClick={handleDownloadInvoice}
-                    disabled={!viewingBooking.estimatedCostLKR}
-                    title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Download Invoice"}
+                    disabled={!viewingBooking.estimatedCostLKR || downloadingPdf}
+                    title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Download PDF Invoice"}
                   >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Invoice
+                    {downloadingPdf ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Download className="mr-2 h-4 w-4" />
+                    )}
+                    {downloadingPdf ? 'Generating PDF...' : 'Download PDF'}
                   </Button>
                 )}
                 <DialogClose asChild>
