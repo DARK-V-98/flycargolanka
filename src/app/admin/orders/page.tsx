@@ -1,10 +1,12 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { useReactToPrint } from 'react-to-print';
+import PrintableInvoice from '@/components/PrintableInvoice';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
@@ -18,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard } from "lucide-react";
+import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard, Printer } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -37,7 +39,7 @@ export type PaymentStatus = 'Pending' | 'Paid' | 'Refunded';
 
 
 // Expanded Booking interface to include all fields from the booking form
-interface Booking {
+export interface Booking {
   id: string;
   userId: string;
   userEmail: string | null; // Email of the user who made the booking
@@ -94,9 +96,24 @@ export default function AdminOrdersPage() {
   const [updatingPaymentStatus, setUpdatingPaymentStatus] = useState<Record<string, boolean>>({});
   const [selectedPaymentStatusMap, setSelectedPaymentStatusMap] = useState<Record<string, PaymentStatus>>({});
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
+  const [bookingForInvoice, setBookingForInvoice] = useState<Booking | null>(null);
+  const invoiceComponentRef = useRef<HTMLDivElement>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<BookingStatus | 'All'>('All');
+
+  const handlePrint = useReactToPrint({
+    content: () => invoiceComponentRef.current,
+    documentTitle: `invoice-${bookingForInvoice?.id || 'booking'}`,
+    onAfterPrint: () => setBookingForInvoice(null),
+  });
+
+  useEffect(() => {
+    if (bookingForInvoice) {
+      handlePrint();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingForInvoice]);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -503,7 +520,17 @@ export default function AdminOrdersPage() {
 
               </div>
             </ScrollArea>
-            <DialogFooter className="mt-4">
+            <DialogFooter className="mt-4 sm:justify-between">
+               {viewingBooking && (
+                  <Button
+                    onClick={() => setBookingForInvoice(viewingBooking)}
+                    disabled={!viewingBooking.estimatedCostLKR}
+                    title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Print Invoice"}
+                  >
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Invoice
+                  </Button>
+                )}
                 <DialogClose asChild>
                     <Button type="button" variant="outline">Close</Button>
                 </DialogClose>
@@ -511,6 +538,10 @@ export default function AdminOrdersPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      <div style={{ display: 'none' }}>
+        {bookingForInvoice && <PrintableInvoice ref={invoiceComponentRef} booking={bookingForInvoice} />}
+      </div>
     </div>
   );
 }
