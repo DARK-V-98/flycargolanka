@@ -71,7 +71,7 @@ export default function Home() {
           <div className="opacity-0 animate-fadeInUp">
             <PageHeader title="Why Choose FlyCargo Lanka?" description="Experience the difference with our commitment to excellence." />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-200">
               <CardHeader>
                 <CardTitle className="text-accent flex items-center"><Truck className="mr-2 h-6 w-6 text-primary" />Reliability</CardTitle>
@@ -94,14 +94,6 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <p className="text-foreground/90">Our dedicated team is here to assist you every step of the way.</p>
-              </CardContent>
-            </Card>
-             <Card className="shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 opacity-0 animate-fadeInScaleUp delay-500">
-              <CardHeader>
-                <CardTitle className="text-accent flex items-center"><ShieldCheck className="mr-2 h-6 w-6 text-primary" />Free Insurance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-foreground/90">Every package is insured, giving you peace of mind and financial protection.</p>
               </CardContent>
             </Card>
           </div>
@@ -132,6 +124,20 @@ export default function Home() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </section>
+
+        <section className="py-12 text-center opacity-0 animate-fadeInUp" style={{animationDelay: '0.6s'}}>
+          <div className="container mx-auto px-4">
+            <Card className="max-w-4xl mx-auto p-8 bg-gradient-to-br from-primary/10 to-background shadow-2xl border-primary/20">
+              <ShieldCheck className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h2 className="text-3xl font-bold font-headline text-accent mb-4">
+                Peace of Mind with Every Parcel
+              </h2>
+              <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
+                We believe in the safety of your shipments. That's why every package you send with FlyCargo Lanka is protected by our <strong className="text-primary font-semibold">free insurance coverage</strong>, giving you complete confidence from pickup to delivery.
+              </p>
+            </Card>
           </div>
         </section>
 
