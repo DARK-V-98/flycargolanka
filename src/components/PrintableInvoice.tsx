@@ -4,7 +4,6 @@
 import React from 'react';
 import type { Booking } from '@/app/admin/orders/page';
 import { format } from 'date-fns';
-import Image from 'next/image';
 
 interface PrintableInvoiceProps {
   booking: Booking;
@@ -24,7 +23,8 @@ const PrintableInvoice = React.forwardRef<HTMLDivElement, PrintableInvoiceProps>
       </style>
       <div className="flex justify-between items-start mb-8">
         <div>
-          <Image src="/fg.png" alt="FlyCargo Lanka Logo" width={80} height={80} />
+          {/* Replaced next/image with standard img for better print compatibility */}
+          <img src="/fg.png" alt="FlyCargo Lanka Logo" style={{ width: '80px', height: 'auto' }} />
           <h1 className="text-2xl font-bold text-gray-800 mt-2">FlyCargo Lanka</h1>
           <p className="text-gray-600">No.05, Avariwatta, Katunayake</p>
           <p className="text-gray-600">info@flycargolanka.lk</p>
