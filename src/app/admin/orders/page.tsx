@@ -564,7 +564,7 @@ export default function AdminOrdersPage() {
                   <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent flex items-center"><Box className="mr-2" />Package &amp; Purpose</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
                      <div className="md:col-span-2"><strong className="text-muted-foreground">Contents:</strong> {viewingBooking.packageContents || 'N/A'}</div>
-                     <div><strong className="text-muted-foreground">Purpose:</strong> <span className="capitalize">{viewingBooking.courierPurpose === 'custom' ? viewingBooking.customPurpose : viewingBooking.courierPurpose.replace(/_/g, ' ')}</span></div>
+                     <div><strong className="text-muted-foreground">Purpose:</strong> <span className="capitalize">{viewingBooking.courierPurpose === 'custom' ? (viewingBooking.customPurpose || 'Custom') : (viewingBooking.courierPurpose?.replace(/_/g, ' ') || 'N/A')}</span></div>
                   </div>
                 </section>
 
