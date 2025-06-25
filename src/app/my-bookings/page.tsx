@@ -76,7 +76,7 @@ function MyBookingsPageContent() {
     setLoadingBookings(true);
     try {
       const bookingsCol = collection(db, 'bookings');
-      const q = query(bookingsCol, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+      const q = query(bookingsCol, where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
       const bookingsData = querySnapshot.docs.map(docSnap => {
         const data = docSnap.data();
@@ -86,6 +86,8 @@ function MyBookingsPageContent() {
             paymentStatus: data.paymentStatus || 'Pending' // Default to pending
         } as Booking;
       });
+      // Sort bookings by creation date client-side
+      bookingsData.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
       setBookings(bookingsData);
     } catch (error) {
       console.error("Error fetching bookings: ", error);

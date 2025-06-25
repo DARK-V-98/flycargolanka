@@ -72,9 +72,10 @@ export default function VerifyNicPage() {
         .map(async (userDoc) => {
           const userData = userDoc.data() as UserProfile;
           const bookingsRef = collection(db, 'bookings');
-          const bookingsQuery = query(bookingsRef, where('userId', '==', userData.uid), orderBy('createdAt', 'desc'));
+          const bookingsQuery = query(bookingsRef, where('userId', '==', userData.uid));
           const bookingsSnapshot = await getDocs(bookingsQuery);
           const bookings = bookingsSnapshot.docs.map(doc => ({ id: doc.id, createdAt: doc.data().createdAt as Timestamp }));
+          bookings.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
           return { ...userData, bookings };
         });
       
