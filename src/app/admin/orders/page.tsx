@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard, Printer } from "lucide-react";
@@ -510,13 +510,14 @@ export default function AdminOrdersPage() {
                {viewingBooking && (
                   <ReactToPrint
                     trigger={() => (
-                      <Button
+                      <button
+                        className={buttonVariants()}
                         disabled={!viewingBooking.estimatedCostLKR}
                         title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Print Invoice"}
                       >
                         <Printer className="mr-2 h-4 w-4" />
                         Print Invoice
-                      </Button>
+                      </button>
                     )}
                     content={() => invoiceComponentRef.current}
                     documentTitle={`invoice-${viewingBooking.id || 'booking'}`}
@@ -536,3 +537,5 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
+
+    
