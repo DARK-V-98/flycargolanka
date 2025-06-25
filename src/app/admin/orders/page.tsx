@@ -112,7 +112,7 @@ export default function AdminOrdersPage() {
       const totalAmount = viewingBooking.estimatedCostLKR?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
 
       const replacements: Record<string, string> = {
-        '{{invoiceId}}': viewingBooking.id,
+        '{{orderId}}': viewingBooking.id,
         '{{invoiceDate}}': format(viewingBooking.createdAt.toDate(), 'PPP'),
         '{{senderName}}': viewingBooking.senderFullName,
         '{{senderAddress}}': viewingBooking.senderAddress,
