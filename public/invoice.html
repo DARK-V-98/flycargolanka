@@ -6,175 +6,237 @@
     <title>Invoice - {{orderId}}</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-            color: #333;
-            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f9f9f9;
+            background-color: #f8f9fa;
+            color: #333;
+            -webkit-print-color-adjust: exact;
         }
-        .invoice-box {
+        .invoice-container {
             max-width: 800px;
-            margin: 40px auto;
-            padding: 30px;
-            border: 1px solid #eee;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-            font-size: 16px;
-            background-color: #fff;
+            margin: 20px auto;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
-        .header {
+        .invoice-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            align-items: center;
+            padding: 40px;
+            background-color: #1a2c4c; /* Dark Blue from theme */
+            color: white;
+            border-bottom: 5px solid #D4AF37; /* Gold from theme */
         }
-        .header .company-details {
+        .invoice-header .logo {
+            display: flex;
+            align-items: center;
+        }
+        .invoice-header .logo img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+        .invoice-header .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .invoice-header .invoice-title {
             text-align: right;
         }
-        .header h1 {
+        .invoice-header h1 {
             margin: 0;
-            font-size: 2.5em;
-            color: #333;
+            font-size: 48px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
-        .header .company-details p {
+        .invoice-header p {
             margin: 0;
-            font-size: 0.9em;
-            color: #555;
+            font-size: 14px;
         }
         .invoice-details {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 40px;
+            padding: 40px;
+            line-height: 1.6;
         }
-        .invoice-details .details-left,
-        .invoice-details .details-right {
+        .invoice-details .bill-to, .invoice-details .bill-from {
             width: 48%;
         }
         .invoice-details h3 {
             margin-top: 0;
-            font-size: 1.2em;
-            color: #333;
-            border-bottom: 1px solid #eee;
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a2c4c; /* Dark Blue */
+            border-bottom: 2px solid #eee;
             padding-bottom: 5px;
             margin-bottom: 10px;
         }
-        .invoice-details p {
+        .invoice-details p, .invoice-details .address {
             margin: 0 0 5px 0;
-            font-size: 1em;
+            font-size: 14px;
         }
-        .items-table {
+        .invoice-meta {
+            background-color: #f8f9fa;
+            padding: 20px 40px;
+            border-top: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+        }
+        .invoice-meta div {
+            font-size: 14px;
+        }
+         .invoice-meta div span {
+            font-weight: bold;
+        }
+        .invoice-table-container {
+            padding: 40px;
+        }
+        .invoice-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            font-size: 14px;
         }
-        .items-table th, .items-table td {
-            border: 1px solid #eee;
-            padding: 12px;
+        .invoice-table thead {
+            background-color: #1a2c4c; /* Dark Blue */
+            color: white;
+        }
+        .invoice-table th, .invoice-table td {
+            padding: 12px 15px;
             text-align: left;
+            border-bottom: 1px solid #dee2e6;
         }
-        .items-table th {
-            background-color: #f9f9f9;
-            font-weight: bold;
-        }
-        .items-table .text-right {
+        .invoice-table th:last-child, .invoice-table td:last-child {
             text-align: right;
         }
-        .total-section {
-            display: flex;
-            justify-content: flex-end;
+        .invoice-table tbody tr:hover {
+            background-color: #f1f1f1;
         }
-        .total-section table {
-            width: 50%;
+        .invoice-summary {
+            padding: 20px 40px;
+            text-align: right;
+        }
+        .invoice-summary table {
+            width: 40%;
+            margin-left: auto;
             border-collapse: collapse;
         }
-        .total-section td {
-            padding: 10px;
-            border: 1px solid #eee;
+        .invoice-summary td {
+            padding: 10px 0;
+            font-size: 16px;
         }
-        .total-section .total-amount {
-            font-size: 1.5em;
+        .invoice-summary .total-row td {
             font-weight: bold;
-            color: #333;
+            font-size: 20px;
+            color: #D4AF37; /* Gold */
+            border-top: 2px solid #333;
         }
-        .footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+        .invoice-footer {
+            padding: 40px;
             text-align: center;
-            font-size: 0.8em;
-            color: #777;
+            font-size: 12px;
+            color: #888;
+            border-top: 1px solid #dee2e6;
         }
-        strong {
-            color: #333;
+        .invoice-footer p {
+            margin: 5px 0;
+        }
+        .invoice-footer a {
+            color: #D4AF37;
+            text-decoration: none;
+        }
+        @media print {
+            body {
+                background-color: #fff;
+            }
+            .invoice-container {
+                box-shadow: none;
+                border: none;
+                margin: 0;
+                max-width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="invoice-box">
-        <div class="header">
-            <div>
-                <h1>INVOICE</h1>
-                <p><strong>Invoice #:</strong> {{orderId}}</p>
-                <p><strong>Date:</strong> {{invoiceDate}}</p>
+    <div class="invoice-container">
+        <header class="invoice-header">
+            <div class="logo">
+                <!-- Assuming logo is at root. Adjust if needed. -->
+                <img src="/fg.png" alt="FlyCargo Lanka Logo">
+                <span class="logo-text">FlyCargo Lanka</span>
             </div>
-            <div class="company-details">
-                <p><strong>FlyCargo Lanka</strong></p>
-                <p>No.05, Avariwatta, Katunayake</p>
-                <p>+94 112 260 310</p>
+            <div class="invoice-title">
+                <h1>Invoice</h1>
+                <p>Order ID: {{orderId}}</p>
             </div>
-        </div>
+        </header>
 
-        <div class="invoice-details">
-            <div class="details-left">
-                <h3>Bill To</h3>
-                <p><strong>{{senderName}}</strong></p>
-                <p>{{senderAddress}}</p>
-                <p>{{senderEmail}}</p>
-            </div>
-            <div class="details-right">
-                <h3>Ship To</h3>
+        <section class="invoice-details">
+            <div class="bill-to">
+                <h3>BILL TO</h3>
                 <p><strong>{{receiverName}}</strong></p>
-                <p>{{receiverAddress}}</p>
+                <div class="address">{{receiverAddress}}</div>
                 <p>{{receiverLocation}}</p>
             </div>
-        </div>
+            <div class="bill-from">
+                <h3>FROM</h3>
+                <p><strong>{{senderName}}</strong></p>
+                <div class="address">{{senderAddress}}</div>
+                <p>{{senderEmail}}</p>
+            </div>
+        </section>
 
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th>Destination</th>
-                    <th class="text-right">Amount (LKR)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{serviceDescription}}</td>
-                    <td>{{serviceDestination}}</td>
-                    <td class="text-right">{{totalAmount}}</td>
-                </tr>
-            </tbody>
-        </table>
+        <section class="invoice-meta">
+            <div>Invoice Number: <span>#{{orderId}}</span></div>
+            <div>Invoice Date: <span>{{invoiceDate}}</span></div>
+            <div>Payment Status: <span>Paid</span></div>
+        </section>
 
-        <div class="total-section">
-            <table>
-                <tr>
-                    <td>Subtotal</td>
-                    <td class="text-right">{{totalAmount}} LKR</td>
-                </tr>
-                <tr>
-                    <td><strong>Total</strong></td>
-                    <td class="text-right total-amount">{{totalAmount}} LKR</td>
-                </tr>
+        <div class="invoice-table-container">
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Destination</th>
+                        <th style="text-align: right;">Amount (LKR)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{serviceDescription}}</td>
+                        <td>{{serviceDestination}}</td>
+                        <td style="text-align: right;">{{totalAmount}}</td>
+                    </tr>
+                </tbody>
             </table>
         </div>
 
-        <div class="footer">
-            <p>Thank you for your business!</p>
-            <p>If you have any questions concerning this invoice, please contact us at +94 112 260 310.</p>
-        </div>
+        <section class="invoice-summary">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Subtotal</td>
+                        <td style="text-align: right;">{{totalAmount}} LKR</td>
+                    </tr>
+                     <tr class="total-row">
+                        <td>Total</td>
+                        <td style="text-align: right;">{{totalAmount}} LKR</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <footer class="invoice-footer">
+            <p><strong>Thank you for choosing FlyCargo Lanka!</strong></p>
+            <p>If you have any questions concerning this invoice, please contact us.</p>
+            <p>
+                <a href="https://flycargolanka.com">www.flycargolanka.com</a> | 
+                <a href="tel:+94112260310">+94 112 260 310</a>
+            </p>
+        </footer>
     </div>
 </body>
 </html>
