@@ -1,11 +1,11 @@
+
 "use client";
 
-import { AuthProvider } from '@/contexts/AuthContext';
 import type { ReactNode } from 'react';
+import { AuthProvider } from '@/contexts/AuthContext';
 
-// This component acts as a client-side boundary.
-// It wraps its children with the AuthProvider, which contains client-side logic (hooks).
-// This allows the root layout.tsx to remain a Server Component and export metadata.
 export default function ClientLayout({ children }: { children: ReactNode }) {
+  // This component acts as the client-side boundary.
+  // It wraps the application in the AuthProvider, which handles auth state and renders the dynamic layout.
   return <AuthProvider>{children}</AuthProvider>;
 }

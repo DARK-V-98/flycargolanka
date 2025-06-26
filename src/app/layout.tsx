@@ -11,13 +11,18 @@ const ptSans = PT_Sans({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | FlyCargo Lanka',
     default: 'FlyCargo Lanka - Courier Services in Sri Lanka',
+    template: '%s | FlyCargo Lanka',
   },
-  description: 'Reliable and affordable international and domestic courier services. Ship parcels worldwide from Sri Lanka with tracking and insurance.',
-  keywords: ['flycargo', 'cargo lanka', 'fcl', 'courier sri lanka', 'international shipping', 'parcel delivery'],
+  description:
+    'FlyCargo Lanka (FCL) offers reliable and affordable international and domestic courier services.',
+  keywords: [
+    'flycargo',
+    'courier sri lanka',
+    'logistics',
+    'freight forwarding',
+  ],
 };
-
 
 export default function RootLayout({
   children,
