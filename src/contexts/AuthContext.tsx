@@ -6,8 +6,12 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { Toaster } from "@/components/ui/toaster";
+import { Loader2 } from 'lucide-react';
 
 export type UserRole = 'user' | 'admin' | 'developer';
 export type NicVerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
@@ -50,6 +54,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const DEVELOPER_EMAIL = "thimira.vishwa2003@gmail.com";
 const NORMALIZED_DEVELOPER_EMAIL = DEVELOPER_EMAIL.toLowerCase();
 
+function AuthRedirectHandler({ user, loading }: { user: FirebaseUser | null; loading: boolean }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
+  const path = searchParams.toString();
+
+  useEffect(() => {
+    if (!loading && user && redirect) {
+      router.push(redirect);
+    }
+  }, [user, loading, redirect, router]);
+
+  return null;
+}
+
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -58,133 +78,100 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const router = useRouter();
 
   useEffect(() => {
-    // Listen for auth state changes
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        const normalizedUserEmail = firebaseUser.email ? firebaseUser.email.toLowerCase() : null;
+        
+        const unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
+          const normalizedUserEmail = firebaseUser.email ? firebaseUser.email.toLowerCase() : null;
 
-        let profileDataFromAuth = {
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-            email: firebaseUser.email,
-        };
+          let profileDataFromAuth = {
+              displayName: firebaseUser.displayName,
+              photoURL: firebaseUser.photoURL,
+              email: firebaseUser.email,
+          };
 
-        if (userDocSnap.exists()) {
-          const profileDataFromFirestore = userDocSnap.data() as UserProfile;
-          let effectiveRole = profileDataFromFirestore.role;
+          if (userDocSnap.exists()) {
+            const profileDataFromFirestore = userDocSnap.data() as UserProfile;
+            let effectiveRole = profileDataFromFirestore.role;
 
-          if (normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL) {
-            effectiveRole = 'developer';
-          }
-
-          const firestoreUpdates: Partial<UserProfile> = {};
-          let needsFirestoreUpdate = false;
-
-          if (profileDataFromAuth.displayName !== profileDataFromFirestore.displayName) {
-            firestoreUpdates.displayName = profileDataFromAuth.displayName;
-            needsFirestoreUpdate = true;
-          }
-          if (profileDataFromAuth.photoURL !== profileDataFromFirestore.photoURL) {
-            firestoreUpdates.photoURL = profileDataFromAuth.photoURL;
-            needsFirestoreUpdate = true;
-          }
-          if (profileDataFromAuth.email !== profileDataFromFirestore.email) {
-             firestoreUpdates.email = profileDataFromAuth.email;
-             needsFirestoreUpdate = true;
-          }
-          if (profileDataFromFirestore.role !== effectiveRole) {
-            firestoreUpdates.role = effectiveRole;
-            needsFirestoreUpdate = true;
-          }
-
-          const currentNic = profileDataFromFirestore.nic || null;
-          const currentPhone = profileDataFromFirestore.phone || null;
-          const currentAddress = profileDataFromFirestore.address || null;
-          const isProfileComplete = !!(currentNic && currentNic.trim() !== '' &&
-                                     currentPhone && currentPhone.trim() !== '' &&
-                                     currentAddress && currentAddress.trim() !== '');
-
-          if (profileDataFromFirestore.isProfileComplete !== isProfileComplete) {
-            firestoreUpdates.isProfileComplete = isProfileComplete;
-            needsFirestoreUpdate = true;
-          }
-
-          if (profileDataFromFirestore.nicFrontUrl === undefined) firestoreUpdates.nicFrontUrl = null;
-          if (profileDataFromFirestore.nicBackUrl === undefined) firestoreUpdates.nicBackUrl = null;
-          if (profileDataFromFirestore.nicVerificationStatus === undefined) firestoreUpdates.nicVerificationStatus = 'none';
-
-
-          if (needsFirestoreUpdate) {
-            try {
-              await updateDoc(userDocRef, {...firestoreUpdates, updatedAt: serverTimestamp()});
-            } catch (error) {
-              console.error("Error updating user profile in Firestore:", error);
+            if (normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL) {
+              effectiveRole = 'developer';
             }
-          }
 
-          const updatedUserProfileState: UserProfile = {
-            ...profileDataFromFirestore,
-            ...profileDataFromAuth,
-            role: effectiveRole,
-            isProfileComplete,
-            nic: currentNic,
-            phone: currentPhone,
-            address: currentAddress,
-            nicFrontUrl: profileDataFromFirestore.nicFrontUrl || null,
-            nicBackUrl: profileDataFromFirestore.nicBackUrl || null,
-            nicVerificationStatus: profileDataFromFirestore.nicVerificationStatus || 'none',
-          };
-          setUserProfile(updatedUserProfileState);
-          setRole(effectiveRole);
+            const currentNic = profileDataFromFirestore.nic || null;
+            const currentPhone = profileDataFromFirestore.phone || null;
+            const currentAddress = profileDataFromFirestore.address || null;
+            const isProfileComplete = !!(currentNic && currentNic.trim() !== '' &&
+                                       currentPhone && currentPhone.trim() !== '' &&
+                                       currentAddress && currentAddress.trim() !== '');
 
-        } else {
-          // New user
-          const determinedRoleForNewUser: UserRole = normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL ? 'developer' : 'user';
-          const newUserProfileData: UserProfile = {
-            uid: firebaseUser.uid,
-            ...profileDataFromAuth,
-            role: determinedRoleForNewUser,
-            nic: null,
-            phone: null,
-            address: null,
-            isProfileComplete: false,
-            nicFrontUrl: null,
-            nicBackUrl: null,
-            nicVerificationStatus: 'none',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          };
-          try {
-            await setDoc(userDocRef, newUserProfileData);
-            setUserProfile(newUserProfileData);
-          } catch (error) {
-             console.error("Error creating new user profile in Firestore:", error);
-             setUserProfile({ ...newUserProfileData, createdAt: new Date(), updatedAt: new Date() });
+            const updatedUserProfileState: UserProfile = {
+              ...profileDataFromFirestore,
+              ...profileDataFromAuth,
+              role: effectiveRole,
+              isProfileComplete,
+              nic: currentNic,
+              phone: currentPhone,
+              address: currentAddress,
+              nicFrontUrl: profileDataFromFirestore.nicFrontUrl || null,
+              nicBackUrl: profileDataFromFirestore.nicBackUrl || null,
+              nicVerificationStatus: profileDataFromFirestore.nicVerificationStatus || 'none',
+            };
+            setUserProfile(updatedUserProfileState);
+            setRole(effectiveRole);
+          } else {
+            // New user - create profile
+            const determinedRoleForNewUser: UserRole = normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL ? 'developer' : 'user';
+            const newUserProfileData: UserProfile = {
+              uid: firebaseUser.uid,
+              ...profileDataFromAuth,
+              role: determinedRoleForNewUser,
+              nic: null,
+              phone: null,
+              address: null,
+              isProfileComplete: false,
+              nicFrontUrl: null,
+              nicBackUrl: null,
+              nicVerificationStatus: 'none',
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+            setDoc(userDocRef, newUserProfileData).then(() => {
+              setUserProfile(newUserProfileData);
+              setRole(determinedRoleForNewUser);
+            }).catch(error => {
+              console.error("Error creating new user profile in Firestore:", error);
+            });
           }
-          setRole(determinedRoleForNewUser);
-        }
+        }, (error) => {
+          console.error("Error on user profile snapshot:", error);
+          setUser(null);
+          setUserProfile(null);
+          setRole(null);
+        });
+
+        setLoading(false); 
+        return () => unsubscribeProfile();
+
       } else {
         setUser(null);
         setUserProfile(null);
         setRole(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => {
-        unsubscribeAuth();
-    };
+    return () => unsubscribeAuth();
   }, []);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      router.push('/');
+      // Let the redirect handler do the work
     } catch (error) {
        if (error instanceof FirebaseError && error.code === 'auth/account-exists-with-different-credential') {
         throw new Error("An account with this email already exists. Please sign in with your password to link your Google account.");
@@ -197,7 +184,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUpWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      router.push('/');
+      // Let the redirect handler do the work
       return userCredential.user;
     } catch (error) {
       console.error("Error signing up with email:", error);
@@ -211,7 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      router.push('/');
+      // Let the redirect handler do the work
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with email:", error);
@@ -244,7 +231,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await updateProfile(user, { displayName: newName });
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, { displayName: newName, updatedAt: serverTimestamp() });
-      setUserProfile(prevProfile => prevProfile ? { ...prevProfile, displayName: newName, updatedAt: new Date() } : null);
+      // State will update via onSnapshot
     } catch (error) {
       console.error("Error updating display name:", error);
       throw new Error("Failed to update display name.");
@@ -263,24 +250,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const currentPhone = data.phone !== undefined ? data.phone : userProfile?.phone;
       const currentAddress = data.address !== undefined ? data.address : userProfile?.address;
 
-      const isNowComplete = !!(currentNic && currentNic.trim() !== '' &&
+      updatesToFirestore.isProfileComplete = !!(currentNic && currentNic.trim() !== '' &&
                                currentPhone && currentPhone.trim() !== '' &&
                                currentAddress && currentAddress.trim() !== '');
 
-      updatesToFirestore.isProfileComplete = isNowComplete;
-
       await updateDoc(userDocRef, updatesToFirestore);
-      setUserProfile(prevProfile => {
-        if (!prevProfile) return null;
-        return {
-          ...prevProfile,
-          nic: data.nic !== undefined ? data.nic : prevProfile.nic,
-          phone: data.phone !== undefined ? data.phone : prevProfile.phone,
-          address: data.address !== undefined ? data.address : prevProfile.address,
-          isProfileComplete: isNowComplete,
-          updatedAt: new Date()
-        };
-      });
+       // State will update via onSnapshot
     } catch (error) {
       console.error("Error updating extended profile:", error);
       throw new Error("Failed to update profile details.");
@@ -301,7 +276,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (details.nicBackUrl) updates.nicBackUrl = details.nicBackUrl;
 
       await updateDoc(userDocRef, updates);
-      setUserProfile(prevProfile => prevProfile ? { ...prevProfile, ...updates, updatedAt: new Date() } : null);
+       // State will update via onSnapshot
     } catch (error) {
       console.error("Error updating NIC verification details:", error);
       throw new Error("Failed to update NIC verification details.");
@@ -369,9 +344,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-
-  return (
-    <AuthContext.Provider value={{
+  const value = {
       user,
       userProfile,
       loading,
@@ -385,8 +358,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateUserRoleByEmail,
       updateUserExtendedProfile,
       updateNicVerificationDetails
-    }}>
-      {children}
+    };
+
+  return (
+    <AuthContext.Provider value={value}>
+       {loading ? (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+        ) : (
+        <>
+            <AuthRedirectHandler user={user} loading={loading}/>
+            <Header />
+            <main className="flex-grow flex flex-col">
+            {children}
+            </main>
+            <Footer />
+            <Toaster />
+        </>
+        )}
     </AuthContext.Provider>
   );
 };
