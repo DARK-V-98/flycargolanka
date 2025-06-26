@@ -3,7 +3,6 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PT_Sans } from 'next/font/google';
-import ClientLayout from '@/components/layout/ClientLayout';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -28,11 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${ptSans.className} font-body antialiased`}>
-        <AuthProvider>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

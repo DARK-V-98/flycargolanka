@@ -8,6 +8,10 @@ import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { Toaster } from "@/components/ui/toaster";
+import { Loader2 } from 'lucide-react';
 
 export type UserRole = 'user' | 'admin' | 'developer';
 export type NicVerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
@@ -64,13 +68,13 @@ function AuthRedirectHandler({ user, loading }: { user: FirebaseUser | null; loa
   return null;
 }
 
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<UserRole | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -166,7 +170,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // Let the redirect handler do the work
     } catch (error) {
        if (error instanceof FirebaseError && error.code === 'auth/account-exists-with-different-credential') {
         throw new Error("An account with this email already exists. Please sign in with your password to link your Google account.");
@@ -179,7 +182,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUpWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      // Let the redirect handler do the work
       return userCredential.user;
     } catch (error) {
       console.error("Error signing up with email:", error);
@@ -193,7 +195,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signInWithEmail = async (email: string, pass: string): Promise<FirebaseUser | null> => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      // Let the redirect handler do the work
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with email:", error);
@@ -226,7 +227,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await updateProfile(user, { displayName: newName });
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, { displayName: newName, updatedAt: serverTimestamp() });
-      // State will update via onSnapshot
     } catch (error) {
       console.error("Error updating display name:", error);
       throw new Error("Failed to update display name.");
@@ -250,7 +250,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                                currentAddress && currentAddress.trim() !== '');
 
       await updateDoc(userDocRef, updatesToFirestore);
-       // State will update via onSnapshot
     } catch (error) {
       console.error("Error updating extended profile:", error);
       throw new Error("Failed to update profile details.");
@@ -271,13 +270,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (details.nicBackUrl) updates.nicBackUrl = details.nicBackUrl;
 
       await updateDoc(userDocRef, updates);
-       // State will update via onSnapshot
     } catch (error) {
       console.error("Error updating NIC verification details:", error);
       throw new Error("Failed to update NIC verification details.");
     }
   };
-
 
   const updateUserRoleByEmail = async (targetUserEmail: string, newRole: UserRole) => {
     if (!user || !role) {
@@ -355,12 +352,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateNicVerificationDetails
     };
 
+    const isMaintenancePage = pathname === '/maintenance';
+    
+    // The Provider now also acts as the Layout Root for client-side rendering
     return (
       <AuthContext.Provider value={value}>
         <Suspense>
             <AuthRedirectHandler user={user} loading={loading}/>
         </Suspense>
-        {children}
+        {isMaintenancePage ? (
+            children
+        ) : loading ? (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        ) : (
+            <div className="flex flex-col min-h-screen bg-background">
+                <Header />
+                <main className="flex-grow flex flex-col">
+                    {children}
+                </main>
+                <Footer />
+                <Toaster />
+            </div>
+        )}
       </AuthContext.Provider>
     );
 };
