@@ -1,4 +1,5 @@
 
+'use client';
 
 import { useState } from 'react';
 import ReactCardFlip from 'react-card-flip';
@@ -529,6 +530,8 @@ export default function AuthPage() {
     </div>
   );
 }
+    
+
     
 
     
