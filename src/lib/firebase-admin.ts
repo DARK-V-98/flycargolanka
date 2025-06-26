@@ -1,4 +1,3 @@
-
 // This file is for server-side Firebase operations (e.g., in API routes)
 // It uses the Firebase Admin SDK for elevated privileges.
 
