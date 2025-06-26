@@ -2,7 +2,6 @@
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PT_Sans } from 'next/font/google';
-import type { Metadata } from 'next';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -10,12 +9,8 @@ const ptSans = PT_Sans({
   display: 'swap',
 });
 
-// This is a Server Component, so metadata export is allowed.
-export const metadata: Metadata = {
-  title: 'FlyCargo Lanka',
-  description: 'International & Domestic Courier Services in Sri Lanka',
-};
-
+// The metadata export has been removed to resolve the build error, as this file contains client-side logic.
+// SEO can be managed on a per-page basis if needed.
 
 export default function RootLayout({
   children,
