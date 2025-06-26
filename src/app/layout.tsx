@@ -1,4 +1,3 @@
-
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PT_Sans } from 'next/font/google';

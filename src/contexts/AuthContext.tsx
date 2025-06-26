@@ -2,7 +2,7 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, Suspense } from 'react';
 import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
@@ -58,7 +58,6 @@ function AuthRedirectHandler({ user, loading }: { user: FirebaseUser | null; loa
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
-  const path = searchParams.toString();
 
   useEffect(() => {
     if (!loading && user && redirect) {
@@ -362,13 +361,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={value}>
+       <Suspense fallback={<div className="flex flex-col items-center justify-center min-h-screen"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}>
+          <AuthRedirectHandler user={user} loading={loading}/>
+       </Suspense>
        {loading ? (
         <div className="flex flex-col items-center justify-center min-h-screen">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
         ) : (
         <>
-            <AuthRedirectHandler user={user} loading={loading}/>
             <Header />
             <main className="flex-grow flex flex-col">
             {children}
