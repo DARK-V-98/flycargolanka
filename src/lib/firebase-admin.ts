@@ -7,9 +7,23 @@ import type { Firestore } from 'firebase-admin/firestore';
 
 // Ensure these environment variables are set in your hosting environment (e.g., Vercel, Netlify).
 // They should be JSON strings.
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-  : null;
+const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+let serviceAccount: admin.ServiceAccount | null = null;
+
+if (serviceAccountString) {
+  try {
+    const parsedServiceAccount = JSON.parse(serviceAccountString);
+    // The private_key in an environment variable often has its newlines escaped.
+    // We need to replace "\\n" with "\n" for the SDK to parse the PEM key correctly.
+    if (parsedServiceAccount.private_key) {
+      parsedServiceAccount.private_key = parsedServiceAccount.private_key.replace(/\\n/g, '\n');
+    }
+    serviceAccount = parsedServiceAccount;
+  } catch (e) {
+    console.error("Error parsing FIREBASE_SERVICE_ACCOUNT JSON. Check your environment variables.", e);
+  }
+}
+
 
 if (!admin.apps.length) {
   if (serviceAccount) {
@@ -20,7 +34,7 @@ if (!admin.apps.length) {
     // This is a fallback for local development without the service account env var.
     // It won't work in production.
     console.warn(
-      "Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT env var is missing. API routes using firebase-admin will fail."
+      "Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT env var is missing or invalid. API routes using firebase-admin will fail."
     );
   }
 }
