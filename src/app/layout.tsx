@@ -6,8 +6,10 @@ import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { PT_Sans } from 'next/font/google';
+import MaintenancePage from './maintenance/page';
+import { Loader2 } from 'lucide-react';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -15,12 +17,37 @@ const ptSans = PT_Sans({
   display: 'swap',
 });
 
-// Note: Static metadata export is removed as RootLayout is now 'use client'.
-// Site-wide metadata can be defined in a root server component or individual page.tsx files.
-// export const metadata: Metadata = {
-//   title: 'FlyCargo Lanka',
-//   description: 'Courier services by FlyCargo Lanka',
-// };
+// A new wrapper component to handle the maintenance mode check
+const AppContent = ({ children }: { children: React.ReactNode }) => {
+  const { maintenanceStatus, role, loading } = useAuth();
+
+  if (loading || maintenanceStatus === null) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const isUnderMaintenance = maintenanceStatus.isDown;
+  const isPrivilegedUser = role === 'admin' || role === 'developer';
+
+  if (isUnderMaintenance && !isPrivilegedUser) {
+    return <MaintenancePage />;
+  }
+
+  return (
+    <>
+      <Header />
+      <main className="flex-grow flex flex-col">
+        {children}
+      </main>
+      <Footer />
+      <Toaster />
+    </>
+  );
+};
+
 
 export default function RootLayout({
   children,
@@ -32,12 +59,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${ptSans.className} font-body antialiased flex flex-col min-h-screen bg-background`}>
         <AuthProvider>
-          <Header />
-          <main className="flex-grow flex flex-col">
-            {children}
-          </main>
-          <Footer />
-          <Toaster />
+          <AppContent>{children}</AppContent>
         </AuthProvider>
       </body>
     </html>

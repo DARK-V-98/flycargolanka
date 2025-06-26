@@ -1,10 +1,11 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
 
@@ -28,11 +29,16 @@ export interface UserProfile {
   updatedAt?: any;
 }
 
+interface MaintenanceStatus {
+  isDown: boolean;
+}
+
 interface AuthContextType {
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
   role: UserRole | null;
+  maintenanceStatus: MaintenanceStatus | null;
   signInWithGoogle: () => Promise<void>;
   signUpWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
   signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
@@ -54,10 +60,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // Listen for auth state changes
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
@@ -111,7 +119,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             needsFirestoreUpdate = true;
           }
 
-          // Initialize new NIC verification fields if they don't exist
           if (profileDataFromFirestore.nicFrontUrl === undefined) firestoreUpdates.nicFrontUrl = null;
           if (profileDataFromFirestore.nicBackUrl === undefined) firestoreUpdates.nicBackUrl = null;
           if (profileDataFromFirestore.nicVerificationStatus === undefined) firestoreUpdates.nicVerificationStatus = 'none';
@@ -174,7 +181,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Listen for maintenance mode changes
+    const statusDocRef = doc(db, 'app_config', 'site_status');
+    const unsubscribeStatus = onSnapshot(statusDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setMaintenanceStatus({ isDown: docSnap.data().isDown || false });
+        } else {
+            // If doc doesn't exist, site is not in maintenance
+            setMaintenanceStatus({ isDown: false });
+        }
+    }, (error) => {
+        console.error("Error listening to maintenance status:", error);
+        // Fail safe: assume site is up
+        setMaintenanceStatus({ isDown: false });
+    });
+
+
+    return () => {
+        unsubscribeAuth();
+        unsubscribeStatus();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
@@ -373,6 +399,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       userProfile,
       loading,
       role,
+      maintenanceStatus,
       signInWithGoogle,
       signUpWithEmail,
       signInWithEmail,
