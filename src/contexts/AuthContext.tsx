@@ -361,22 +361,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={value}>
-       <Suspense fallback={<div className="flex flex-col items-center justify-center min-h-screen"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}>
+       <Suspense fallback={<div className="flex flex-col items-center justify-center min-h-screen bg-background"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}>
           <AuthRedirectHandler user={user} loading={loading}/>
        </Suspense>
        {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
         ) : (
-        <>
+        <div className="flex flex-col min-h-screen bg-background">
             <Header />
             <main className="flex-grow flex flex-col">
             {children}
             </main>
             <Footer />
             <Toaster />
-        </>
+        </div>
         )}
     </AuthContext.Provider>
   );

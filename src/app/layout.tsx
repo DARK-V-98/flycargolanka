@@ -75,7 +75,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`${ptSans.className} font-body antialiased flex flex-col min-h-screen bg-background`}>
+      <body className={`${ptSans.className} font-body antialiased`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
