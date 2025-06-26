@@ -6,7 +6,7 @@ import React, { createContext, useContext, useEffect, useState, Suspense } from 
 import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -75,6 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<UserRole | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -359,15 +360,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateNicVerificationDetails
     };
 
+    const isMaintenancePage = pathname === '/maintenance';
+
+
   return (
     <AuthContext.Provider value={value}>
        <Suspense fallback={<div className="flex flex-col items-center justify-center min-h-screen bg-background"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}>
           <AuthRedirectHandler user={user} loading={loading}/>
        </Suspense>
-       {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
+       {loading || isMaintenancePage ? (
+          isMaintenancePage ? children :
+          <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
         ) : (
         <div className="flex flex-col min-h-screen bg-background">
             <Header />

@@ -10,7 +10,7 @@ const ptSans = PT_Sans({
   display: 'swap',
 });
 
-// Reverting to a simpler metadata object to resolve build errors.
+// This is a Server Component, so metadata export is allowed.
 export const metadata: Metadata = {
   title: 'FlyCargo Lanka',
   description: 'International & Domestic Courier Services in Sri Lanka',
@@ -22,10 +22,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="en">
       <body className={`${ptSans.className} font-body antialiased`}>
+        {/* AuthProvider is a Client Component that will handle the dynamic layout */}
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
