@@ -1,3 +1,11 @@
-// This file is no longer needed and can be safely deleted.
-// The layout logic has been moved into the AuthProvider in src/contexts/AuthContext.tsx
-// to correctly handle the separation of Server and Client Components in Next.js.
+"use client";
+
+import { AuthProvider } from '@/contexts/AuthContext';
+import type { ReactNode } from 'react';
+
+// This component acts as a client-side boundary.
+// It wraps its children with the AuthProvider, which contains client-side logic (hooks).
+// This allows the root layout.tsx to remain a Server Component and export metadata.
+export default function ClientLayout({ children }: { children: ReactNode }) {
+  return <AuthProvider>{children}</AuthProvider>;
+}

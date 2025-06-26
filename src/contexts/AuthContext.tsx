@@ -354,7 +354,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const isMaintenancePage = pathname === '/maintenance';
     
-    // The Provider now also acts as the Layout Root for client-side rendering
     return (
       <AuthContext.Provider value={value}>
         <Suspense>
