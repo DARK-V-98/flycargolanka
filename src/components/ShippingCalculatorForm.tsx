@@ -185,16 +185,16 @@ export default function ShippingCalculatorForm() {
         isDocExpressEnabled, docExpressPrice,
     } = selectedWeightBand;
 
-    if (isNdEconomyEnabled && ndEconomyPrice != null) {
+    if (isNdEconomyEnabled && ndEconomyPrice != null && ndEconomyPrice > 0) {
       options.push({ shipmentType: 'Parcel', serviceType: 'Economy', price: ndEconomyPrice, icon: Clock, typeIcon: Package });
     }
-    if (isNdExpressEnabled && ndExpressPrice != null) {
+    if (isNdExpressEnabled && ndExpressPrice != null && ndExpressPrice > 0) {
       options.push({ shipmentType: 'Parcel', serviceType: 'Express', price: ndExpressPrice, icon: Zap, typeIcon: Package });
     }
-    if (isDocEconomyEnabled && docEconomyPrice != null) {
+    if (isDocEconomyEnabled && docEconomyPrice != null && docEconomyPrice > 0) {
       options.push({ shipmentType: 'Document', serviceType: 'Economy', price: docEconomyPrice, icon: Clock, typeIcon: FileText });
     }
-    if (isDocExpressEnabled && docExpressPrice != null) {
+    if (isDocExpressEnabled && docExpressPrice != null && docExpressPrice > 0) {
       options.push({ shipmentType: 'Document', serviceType: 'Express', price: docExpressPrice, icon: Zap, typeIcon: FileText });
     }
 
