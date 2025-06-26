@@ -21,6 +21,8 @@ export const metadata: Metadata = {
     'courier sri lanka',
     'logistics',
     'freight forwarding',
+    'fcl',
+    'FCL',
   ],
 };
 
