@@ -30,9 +30,9 @@ const AppContent = ({ children }: { children: React.ReactNode }) => {
   }
 
   const isUnderMaintenance = maintenanceStatus.isDown;
-  const isPrivilegedUser = role === 'admin' || role === 'developer';
-
-  if (isUnderMaintenance && !isPrivilegedUser) {
+  
+  // When maintenance is on, only developers can access the site.
+  if (isUnderMaintenance && role !== 'developer') {
     return <MaintenancePage />;
   }
 
