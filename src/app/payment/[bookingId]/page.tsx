@@ -202,14 +202,14 @@ export default function PaymentPage() {
               <CardContent className="text-sm space-y-3 flex-grow">
                  <p>Please transfer the total amount of <strong className="text-primary">{booking.estimatedCostLKR?.toLocaleString('en-US')} LKR</strong> to the following account:</p>
                   <ul className="list-disc list-inside bg-muted/50 p-3 rounded-md space-y-1">
-                      <li><strong>Bank Name:</strong> [YOUR_BANK_NAME]</li>
-                      <li><strong>Account Name:</strong> [YOUR_ACCOUNT_NAME]</li>
-                      <li><strong>Account Number:</strong> [YOUR_ACCOUNT_NUMBER]</li>
-                      <li><strong>Branch:</strong> [YOUR_BRANCH]</li>
+                      <li><strong>Bank Name:</strong> HNB</li>
+                      <li><strong>Account Name:</strong> Delectaa</li>
+                      <li><strong>Account Number:</strong> 148010007911</li>
+                      <li><strong>Branch:</strong> Giriulla</li>
                       <li><strong>Reference:</strong> <span className="font-mono">{booking.id}</span></li>
                   </ul>
                   <p className="font-semibold">
-                      After payment, please email the receipt to <a href="mailto:info@flycargolanka.lk" className="text-primary underline">info@flycargolanka.lk</a> with your Booking ID as the subject.
+                      After payment, please send the receipt via WhatsApp to <a href="https://wa.me/94711318725" target="_blank" rel="noopener noreferrer" className="text-primary underline">+94 711 318 725</a> with your Booking ID.
                   </p>
               </CardContent>
               <CardFooter>
@@ -226,4 +226,3 @@ export default function PaymentPage() {
     </div>
   );
 }
-
