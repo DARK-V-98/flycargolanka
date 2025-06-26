@@ -29,16 +29,11 @@ export interface UserProfile {
   updatedAt?: any;
 }
 
-interface MaintenanceStatus {
-  isDown: boolean;
-}
-
 interface AuthContextType {
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
   role: UserRole | null;
-  maintenanceStatus: MaintenanceStatus | null;
   signInWithGoogle: () => Promise<void>;
   signUpWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
   signInWithEmail: (email: string, pass: string) => Promise<FirebaseUser | null>;
@@ -60,7 +55,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<UserRole | null>(null);
-  const [maintenanceStatus, setMaintenanceStatus] = useState<MaintenanceStatus | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -181,25 +175,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
     });
 
-    // Listen for maintenance mode changes
-    const statusDocRef = doc(db, 'app_config', 'site_status');
-    const unsubscribeStatus = onSnapshot(statusDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setMaintenanceStatus({ isDown: docSnap.data().isDown || false });
-        } else {
-            // If doc doesn't exist, site is not in maintenance
-            setMaintenanceStatus({ isDown: false });
-        }
-    }, (error) => {
-        console.error("Error listening to maintenance status:", error);
-        // Fail safe: assume site is up
-        setMaintenanceStatus({ isDown: false });
-    });
-
-
     return () => {
         unsubscribeAuth();
-        unsubscribeStatus();
     };
   }, []);
 
@@ -238,7 +215,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with email:", error);
-       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'invalid-credential') {
         throw new Error("Invalid email or password. Please try again.");
       }
       throw error;
@@ -399,7 +376,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       userProfile,
       loading,
       role,
-      maintenanceStatus,
       signInWithGoogle,
       signUpWithEmail,
       signInWithEmail,

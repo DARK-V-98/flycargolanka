@@ -8,7 +8,6 @@ import Footer from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { PT_Sans } from 'next/font/google';
-import MaintenancePage from './maintenance/page';
 import { Loader2 } from 'lucide-react';
 
 const ptSans = PT_Sans({
@@ -17,23 +16,16 @@ const ptSans = PT_Sans({
   display: 'swap',
 });
 
-// A new wrapper component to handle the maintenance mode check
+// A wrapper component to handle the loading state
 const AppContent = ({ children }: { children: React.ReactNode }) => {
-  const { maintenanceStatus, role, loading } = useAuth();
+  const { loading } = useAuth();
 
-  if (loading || maintenanceStatus === null) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
-  }
-
-  const isUnderMaintenance = maintenanceStatus.isDown;
-  
-  // When maintenance is on, only developers can access the site.
-  if (isUnderMaintenance && role !== 'developer') {
-    return <MaintenancePage />;
   }
 
   return (
