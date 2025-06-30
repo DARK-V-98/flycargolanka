@@ -219,6 +219,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       });
       setNotifications(unreadNotifications);
+    }, (error) => {
+        console.error("Firestore snapshot error on notifications:", error);
+        toast({
+            title: "Notification Access Denied",
+            description: "Could not fetch admin notifications due to a permissions issue. Please check your Firestore security rules.",
+            variant: "destructive",
+            duration: 10000,
+        });
     });
 
     return () => unsubscribe();
