@@ -5,7 +5,7 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type NicVerificationStatus } from '@/contexts/AuthContext';
 import { storage, db } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -17,11 +17,13 @@ import { Loader2, AlertTriangle, CheckCircle2, UploadCloud, ShieldCheck, Info, F
 import Image from 'next/image';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from '@/components/ui/progress';
+
 
 const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
 
 export default function VerifyNicPage() {
-  const { user, userProfile, loading: authLoading, updateUserExtendedProfile, updateNicVerificationDetails } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -31,6 +33,7 @@ export default function VerifyNicPage() {
   const [frontImageUrlPreview, setFrontImageUrlPreview] = useState<string | null>(null);
   const [backImageUrlPreview, setBackImageUrlPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -103,6 +106,33 @@ export default function VerifyNicPage() {
     }
   };
 
+  const uploadImage = (file: File, side: 'front' | 'back', onProgress: (progress: number) => void): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      if (!user) {
+        return reject(new Error("User not authenticated."));
+      }
+      const fileExtension = file.name.split('.').pop();
+      const storageRef = ref(storage, `nic_verification/${user.uid}/nic_${side}_${Date.now()}.${fileExtension}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          onProgress(progress);
+        },
+        (error) => {
+          console.error(`Upload failed for ${side}:`, error);
+          reject(error);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            resolve(downloadURL);
+          }).catch(reject);
+        }
+      );
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError(null);
@@ -120,30 +150,38 @@ export default function VerifyNicPage() {
       return;
     }
 
-
     setIsUploading(true);
-    try {
-      if (nic.trim() !== userProfile.nic) {
-        await updateUserExtendedProfile({ nic: nic.trim() });
-      }
+    setUploadProgress(0);
 
-      const uploadImage = async (file: File, side: 'front' | 'back'): Promise<string> => {
-        const fileExtension = file.name.split('.').pop();
-        const storageRef = ref(storage, `nic_verification/${user.uid}/nic_${side}.${fileExtension}`);
-        await uploadBytes(storageRef, file);
-        return getDownloadURL(storageRef);
+    try {
+      let frontProgress = 0;
+      let backProgress = 0;
+      const updateCombinedProgress = () => {
+        setUploadProgress((frontProgress + backProgress) / 2);
       };
 
-      const frontUrl = await uploadImage(frontImageFile, 'front');
-      const backUrl = await uploadImage(backImageFile, 'back');
-
-      await updateNicVerificationDetails({
-        nicFrontUrl: frontUrl,
-        nicBackUrl: backUrl,
-        nicVerificationStatus: 'pending',
+      const frontUrlPromise = uploadImage(frontImageFile, 'front', (p) => {
+        frontProgress = p;
+        updateCombinedProgress();
       });
 
-      // Create notification for admins
+      const backUrlPromise = uploadImage(backImageFile, 'back', (p) => {
+        backProgress = p;
+        updateCombinedProgress();
+      });
+
+      const [frontUrl, backUrl] = await Promise.all([frontUrlPromise, backUrlPromise]);
+      setUploadProgress(100);
+
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        nic: nic.trim(),
+        nicFrontUrl: frontUrl,
+        nicBackUrl: backUrl,
+        nicVerificationStatus: 'pending' as NicVerificationStatus,
+        updatedAt: serverTimestamp(),
+      });
+
       await addDoc(collection(db, 'notifications'), {
         type: 'nic_verification',
         message: `NIC submitted for verification by ${userProfile.displayName || user.email}.`,
@@ -155,7 +193,7 @@ export default function VerifyNicPage() {
 
       toast({
         title: "NIC Images Submitted",
-        description: "Your NIC details have been uploaded. Verification will take some time. You can check the status on your My Bookings page.",
+        description: "Your NIC details have been uploaded for verification. You can check the status on your My Bookings page.",
         variant: "default",
         duration: 7000,
       });
@@ -171,6 +209,7 @@ export default function VerifyNicPage() {
       setFormError(error.message || "Could not upload NIC images. Please try again.");
     } finally {
       setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -244,14 +283,20 @@ export default function VerifyNicPage() {
                 </AlertDescription>
             </Alert>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-col">
             <Button type="submit" className="w-full" size="lg" disabled={isUploading || !frontImageFile || !backImageFile || !nic}>
               {isUploading ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Uploading & Submitting...</>
+                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
               ) : (
                 <><UploadCloud className="mr-2 h-5 w-5" /> Submit for Verification</>
               )}
             </Button>
+            {isUploading && uploadProgress !== null && (
+                <div className="w-full space-y-2 mt-4">
+                    <Progress value={uploadProgress} className="w-full" />
+                    <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
+                </div>
+            )}
           </CardFooter>
         </form>
       </Card>
