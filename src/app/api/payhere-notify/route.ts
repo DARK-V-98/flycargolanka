@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
 
     console.log(`Received Payhere notification for order ${order_id} with status code ${status_code}`);
     
-    // IMPORTANT: Use the same Merchant Secret as in your Payhere account settings.
-    // It's recommended to store this in environment variables.
-    const merchant_secret = process.env.PAYHERE_MERCHANT_SECRET || 'MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA=';
+    // IMPORTANT: Your Payhere Merchant Secret.
+    // For better security in production, consider using environment variables.
+    const merchant_secret = 'MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA=';
 
     if (!merchant_secret) {
         console.error("Payhere merchant secret is not configured in environment variables.");

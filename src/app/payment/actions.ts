@@ -4,14 +4,15 @@
 import crypto from 'crypto';
 import type { PayhereData } from '@/types/payhere';
 
-// IMPORTANT: These values should be stored in your environment variables (.env.local)
-// and should not be hardcoded in the source code for production.
-const MERCHANT_ID = process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID || '1230954';
-const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET || 'MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA=';
+// IMPORTANT: These values are hardcoded based on your provided details.
+// For better security in production, consider moving them to environment variables.
+const MERCHANT_ID = '1230954';
+const MERCHANT_SECRET = 'MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA=';
+const PAYHERE_MODE = 'sandbox'; // Set to 'live' for production
+const APP_URL = 'http://localhost:3000'; // Your app's public URL
 
-// Determine Payhere URL based on environment variable. Use 'live' for production.
-// In your .env.local file, set PAYHERE_MODE=live for production. Otherwise, it defaults to sandbox.
-const isLive = process.env.PAYHERE_MODE?.trim() === 'live';
+// Determine Payhere URL based on the mode.
+const isLive = PAYHERE_MODE.trim() === 'live';
 const PAYHERE_URL = isLive
   ? 'https://www.payhere.lk/pay/checkout' // Live URL
   : 'https://sandbox.payhere.lk/pay/checkout'; // Sandbox URL for testing
@@ -28,7 +29,7 @@ export async function generatePayhereData(
   address: string,
   city: string,
 ): Promise<PayhereData> {
-  const domain = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const domain = APP_URL;
   
   const returnUrl = `${domain}/payment/success?bookingId=${bookingId}`;
   const cancelUrl = `${domain}/payment/cancel?bookingId=${bookingId}`;
