@@ -30,8 +30,8 @@ export interface UserProfile {
   phone?: string | null;
   address?: string | null;
   isProfileComplete?: boolean;
-  nicFrontUrl?: string | null;
-  nicBackUrl?: string | null;
+  nicFrontPath?: string | null;
+  nicBackPath?: string | null;
   nicVerificationStatus?: NicVerificationStatus;
   createdAt?: any;
   updatedAt?: any;
@@ -59,7 +59,6 @@ interface AuthContextType {
   updateUserDisplayName: (newName: string) => Promise<void>;
   updateUserRoleByEmail: (targetUserEmail: string, newRole: UserRole) => Promise<void>;
   updateUserExtendedProfile: (data: { nic?: string | null; phone?: string | null; address?: string | null }) => Promise<void>;
-  updateNicVerificationDetails: (details: { nicFrontUrl?: string; nicBackUrl?: string; nicVerificationStatus: NicVerificationStatus }) => Promise<void>;
   notifications: AdminNotification[];
   markNotificationAsRead: (id: string) => Promise<void>;
 }
@@ -134,8 +133,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               nic: currentNic,
               phone: currentPhone,
               address: currentAddress,
-              nicFrontUrl: profileDataFromFirestore.nicFrontUrl || null,
-              nicBackUrl: profileDataFromFirestore.nicBackUrl || null,
+              nicFrontPath: profileDataFromFirestore.nicFrontPath || null,
+              nicBackPath: profileDataFromFirestore.nicBackPath || null,
               nicVerificationStatus: profileDataFromFirestore.nicVerificationStatus || 'none',
             };
             setUserProfile(updatedUserProfileState);
@@ -152,8 +151,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               phone: null,
               address: null,
               isProfileComplete: false,
-              nicFrontUrl: null,
-              nicBackUrl: null,
+              nicFrontPath: null,
+              nicBackPath: null,
               nicVerificationStatus: 'none',
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
@@ -323,26 +322,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateNicVerificationDetails = async (details: { nicFrontUrl?: string; nicBackUrl?: string; nicVerificationStatus: NicVerificationStatus }) => {
-    if (!user) {
-      throw new Error("You must be logged in to update NIC verification details.");
-    }
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const updates: Partial<UserProfile> = {
-        nicVerificationStatus: details.nicVerificationStatus,
-        updatedAt: serverTimestamp(),
-      };
-      if (details.nicFrontUrl) updates.nicFrontUrl = details.nicFrontUrl;
-      if (details.nicBackUrl) updates.nicBackUrl = details.nicBackUrl;
-
-      await updateDoc(userDocRef, updates);
-    } catch (error) {
-      console.error("Error updating NIC verification details:", error);
-      throw new Error("Failed to update NIC verification details.");
-    }
-  };
-
   const updateUserRoleByEmail = async (targetUserEmail: string, newRole: UserRole) => {
     if (!user || !role) {
       throw new Error("Authentication details not loaded or user not logged in.");
@@ -425,7 +404,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateUserDisplayName,
       updateUserRoleByEmail,
       updateUserExtendedProfile,
-      updateNicVerificationDetails,
       notifications,
       markNotificationAsRead
     };

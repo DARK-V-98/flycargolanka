@@ -4,8 +4,6 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type NicVerificationStatus } from '@/contexts/AuthContext';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,6 +120,7 @@ export default function VerifyNicPage() {
       const formData = new FormData();
       formData.append('frontImage', frontImageFile);
       formData.append('backImage', backImageFile);
+      formData.append('nic', nic.trim()); // Send NIC to API
 
       setUploadStatus("Uploading images... This may take a moment.");
 
@@ -133,43 +132,14 @@ export default function VerifyNicPage() {
         body: formData,
       });
 
-      if (!response.ok) {
-        let errorPayload;
-        try {
-            errorPayload = await response.json();
-        } catch (e) {
-            // Response is not JSON, which indicates a severe server error (e.g., crash).
-            throw new Error(`The server returned an unreadable error (status: ${response.status} ${response.statusText}). Please check the server logs.`);
-        }
-        // Use the specific error message from the API if available.
-        throw new Error(errorPayload.error || 'Failed to upload images. The server responded with an unknown error.');
-      }
-      
       const result = await response.json();
 
-      if (!result.frontUrl || !result.backUrl) {
-        throw new Error("Server did not return the required image URLs after upload.");
+      if (!response.ok) {
+        // Use the specific error message from the API if available.
+        throw new Error(result.error || 'Failed to upload images. The server responded with an unknown error.');
       }
-
-      setUploadStatus("Finalizing submission...");
       
-      const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, {
-        nic: nic.trim(),
-        nicFrontUrl: result.frontUrl,
-        nicBackUrl: result.backUrl,
-        nicVerificationStatus: 'pending' as NicVerificationStatus,
-        updatedAt: serverTimestamp(),
-      });
-
-      await addDoc(collection(db, 'notifications'), {
-        type: 'nic_verification',
-        message: `NIC submitted for verification by ${userProfile.displayName || user.email}.`,
-        link: '/admin/verify-nic',
-        isRead: false,
-        recipient: 'admins',
-        createdAt: serverTimestamp()
-      });
+      setUploadStatus("Submission complete!");
 
       toast({
         title: "NIC Images Submitted",

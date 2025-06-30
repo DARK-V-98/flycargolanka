@@ -29,6 +29,7 @@ import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, BadgeCheck, User, Mail, Phone, Fingerprint, Book, AlertTriangle, Filter, Image as ImageIcon, Search, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
+import { getSignedUrlForNicImage } from '../actions';
 
 interface BookingStub {
   id: string;
@@ -52,6 +53,54 @@ const getStatusBadgeVariant = (status: NicVerificationStatus): 'default' | 'seco
   }
 };
 
+
+const SecureNicImageViewer = ({ filePath, alt }: { filePath: string | null | undefined, alt: string }) => {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchUrl = async () => {
+    if (!filePath) {
+      setError("No image path provided.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const url = await getSignedUrlForNicImage(filePath);
+      setImageUrl(url);
+    } catch (err: any) {
+      setError(err.message || "Failed to load image.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!filePath) {
+     return <p className="text-xs text-muted-foreground">{alt} not submitted.</p>;
+  }
+  
+  return (
+    <Dialog onOpenChange={(open) => { if (open && !imageUrl) fetchUrl(); }}>
+        <DialogTrigger asChild>
+            <button className="border rounded-md p-1 hover:border-primary transition-colors w-[120px] h-[75px] flex items-center justify-center bg-muted/50">
+                <ImageIcon className="h-8 w-8 text-muted-foreground"/>
+                 <span className="sr-only">View {alt}</span>
+            </button>
+        </DialogTrigger>
+        <DialogContent className="max-w-xl">
+            <DialogHeader><DialogTitle>{alt}</DialogTitle></DialogHeader>
+            <div className="w-full h-auto min-h-[200px] flex items-center justify-center rounded-md mt-4">
+              {isLoading && <Loader2 className="h-8 w-8 animate-spin" />}
+              {error && <p className="text-destructive text-sm">{error}</p>}
+              {imageUrl && !isLoading && <Image src={imageUrl} alt={alt} width={800} height={500} className="w-full h-auto" />}
+            </div>
+        </DialogContent>
+    </Dialog>
+  );
+};
+
+
 export default function VerifyNicPage() {
   const [allUsers, setAllUsers] = useState<UserForVerification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +114,7 @@ export default function VerifyNicPage() {
     try {
       const usersRef = collection(db, 'users');
       // Fetch all users and filter client-side, as Firestore query limitations on '!=' and 'in' are restrictive.
-      const userSnapshot = await getDocs(usersRef);
+      const userSnapshot = await getDocs(query(usersRef, orderBy('updatedAt', 'desc')));
 
       const usersDataPromises = userSnapshot.docs
         .filter(doc => doc.data().nicVerificationStatus && doc.data().nicVerificationStatus !== 'none')
@@ -81,7 +130,6 @@ export default function VerifyNicPage() {
       
       const usersData = await Promise.all(usersDataPromises);
       
-      // Sort to prioritize pending requests, then by most recently updated
       const statusOrder: Record<NicVerificationStatus, number> = {
         pending: 1,
         rejected: 2,
@@ -100,7 +148,6 @@ export default function VerifyNicPage() {
           return orderA - orderB;
         }
         
-        // If statuses are the same, sort by most recently updated
         return (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0);
       });
 
@@ -121,12 +168,10 @@ export default function VerifyNicPage() {
   const filteredUsers = useMemo(() => {
     let currentUsers = [...allUsers];
 
-    // Filter by status first
     if (filterStatus !== 'all') {
       currentUsers = currentUsers.filter(user => user.nicVerificationStatus === filterStatus);
     }
 
-    // Then filter by search term
     if (searchTerm) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       currentUsers = currentUsers.filter(user =>
@@ -237,22 +282,8 @@ export default function VerifyNicPage() {
                     <div className="space-y-2 pt-2">
                         <h4 className="font-semibold flex items-center text-sm"><ImageIcon className="mr-2 h-4 w-4 text-muted-foreground"/> Submitted Images</h4>
                         <div className="flex gap-4">
-                            {user.nicFrontUrl ? (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <button className="border rounded-md p-1 hover:border-primary transition-colors"><Image src={user.nicFrontUrl} alt="NIC Front" width={120} height={75} className="rounded-sm object-contain" /></button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-xl"><DialogHeader><DialogTitle>NIC Front Image</DialogTitle></DialogHeader><Image src={user.nicFrontUrl} alt="NIC Front" width={800} height={500} className="w-full h-auto rounded-md mt-4"/></DialogContent>
-                                </Dialog>
-                            ) : <p className="text-xs text-muted-foreground">Front image not submitted.</p>}
-                            {user.nicBackUrl ? (
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <button className="border rounded-md p-1 hover:border-primary transition-colors"><Image src={user.nicBackUrl} alt="NIC Back" width={120} height={75} className="rounded-sm object-contain" /></button>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-xl"><DialogHeader><DialogTitle>NIC Back Image</DialogTitle></DialogHeader><Image src={user.nicBackUrl} alt="NIC Back" width={800} height={500} className="w-full h-auto rounded-md mt-4"/></DialogContent>
-                                </Dialog>
-                            ) : <p className="text-xs text-muted-foreground">Back image not submitted.</p>}
+                           <SecureNicImageViewer filePath={user.nicFrontPath} alt="NIC Front" />
+                           <SecureNicImageViewer filePath={user.nicBackPath} alt="NIC Back" />
                         </div>
                     </div>
 
