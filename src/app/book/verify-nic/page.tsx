@@ -3,14 +3,14 @@
 
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, type NicVerificationStatus } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle, CheckCircle2, UploadCloud, ShieldCheck, Info, Fingerprint } from 'lucide-react';
+import { Loader2, AlertTriangle, UploadCloud, ShieldCheck, Info, Fingerprint } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,8 +32,7 @@ export default function VerifyNicPage() {
   const [frontImageUrlPreview, setFrontImageUrlPreview] = useState<string | null>(null);
   const [backImageUrlPreview, setBackImageUrlPreview] = useState<string | null>(null);
   
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -98,7 +97,7 @@ export default function VerifyNicPage() {
     e.preventDefault();
     setFormError(null);
 
-    if (!user || !userProfile) {
+    if (!user) {
       toast({ title: "Error", description: "User not found. Please log in again.", variant: "destructive" });
       return;
     }
@@ -111,8 +110,7 @@ export default function VerifyNicPage() {
       return;
     }
 
-    setIsUploading(true);
-    setUploadStatus("Preparing upload...");
+    setIsSubmitting(true);
 
     try {
       const token = await user.getIdToken();
@@ -120,9 +118,7 @@ export default function VerifyNicPage() {
       const formData = new FormData();
       formData.append('frontImage', frontImageFile);
       formData.append('backImage', backImageFile);
-      formData.append('nic', nic.trim()); // Send NIC to API
-
-      setUploadStatus("Uploading images... This may take a moment.");
+      formData.append('nic', nic.trim());
 
       const response = await fetch('/api/upload-nic', {
         method: 'POST',
@@ -135,12 +131,9 @@ export default function VerifyNicPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        // Use the specific error message from the API if available.
         throw new Error(result.error || 'Failed to upload images. The server responded with an unknown error.');
       }
       
-      setUploadStatus("Submission complete!");
-
       toast({
         title: "NIC Images Submitted",
         description: "Your NIC details have been uploaded for verification. You can check the status on your My Bookings page.",
@@ -155,8 +148,7 @@ export default function VerifyNicPage() {
       toast({ title: "Submission Failed", description: errorMessage, variant: "destructive" });
       setFormError(errorMessage);
     } finally {
-      setIsUploading(false);
-      setUploadStatus('');
+      setIsSubmitting(false);
     }
   };
 
@@ -231,17 +223,17 @@ export default function VerifyNicPage() {
             </Alert>
           </CardContent>
           <CardFooter className="flex-col">
-            <Button type="submit" className="w-full" size="lg" disabled={isUploading || !frontImageFile || !backImageFile || !nic}>
-              {isUploading ? (
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || !frontImageFile || !backImageFile || !nic}>
+              {isSubmitting ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
               ) : (
                 <><UploadCloud className="mr-2 h-5 w-5" /> Submit for Verification</>
               )}
             </Button>
-            {isUploading && (
+            {isSubmitting && (
                 <div className="w-full space-y-2 mt-4 text-center">
-                    <p className="text-sm text-muted-foreground">{uploadStatus}</p>
-                    <Progress value={isUploading ? undefined : 0} className="w-full" />
+                    <p className="text-sm text-muted-foreground">Uploading...</p>
+                    <Progress value={isSubmitting ? undefined : 0} className="w-full" />
                 </div>
             )}
           </CardFooter>

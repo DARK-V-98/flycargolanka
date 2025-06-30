@@ -23,7 +23,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -70,7 +69,14 @@ const SecureNicImageViewer = ({ filePath, alt }: { filePath: string | null | und
       const url = await getSignedUrlForNicImage(filePath);
       setImageUrl(url);
     } catch (err: any) {
-      setError(err.message || "Failed to load image.");
+      console.error(`Error fetching signed URL for ${alt}:`, err);
+      const errorMessage = err.message || "Failed to load image.";
+      // Check for specific permission error text
+      if (errorMessage.includes('does not have iam.serviceAccounts.signBlob') || errorMessage.includes('permission denied')) {
+        setError("Permission error on the server. The service account needs the 'Service Account Token Creator' IAM role to generate viewable links.");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +98,7 @@ const SecureNicImageViewer = ({ filePath, alt }: { filePath: string | null | und
             <DialogHeader><DialogTitle>{alt}</DialogTitle></DialogHeader>
             <div className="w-full h-auto min-h-[200px] flex items-center justify-center rounded-md mt-4">
               {isLoading && <Loader2 className="h-8 w-8 animate-spin" />}
-              {error && <p className="text-destructive text-sm">{error}</p>}
+              {error && <p className="text-destructive text-center text-sm p-4 bg-destructive/10 rounded-md">{error}</p>}
               {imageUrl && !isLoading && <Image src={imageUrl} alt={alt} width={800} height={500} className="w-full h-auto" />}
             </div>
         </DialogContent>
