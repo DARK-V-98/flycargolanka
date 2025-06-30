@@ -41,16 +41,6 @@ export function SearchableSelect({
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false)
 
-  const handleSelect = (currentValue: string) => {
-    // When a user clicks an item, we update the form's value
-    // and close the dropdown. We compare with the current value
-    // to avoid redundant updates if the same item is clicked again.
-    if (value !== currentValue) {
-      onChange(currentValue)
-    }
-    setOpen(false)
-  }
-
   const displayLabel = value
     ? options.find((option) => option.value.toLowerCase() === value.toLowerCase())?.label
     : placeholder;
@@ -78,8 +68,11 @@ export function SearchableSelect({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.value}
-                  onSelect={handleSelect}
+                  value={option.label} // Use label for filtering
+                  onSelect={() => {
+                    onChange(option.value)
+                    setOpen(false)
+                  }}
                 >
                   <Check
                     className={cn(
