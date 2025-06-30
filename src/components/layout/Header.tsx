@@ -101,7 +101,7 @@ export default function Header() {
                                 <div className="flex flex-col">
                                     <p className="text-sm leading-snug whitespace-normal">{n.message}</p>
                                     <p className="text-xs text-muted-foreground mt-1">
-                                        {formatDistanceToNow(n.createdAt.toDate(), { addSuffix: true })}
+                                        {n.createdAt ? formatDistanceToNow(n.createdAt.toDate(), { addSuffix: true }) : 'just now'}
                                     </p>
                                 </div>
                              </div>
