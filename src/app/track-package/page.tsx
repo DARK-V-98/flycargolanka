@@ -16,8 +16,8 @@ export default function TrackPackagePage() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (trackingNumber.trim()) {
-      const upsUrl = `https://www.ups.com/track?loc=en_SG&requester=ST/&tracknum=${trackingNumber.trim()}`;
-      setIframeSrc(upsUrl);
+      const expoUrl = `https://expoceylonplc.com/track/?tracking_id=${trackingNumber.trim()}`;
+      setIframeSrc(expoUrl);
       setShowIframe(true);
     }
   };
@@ -45,7 +45,7 @@ export default function TrackPackagePage() {
                 <Input
                   id="tracknum"
                   name="tracknum"
-                  placeholder="Enter your UPS tracking ID"
+                  placeholder="Enter your tracking ID"
                   required
                   minLength={5}
                   value={trackingNumber}
@@ -66,14 +66,14 @@ export default function TrackPackagePage() {
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Display Notice</AlertTitle>
                 <AlertDescription>
-                    If the area below is blank, it means UPS has blocked the content from being shown on other websites for security reasons. This is expected behavior.
+                    If the area below is blank, it means the tracking site has blocked the content from being shown on other websites for security reasons. This is expected behavior.
                 </AlertDescription>
             </Alert>
             <Card className="w-full">
                 <CardContent className="p-2">
                     <iframe
                         src={iframeSrc}
-                        title="UPS Tracking"
+                        title="Expoceylon Tracking"
                         className="w-full h-[600px] border-0 rounded-md"
                         sandbox="allow-forms allow-scripts allow-same-origin"
                     ></iframe>
