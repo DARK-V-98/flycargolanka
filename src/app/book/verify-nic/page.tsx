@@ -3,23 +3,30 @@
 
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, type UserProfile } from '@/contexts/AuthContext';
+import { db, storage } from '@/lib/firebase';
+import { ref, uploadBytesResumable, getDownloadURL, type UploadTaskSnapshot } from 'firebase/storage';
+import { doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
+
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle, UploadCloud, ShieldCheck, Info, Fingerprint } from 'lucide-react';
+import { Loader2, AlertTriangle, UploadCloud, ShieldCheck, Info, Fingerprint, FileImage, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from '@/components/ui/progress';
-
 
 const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+interface UploadProgress {
+  progress: number;
+  fileName: string;
+}
 
 export default function VerifyNicPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -33,7 +40,7 @@ export default function VerifyNicPage() {
   const [backImageUrlPreview, setBackImageUrlPreview] = useState<string | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,6 +99,42 @@ export default function VerifyNicPage() {
       }
     }
   };
+  
+  const uploadFile = (file: File, path: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const storageRef = ref(storage, path);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on('state_changed', 
+        (snapshot: UploadTaskSnapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress({ progress, fileName: file.name });
+        }, 
+        (error) => {
+          // Handle specific errors
+          switch (error.code) {
+            case 'storage/unauthorized':
+              reject(new Error("Permission denied. Please ensure CORS is configured correctly on your Firebase Storage bucket."));
+              break;
+            case 'storage/canceled':
+              reject(new Error("Upload canceled."));
+              break;
+            default:
+              reject(new Error("An unknown error occurred during upload."));
+              break;
+          }
+        }, 
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            resolve(downloadURL);
+          } catch (urlError) {
+             reject(new Error("Could not get download URL."));
+          }
+        }
+      );
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -113,32 +156,39 @@ export default function VerifyNicPage() {
     setIsSubmitting(true);
 
     try {
-      const token = await user.getIdToken();
-      
-      const formData = new FormData();
-      formData.append('frontImage', frontImageFile);
-      formData.append('backImage', backImageFile);
-      formData.append('nic', nic.trim());
+      const frontPath = `nic_verification/${user.uid}/nic_front_${Date.now()}`;
+      const backPath = `nic_verification/${user.uid}/nic_back_${Date.now()}`;
 
-      const response = await fetch('/api/upload-nic', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData,
+      const frontUrl = await uploadFile(frontImageFile, frontPath);
+      const backUrl = await uploadFile(backImageFile, backPath);
+
+      setUploadProgress(null); // Clear progress after uploads
+
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        nic: nic.trim(),
+        nicFrontUrl: frontUrl,
+        nicBackUrl: backUrl,
+        nicVerificationStatus: 'pending',
+        updatedAt: serverTimestamp(),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to upload images. The server responded with an unknown error.');
-      }
+      // Create a notification for admins
+      await addDoc(collection(db, 'notifications'), {
+          type: 'nic_verification',
+          message: `NIC submitted for verification by ${userProfile?.displayName || user.email}.`,
+          link: '/admin/verify-nic',
+          isRead: false,
+          recipient: 'admins',
+          createdAt: serverTimestamp()
+      });
       
       toast({
         title: "NIC Images Submitted",
-        description: "Your NIC details have been uploaded for verification. You can check the status on your My Bookings page.",
+        description: "Your NIC details have been uploaded for verification.",
         variant: "default",
         duration: 7000,
+        action: <CheckCircle2 className="text-green-500" />
       });
       router.push('/my-bookings');
 
@@ -149,6 +199,7 @@ export default function VerifyNicPage() {
       setFormError(errorMessage);
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(null);
     }
   };
 
@@ -186,11 +237,12 @@ export default function VerifyNicPage() {
                     value={nic}
                     onChange={(e) => setNic(e.target.value)}
                     required
+                    disabled={isSubmitting}
                 />
             </div>
             <div className="space-y-2">
               <Label htmlFor="nicFront" className="text-base">NIC Front Image</Label>
-              <Input id="nicFront" type="file" accept="image/jpeg, image/png, image/webp" onChange={(e) => handleFileChange(e, 'front')} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+              <Input id="nicFront" type="file" accept="image/jpeg, image/png, image/webp" onChange={(e) => handleFileChange(e, 'front')} disabled={isSubmitting} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
               {frontImageUrlPreview && (
                 <div className="mt-2 border rounded-md p-2 inline-block">
                   <Image src={frontImageUrlPreview} alt="NIC Front Preview" width={200} height={120} className="object-contain rounded" />
@@ -200,7 +252,7 @@ export default function VerifyNicPage() {
 
             <div className="space-y-2">
               <Label htmlFor="nicBack" className="text-base">NIC Back Image</Label>
-              <Input id="nicBack" type="file" accept="image/jpeg, image/png, image/webp" onChange={(e) => handleFileChange(e, 'back')} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
+              <Input id="nicBack" type="file" accept="image/jpeg, image/png, image/webp" onChange={(e) => handleFileChange(e, 'back')} disabled={isSubmitting} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
               {backImageUrlPreview && (
                 <div className="mt-2 border rounded-md p-2 inline-block">
                   <Image src={backImageUrlPreview} alt="NIC Back Preview" width={200} height={120} className="object-contain rounded" />
@@ -223,6 +275,15 @@ export default function VerifyNicPage() {
             </Alert>
           </CardContent>
           <CardFooter className="flex-col">
+             {isSubmitting && uploadProgress && (
+                <div className="w-full space-y-2 mb-4 text-center">
+                    <p className="text-sm text-muted-foreground flex items-center justify-center">
+                      <FileImage className="mr-2 h-4 w-4 animate-pulse"/>
+                      Uploading: {uploadProgress.fileName}
+                    </p>
+                    <Progress value={uploadProgress.progress} className="w-full" />
+                </div>
+            )}
             <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || !frontImageFile || !backImageFile || !nic}>
               {isSubmitting ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
@@ -230,12 +291,6 @@ export default function VerifyNicPage() {
                 <><UploadCloud className="mr-2 h-5 w-5" /> Submit for Verification</>
               )}
             </Button>
-            {isSubmitting && (
-                <div className="w-full space-y-2 mt-4 text-center">
-                    <p className="text-sm text-muted-foreground">Uploading...</p>
-                    <Progress value={isSubmitting ? undefined : 0} className="w-full" />
-                </div>
-            )}
           </CardFooter>
         </form>
       </Card>

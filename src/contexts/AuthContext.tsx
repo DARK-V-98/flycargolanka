@@ -30,8 +30,8 @@ export interface UserProfile {
   phone?: string | null;
   address?: string | null;
   isProfileComplete?: boolean;
-  nicFrontPath?: string | null;
-  nicBackPath?: string | null;
+  nicFrontUrl?: string | null;
+  nicBackUrl?: string | null;
   nicVerificationStatus?: NicVerificationStatus;
   createdAt?: any;
   updatedAt?: any;
@@ -133,8 +133,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               nic: currentNic,
               phone: currentPhone,
               address: currentAddress,
-              nicFrontPath: profileDataFromFirestore.nicFrontPath || null,
-              nicBackPath: profileDataFromFirestore.nicBackPath || null,
+              nicFrontUrl: profileDataFromFirestore.nicFrontUrl || null,
+              nicBackUrl: profileDataFromFirestore.nicBackUrl || null,
               nicVerificationStatus: profileDataFromFirestore.nicVerificationStatus || 'none',
             };
             setUserProfile(updatedUserProfileState);
@@ -151,8 +151,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               phone: null,
               address: null,
               isProfileComplete: false,
-              nicFrontPath: null,
-              nicBackPath: null,
+              nicFrontUrl: null,
+              nicBackUrl: null,
               nicVerificationStatus: 'none',
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
