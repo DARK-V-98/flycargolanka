@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     'fcl',
     'FCL',
   ],
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

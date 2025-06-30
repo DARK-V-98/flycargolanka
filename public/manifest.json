@@ -1,0 +1,20 @@
+{
+  "name": "FlyCargo Web",
+  "short_name": "FlyCargo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF5E7",
+  "theme_color": "#0D1B2A",
+  "icons": [
+    {
+      "src": "/fg.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/fg.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
