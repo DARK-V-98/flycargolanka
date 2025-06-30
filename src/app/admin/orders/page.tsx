@@ -131,6 +131,7 @@ export default function AdminOrdersPage() {
             '{{serviceDescription}}': serviceDescription,
             '{{serviceDestination}}': viewingBooking.receiverCountry,
             '{{totalAmount}}': totalAmount,
+            '{{contactNumber}}': '+94704917636',
         };
 
         for (const key in replacements) {
