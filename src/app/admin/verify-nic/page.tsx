@@ -8,7 +8,7 @@ import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, ord
 import type { UserProfile, NicVerificationStatus } from '@/contexts/AuthContext';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -287,7 +287,7 @@ export default function VerifyNicPage() {
                         <AlertDialogHeader><AlertDialogTitle>Confirm Rejection</AlertDialogTitle><AlertDialogDescription>Are you sure you want to reject NIC verification for {user.email}? The user will be notified to re-submit.</AlertDialogDescription></AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleStatusUpdate(user.uid, 'rejected')} className={Button({ variant: 'destructive' })}>Confirm Reject</AlertDialogAction>
+                          <AlertDialogAction onClick={() => handleStatusUpdate(user.uid, 'rejected')} className={buttonVariants({ variant: 'destructive' })}>Confirm Reject</AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
