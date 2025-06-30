@@ -64,7 +64,6 @@ export default function VerifyNicPage() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, type: 'front' | 'back') => {
     const file = e.target.files?.[0];
     if (file) {
-      // Clear previous errors on new file selection
       setFormError(null);
 
       if (file.size > MAX_FILE_SIZE_BYTES) {
@@ -134,16 +133,22 @@ export default function VerifyNicPage() {
         body: formData,
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to upload images. The server responded with an error.');
+        let errorPayload;
+        try {
+            errorPayload = await response.json();
+        } catch (e) {
+            // Response is not JSON, which indicates a severe server error (e.g., crash).
+            throw new Error(`The server returned an unreadable error (status: ${response.status} ${response.statusText}). Please check the server logs.`);
+        }
+        // Use the specific error message from the API if available.
+        throw new Error(errorPayload.error || 'Failed to upload images. The server responded with an unknown error.');
       }
       
-      const { frontUrl, backUrl } = result;
+      const result = await response.json();
 
-      if (!frontUrl || !backUrl) {
-        throw new Error("Server did not return the required image URLs.");
+      if (!result.frontUrl || !result.backUrl) {
+        throw new Error("Server did not return the required image URLs after upload.");
       }
 
       setUploadStatus("Finalizing submission...");
@@ -151,8 +156,8 @@ export default function VerifyNicPage() {
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
         nic: nic.trim(),
-        nicFrontUrl: frontUrl,
-        nicBackUrl: backUrl,
+        nicFrontUrl: result.frontUrl,
+        nicBackUrl: result.backUrl,
         nicVerificationStatus: 'pending' as NicVerificationStatus,
         updatedAt: serverTimestamp(),
       });
