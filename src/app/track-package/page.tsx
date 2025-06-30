@@ -15,7 +15,7 @@ export default function TrackPackagePage() {
     <div className="opacity-0 animate-fadeInUp space-y-8 container mx-auto px-4 py-8">
       <PageHeader
         title="Track Your Package"
-        description="Enter your tracking number below to see the current status of your shipment via our partner's portal."
+        description="Enter your tracking number below to see the current status of your shipment via UPS."
       />
       <Card className="max-w-lg mx-auto shadow-xl border-border/50">
         <CardHeader>
@@ -23,33 +23,35 @@ export default function TrackPackagePage() {
             <PackageSearch className="mr-2 h-6 w-6 text-primary" /> Enter Tracking ID
           </CardTitle>
           <CardDescription>
-            You will be redirected to the official tracking website in a new tab.
+            You will be redirected to the official UPS tracking website in a new tab.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form
-            action="https://expoceylonplc.com/track/"
-            method="POST"
+            action="https://www.ups.com/track"
+            method="GET"
             target="_blank" // This ensures the form submission opens in a new tab
             onSubmit={() => setIsSubmitting(true)}
             onAnimationEnd={() => setIsSubmitting(false)} // Reset if user comes back to the tab
           >
+            <input type="hidden" name="loc" value="en_SG" />
+            <input type="hidden" name="requester" value="ST/" />
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="trackid">Tracking Number</Label>
+                <Label htmlFor="tracknum">Tracking Number</Label>
                 <Input
-                  id="trackid"
-                  name="trackid" // This name must match the external form's input field name
-                  placeholder="Enter your tracking ID"
+                  id="tracknum"
+                  name="tracknum" // Name attribute for UPS tracking
+                  placeholder="Enter your UPS tracking ID"
                   required
                   minLength={5}
                 />
               </div>
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Opening Tracker...</>
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Opening UPS Tracker...</>
                 ) : (
-                  <><ExternalLink className="mr-2 h-5 w-5" /> Track in New Tab</>
+                  <><ExternalLink className="mr-2 h-5 w-5" /> Track on UPS.com</>
                 )}
               </Button>
             </div>
