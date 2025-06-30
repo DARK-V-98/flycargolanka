@@ -48,14 +48,11 @@ export async function POST(req: NextRequest) {
             },
         });
         
-        // Generate a long-lived signed URL.
-        const [signedUrl] = await blob.getSignedUrl({
-            action: 'read',
-            // Set an expiration date far in the future, making the URL effectively permanent.
-            expires: '01-01-2100',
-        });
+        // Make the file publicly readable to get a URL. This is simpler than signed URLs for this use case.
+        await blob.makePublic();
 
-        return signedUrl;
+        // Return the public URL
+        return blob.publicUrl();
     };
 
     const frontUrl = await uploadFile(frontImageFile, 'front');
@@ -65,17 +62,9 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('Error in API route /api/upload-nic:', error);
-    
     if (error.code === 'auth/id-token-expired' || error.code === 'auth/argument-error') {
         return NextResponse.json({ error: 'Invalid or expired authentication token. Please log in again.' }, { status: 401 });
     }
-    
-    if (error.message && (error.message.includes('permission') || error.message.includes('iam.serviceAccountTokenCreator'))) {
-        const specificError = "Server configuration error: The service account is missing the 'Service Account Token Creator' IAM role. Please add this role in the Google Cloud Console to the service account used by your application to enable file uploads.";
-        return NextResponse.json({ error: specificError }, { status: 500 });
-    }
-    
-    // Pass a more useful error message to the client for other cases.
-    return NextResponse.json({ error: `Server-side upload failed: ${error.message}` }, { status: 500 });
+    return NextResponse.json({ error: 'An unexpected error occurred during file upload.', details: error.message }, { status: 500 });
   }
 }
