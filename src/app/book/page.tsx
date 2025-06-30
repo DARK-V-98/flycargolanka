@@ -30,7 +30,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
@@ -611,21 +611,31 @@ export default function BookingPage() {
                   <FormField control={form.control} name="receiverCountry" render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Destination Country</FormLabel>
-                      <SearchableSelect
-                        options={availableCountries.map(c => ({ label: c.name, value: c.name }))}
-                        value={field.value}
-                        onChange={(value) => {
-                            field.onChange(value);
-                            form.setValue('approxWeight', '' as any);
-                            setCalculatedCost(null);
-                            setCalculationError(null);
-                            setAvailableWeights([]);
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          form.setValue('approxWeight', '' as any);
+                          setCalculatedCost(null);
+                          setCalculationError(null);
+                          setAvailableWeights([]);
                         }}
-                        placeholder={loadingCountries ? "Loading countries..." : "Select country"}
-                        searchPlaceholder="Search country..."
-                        emptyPlaceholder="No country found."
+                        defaultValue={field.value}
+                        value={field.value}
                         disabled={loadingCountries || availableCountries.length === 0}
-                      />
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={loadingCountries ? "Loading countries..." : "Select a country"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableCountries.map((country) => (
+                            <SelectItem key={country.id} value={country.name}>
+                              {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )} />

@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap, CheckCircle, Box } from 'lucide-react';
-import { SearchableSelect } from './ui/searchable-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const calculatorSchema = z.object({
   destinationCountry: z.string().min(1, "Please select a destination country."),
@@ -234,21 +234,31 @@ export default function ShippingCalculatorForm() {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
-                    <SearchableSelect
-                      options={availableCountries.map(country => ({ label: country.name, value: country.name }))}
-                      value={field.value}
-                      onChange={(value) => {
+                    <Select
+                      onValueChange={(value) => {
                         field.onChange(value);
                         setRateOptions([]);
                         setChargeableWeight(null);
                         setCalculationError(null);
                         setAvailableWeights([]);
                       }}
-                      placeholder={loadingCountries ? "Loading countries..." : "Select destination country"}
-                      searchPlaceholder="Search country..."
-                      emptyPlaceholder="No country found."
+                      defaultValue={field.value}
+                      value={field.value}
                       disabled={loadingCountries || availableCountries.length === 0}
-                    />
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={loadingCountries ? "Loading countries..." : "Select destination country"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableCountries.map((country) => (
+                          <SelectItem key={country.id} value={country.name}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
