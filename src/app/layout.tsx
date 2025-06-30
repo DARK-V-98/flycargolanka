@@ -2,6 +2,9 @@ import './globals.css';
 import { PT_Sans } from 'next/font/google';
 import ClientLayout from '@/components/layout/ClientLayout';
 import type { Metadata } from 'next';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { Toaster } from '@/components/ui/toaster';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -35,7 +38,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${ptSans.className} font-body antialiased`}>
-        <ClientLayout>{children}</ClientLayout>
+        <ClientLayout>
+          <div className="flex flex-col min-h-screen bg-background">
+            <Header />
+            <main className="flex-grow flex flex-col">{children}</main>
+            <Footer />
+            <Toaster />
+          </div>
+        </ClientLayout>
       </body>
     </html>
   );

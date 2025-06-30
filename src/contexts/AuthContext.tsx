@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ReactNode } from 'react';
@@ -8,10 +7,6 @@ import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot, orderBy, type Timestamp } from 'firebase/firestore';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
-import { Toaster } from "@/components/ui/toaster";
-import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import Link from 'next/link';
@@ -88,7 +83,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<UserRole | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
 
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const { toast } = useToast();
@@ -407,26 +401,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       notifications,
       markNotificationAsRead
     };
-
-    const isMaintenancePage = pathname === '/maintenance';
     
     return (
       <AuthContext.Provider value={value}>
         <Suspense>
             <AuthRedirectHandler user={user} loading={loading}/>
         </Suspense>
-        {isMaintenancePage ? (
-            children
-        ) : (
-            <div className="flex flex-col min-h-screen bg-background">
-                <Header />
-                <main className="flex-grow flex flex-col">
-                    {children}
-                </main>
-                <Footer />
-                <Toaster />
-            </div>
-        )}
+        {children}
       </AuthContext.Provider>
     );
 };
