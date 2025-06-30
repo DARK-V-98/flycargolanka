@@ -1,0 +1,20 @@
+# --- New Firebase Client-Side Configuration ---
+NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyD3VuVdcb1OCN9-pKKrw7IVxnjkp1mZHsM"
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="flycargo-lanka.firebaseapp.com"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="flycargo-lanka"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="flycargo-lanka.firebasestorage.app"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="405334316488"
+NEXT_PUBLIC_FIREBASE_APP_ID="1:405334316488:web:11af3ff0d28d6875495cfd"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# --- Payhere Credentials ---
+# Replace with your actual credentials if they are different.
+NEXT_PUBLIC_PAYHERE_MERCHANT_ID="1230954"
+PAYHERE_MERCHANT_SECRET="MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA="
+PAYHERE_MODE="sandbox" # Use 'live' for production
+
+# --- Firebase Server-Side Configuration ---
+# IMPORTANT: Replace the placeholder value below with the entire contents
+# of the service account JSON file you downloaded from Firebase.
+# The entire JSON object must be on a single line.
+FIREBASE_SERVICE_ACCOUNT='{"type": "service_account", "project_id": "your-new-project", "private_key_id": "...", "private_key": "...", "client_email": "...", "client_id": "...", "auth_uri": "...", "token_uri": "...", "auth_provider_x509_cert_url": "...", "client_x509_cert_url": "..."}'
