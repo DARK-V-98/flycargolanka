@@ -8,7 +8,6 @@ import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -31,6 +30,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Combobox } from '@/components/ui/combobox';
 
 const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
@@ -609,17 +609,24 @@ export default function BookingPage() {
                 <div className="space-y-4 pt-4 mt-4 border-t border-border/30">
                   <h3 className="text-lg font-semibold text-muted-foreground flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary" />Destination &amp; Weight for Rate Calculation</h3>
                   <FormField control={form.control} name="receiverCountry" render={({ field }) => (
-                    <FormItem><FormLabel>Destination Country</FormLabel>
-                      <Select onValueChange={(value) => {field.onChange(value); form.setValue('approxWeight', '' as any); setCalculatedCost(null); setCalculationError(null); setAvailableWeights([]);}} value={field.value ?? ''} disabled={loadingCountries || availableCountries.length === 0}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={ loadingCountries ? "Loading countries..." : availableCountries.length === 0 ? "No countries available" : "Select country" } />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableCountries.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select><FormMessage />
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Destination Country</FormLabel>
+                      <Combobox
+                        options={availableCountries.map(c => ({ label: c.name, value: c.name }))}
+                        value={field.value}
+                        onChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('approxWeight', '' as any);
+                            setCalculatedCost(null);
+                            setCalculationError(null);
+                            setAvailableWeights([]);
+                        }}
+                        placeholder={loadingCountries ? "Loading countries..." : "Select country"}
+                        searchPlaceholder="Search country..."
+                        emptyPlaceholder="No country found."
+                        disabled={loadingCountries || availableCountries.length === 0}
+                      />
+                      <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="approxWeight" render={({ field }) => (
@@ -763,22 +770,17 @@ export default function BookingPage() {
                         <FormField control={form.control} name="courierPurpose" render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Purpose of Courier</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select the purpose of the shipment" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="gift">Gift</SelectItem>
-                                        <SelectItem value="commercial">Commercial</SelectItem>
-                                        <SelectItem value="personal">Personal</SelectItem>
-                                        <SelectItem value="sample">Sample</SelectItem>
-                                        <SelectItem value="return_for_repair">Return for Repair</SelectItem>
-                                        <SelectItem value="return_after_repair">Return after Repair</SelectItem>
-                                        <SelectItem value="custom">Custom</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <FormControl>
+                                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="gift" /></FormControl><FormLabel className="font-normal">Gift</FormLabel></FormItem>
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="commercial" /></FormControl><FormLabel className="font-normal">Commercial</FormLabel></FormItem>
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="personal" /></FormControl><FormLabel className="font-normal">Personal</FormLabel></FormItem>
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="sample" /></FormControl><FormLabel className="font-normal">Sample</FormLabel></FormItem>
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="return_for_repair" /></FormControl><FormLabel className="font-normal">Return for Repair</FormLabel></FormItem>
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="return_after_repair" /></FormControl><FormLabel className="font-normal">Return after Repair</FormLabel></FormItem>
+                                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="custom" /></FormControl><FormLabel className="font-normal">Custom</FormLabel></FormItem>
+                                  </RadioGroup>
+                                </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )} />

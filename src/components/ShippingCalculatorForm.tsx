@@ -12,12 +12,12 @@ import Link from 'next/link';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap, CheckCircle, Box } from 'lucide-react';
+import { Combobox } from './ui/combobox';
 
 const calculatorSchema = z.object({
   destinationCountry: z.string().min(1, "Please select a destination country."),
@@ -232,22 +232,23 @@ export default function ShippingCalculatorForm() {
                 control={form.control}
                 name="destinationCountry"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
-                    <Select onValueChange={(value) => { field.onChange(value); setRateOptions([]); setChargeableWeight(null); setCalculationError(null); setAvailableWeights([]); }} defaultValue={field.value} disabled={loadingCountries || availableCountries.length === 0}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={ loadingCountries ? "Loading countries..." : (availableCountries.length === 0 ? "No countries available" : "Select destination country") } />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableCountries.map(country => (
-                          <SelectItem key={country.id} value={country.name}>
-                            {country.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                      options={availableCountries.map(country => ({ label: country.name, value: country.name }))}
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        setRateOptions([]);
+                        setChargeableWeight(null);
+                        setCalculationError(null);
+                        setAvailableWeights([]);
+                      }}
+                      placeholder={loadingCountries ? "Loading countries..." : "Select destination country"}
+                      searchPlaceholder="Search country..."
+                      emptyPlaceholder="No country found."
+                      disabled={loadingCountries || availableCountries.length === 0}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
