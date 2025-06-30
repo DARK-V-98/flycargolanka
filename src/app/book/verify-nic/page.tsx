@@ -4,10 +4,6 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type UserProfile } from '@/contexts/AuthContext';
-import { db, storage } from '@/lib/firebase';
-import { ref, uploadBytesResumable, getDownloadURL, type UploadTaskSnapshot } from 'firebase/storage';
-import { doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
-
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +36,6 @@ export default function VerifyNicPage() {
   const [backImageUrlPreview, setBackImageUrlPreview] = useState<string | null>(null);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -99,39 +94,13 @@ export default function VerifyNicPage() {
       }
     }
   };
-  
-  const uploadFile = (file: File, path: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, path);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on('state_changed', 
-        (snapshot: UploadTaskSnapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress({ progress, fileName: file.name });
-        }, 
-        (error) => {
-          // This is where we handle upload errors, including CORS
-          reject(error);
-        }, 
-        async () => {
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            resolve(downloadURL);
-          } catch (urlError) {
-             reject(new Error("Could not get download URL after upload. Check storage permissions."));
-          }
-        }
-      );
-    });
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError(null);
 
     if (!user) {
-      toast({ title: "Error", description: "User not found. Please log in again.", variant: "destructive" });
+      toast({ title: "Authentication Error", description: "You must be logged in to submit.", variant: "destructive" });
       return;
     }
     if (!frontImageFile || !backImageFile) {
@@ -145,60 +114,46 @@ export default function VerifyNicPage() {
 
     setIsSubmitting(true);
 
+    const formData = new FormData();
+    formData.append('frontImage', frontImageFile);
+    formData.append('backImage', backImageFile);
+    formData.append('nic', nic.trim());
+
     try {
-      const frontPath = `nic_verification/${user.uid}/nic_front_${Date.now()}`;
-      const backPath = `nic_verification/${user.uid}/nic_back_${Date.now()}`;
-
-      const frontUrl = await uploadFile(frontImageFile, frontPath);
-      const backUrl = await uploadFile(backImageFile, backPath);
-
-      setUploadProgress(null); // Clear progress after uploads
-
-      const userDocRef = doc(db, 'users', user.uid);
-      await updateDoc(userDocRef, {
-        nic: nic.trim(),
-        nicFrontUrl: frontUrl,
-        nicBackUrl: backUrl,
-        nicVerificationStatus: 'pending',
-        updatedAt: serverTimestamp(),
+      const token = await user.getIdToken();
+      const response = await fetch('/api/upload-nic', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
       });
 
-      // Create a notification for admins
-      await addDoc(collection(db, 'notifications'), {
-          type: 'nic_verification',
-          message: `NIC submitted for verification by ${userProfile?.displayName || user.email}.`,
-          link: '/admin/verify-nic',
-          isRead: false,
-          recipient: 'admins',
-          createdAt: serverTimestamp()
-      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to upload images. The server responded with an error.');
+      }
       
       toast({
         title: "NIC Images Submitted",
         description: "Your NIC details have been uploaded for verification.",
         variant: "default",
-        duration: 7000,
         action: <CheckCircle2 className="text-green-500" />
       });
       router.push('/my-bookings');
 
     } catch (error: any) {
-      console.error("Error submitting NIC verification:", error);
-      let errorMessage = "An unexpected error occurred during the upload process. Please try again.";
-
-      // This is the key change: Detect and explain the CORS error.
-      if (error.code === 'storage/unauthorized') {
-        const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "YOUR_BUCKET_ID";
-        errorMessage = `Permission Denied: Your website is not authorized to upload files. This is a backend CORS configuration issue. To fix it, run this command in your terminal: \n\ngsutil cors set cors.json gs://${bucketName}`;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({ title: "Submission Failed", description: errorMessage, variant: "destructive", duration: 20000 });
-      setFormError(errorMessage);
+      console.error("Error submitting NIC verification via API:", error);
+      setFormError(error.message || 'An unexpected error occurred during the upload process.');
+      toast({ 
+        title: "Submission Failed", 
+        description: error.message || 'An unexpected error occurred.', 
+        variant: "destructive",
+        duration: 9000
+      });
     } finally {
       setIsSubmitting(false);
-      setUploadProgress(null);
     }
   };
 
@@ -274,15 +229,6 @@ export default function VerifyNicPage() {
             </Alert>
           </CardContent>
           <CardFooter className="flex-col">
-             {isSubmitting && uploadProgress && (
-                <div className="w-full space-y-2 mb-4 text-center">
-                    <p className="text-sm text-muted-foreground flex items-center justify-center">
-                      <FileImage className="mr-2 h-4 w-4 animate-pulse"/>
-                      Uploading: {uploadProgress.fileName}
-                    </p>
-                    <Progress value={uploadProgress.progress} className="w-full" />
-                </div>
-            )}
             <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || !frontImageFile || !backImageFile || !nic}>
               {isSubmitting ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Submitting...</>
