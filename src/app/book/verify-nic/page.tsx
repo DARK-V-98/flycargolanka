@@ -16,7 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from '@/components/ui/progress';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
-import { doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, addDoc, collection, getDoc } from 'firebase/firestore';
 
 const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
 const MAX_FILE_SIZE_MB = 5;
@@ -129,9 +129,16 @@ export default function VerifyNicPage() {
                         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                         setUploadProgress({ progress, fileName: file.name });
                     },
-                    (error) => {
+                    (error: any) => {
                         console.error("Upload error:", error);
-                        reject(new Error(`Failed to upload ${file.name}. Please check your connection and storage rules.`));
+                        // Catch specific CORS / permissions errors
+                        if (error.code === 'storage/unauthorized' || error.code === 'storage/object-not-found') {
+                            const corsErrorMsg = "A permissions error occurred. This is likely due to a CORS configuration issue on the Firebase Storage bucket. Please contact support and mention this error.";
+                            setFormError(corsErrorMsg);
+                            reject(new Error(corsErrorMsg));
+                        } else {
+                           reject(new Error(`Failed to upload ${file.name}. Please check your connection and storage rules.`));
+                        }
                     },
                     () => {
                         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
@@ -166,10 +173,12 @@ export default function VerifyNicPage() {
         });
 
         // Create a notification for admins
-        const userProfile = (await doc(userDocRef).get()).data() as UserProfile | undefined;
+        const userDocSnap = await getDoc(userDocRef);
+        const updatedUserProfile = userDocSnap.data() as UserProfile | undefined;
+
         await addDoc(collection(db, 'notifications'), {
             type: 'nic_verification',
-            message: `NIC submitted for verification by ${userProfile?.displayName || user.email}.`,
+            message: `NIC submitted for verification by ${updatedUserProfile?.displayName || user.email}.`,
             link: '/admin/verify-nic',
             isRead: false,
             recipient: 'admins',
@@ -187,7 +196,10 @@ export default function VerifyNicPage() {
 
     } catch (error: any) {
         console.error("Error during NIC submission process:", error);
-        setFormError(error.message || 'An unexpected error occurred during the upload process. Please try again.');
+        // Only update the form error if it hasn't been set by the uploader already
+        if (!formError) {
+            setFormError(error.message || 'An unexpected error occurred. Please try again.');
+        }
         toast({ 
             title: "Submission Failed", 
             description: error.message || 'An unexpected error occurred.', 
@@ -269,7 +281,14 @@ export default function VerifyNicPage() {
                 <Alert variant="destructive" className="mt-4 whitespace-pre-wrap">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{formError}</AlertDescription>
+                    <AlertDescription>
+                        {formError}
+                        {formError.includes("CORS") && (
+                            <p className="mt-2 text-xs">
+                                <strong>How to fix:</strong> This requires a one-time configuration on your Firebase project. Please ask support for instructions on how to set your Storage CORS policy.
+                            </p>
+                        )}
+                    </AlertDescription>
                 </Alert>
             )}
              <Alert variant="default" className="bg-secondary/50 border-secondary">
