@@ -71,7 +71,7 @@ export default function ReturnPolicyPage() {
           <section>
             <h3 className="text-xl font-semibold text-accent mb-2">6. Contact Us</h3>
             <p>
-              For any questions about our Return & Refund Policy, please contact us by calling us at <a href="tel:+94704917636" className="text-primary underline">+94 704 917 636</a>.
+              For any questions about our Return & Refund Policy, please contact us by calling us at <a href="tel:+94704917636" className="text-primary underline">+94 704 917 636</a> or on our landline at <a href="tel:+94112345678" className="text-primary underline">+94 11 234 5678</a>.
             </p>
           </section>
         </CardContent>
@@ -79,3 +79,5 @@ export default function ReturnPolicyPage() {
     </div>
   );
 }
+
+    

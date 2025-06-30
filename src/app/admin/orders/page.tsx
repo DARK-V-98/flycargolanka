@@ -132,6 +132,7 @@ export default function AdminOrdersPage() {
             '{{serviceDestination}}': viewingBooking.receiverCountry,
             '{{totalAmount}}': totalAmount,
             '{{contactNumber}}': '+94704917636',
+            '{{landlineNumber}}': '+94 11 234 5678',
         };
 
         for (const key in replacements) {
@@ -633,3 +634,5 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
+
+    
