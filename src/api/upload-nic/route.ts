@@ -5,12 +5,12 @@ import { getStorage } from 'firebase-admin/storage';
 import { db } from '@/lib/firebase-admin';
 import { serverTimestamp } from 'firebase-admin/firestore';
 
-// Ensure the admin app is initialized before using its services
-if (!db) {
-  throw new Error("Firestore Admin SDK is not initialized. Check server configuration for FIREBASE_SERVICE_ACCOUNT.");
-}
-
 export async function POST(req: NextRequest) {
+  // Moved initialization checks inside the handler to prevent build-time errors.
+  if (!db) {
+    return NextResponse.json({ error: 'Firebase Admin SDK not initialized. Check server configuration.' }, { status: 500 });
+  }
+
   try {
     const formData = await req.formData();
     const frontImageFile = formData.get('frontImage') as File | null;
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     
     const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
     if (!bucketName) {
-        throw new Error("Firebase Storage bucket name is not configured in environment variables.");
+        return NextResponse.json({ error: "Firebase Storage bucket name is not configured." }, { status: 500 });
     }
     const bucket = getStorage().bucket(bucketName);
 
