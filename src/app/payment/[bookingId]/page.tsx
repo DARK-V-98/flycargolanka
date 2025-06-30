@@ -209,7 +209,7 @@ export default function PaymentPage() {
                       <li><strong>Reference:</strong> <span className="font-mono">{booking.id}</span></li>
                   </ul>
                   <p className="font-semibold">
-                      After payment, please send the receipt via WhatsApp to <a href="https://wa.me/94711318725" target="_blank" rel="noopener noreferrer" className="text-primary underline">+94 711 318 725</a> with your Booking ID.
+                      After payment, please send the receipt via WhatsApp to <a href="https://wa.me/94704917636" target="_blank" rel="noopener noreferrer" className="text-primary underline">+94 704 917 636</a> with your Booking ID.
                   </p>
               </CardContent>
               <CardFooter>

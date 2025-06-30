@@ -37,8 +37,7 @@ export default function Footer() {
             <p className="text-lg font-semibold">Contact Us</p>
             <address className="mt-2 text-sm opacity-90 not-italic space-y-1">
               <p>Fly cargo lanka. No.05, avariwatta, katunayake</p>
-              <p>Corporate Line: <a href="tel:+94112260310" className="hover:underline">+94 112 260 310</a></p>
-              <p>Hotline: <a href="tel:+94711318725" className="hover:underline">+94 711 318 725</a></p>
+              <p>Contact: <a href="tel:+94704917636" className="hover:underline">+94 704 917 636</a></p>
             </address>
           </div>
         </div>

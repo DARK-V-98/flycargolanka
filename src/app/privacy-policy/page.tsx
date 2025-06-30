@@ -77,7 +77,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h3 className="text-xl font-semibold text-accent mb-2">7. Contact Us</h3>
             <p>
-              If you have any questions about this Privacy Policy, please contact us by calling our corporate line at <a href="tel:+94112260310" className="text-primary underline">+94 112 260 310</a>.
+              If you have any questions about this Privacy Policy, please contact us by calling us at <a href="tel:+94704917636" className="text-primary underline">+94 704 917 636</a>.
             </p>
           </section>
         </CardContent>
