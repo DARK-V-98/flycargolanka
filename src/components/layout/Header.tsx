@@ -42,7 +42,6 @@ export default function Header() {
     let items = [...baseNavItems];
     if (!loading && user) {
       items.push({ href: '/my-bookings' as Route, label: 'My Bookings' });
-      items.push({ href: '/track-package' as Route, label: 'Track Package' });
       if (role === 'admin' || role === 'developer') {
         items.push({ href: '/admin/dashboard' as Route, label: 'Admin Dashboard' });
       }
