@@ -1,7 +1,11 @@
 
 [
   {
-    "origin": ["http://localhost:3000", "https://www.flycargolanka.lk"],
+    "origin": [
+      "http://localhost:3000", 
+      "https://www.flycargolanka.lk",
+      "https://flycargolanka-q18x.vercel.app"
+    ],
     "method": ["GET", "PUT", "POST", "DELETE"],
     "responseHeader": [
       "Content-Type",
