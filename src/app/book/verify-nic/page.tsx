@@ -111,25 +111,15 @@ export default function VerifyNicPage() {
           setUploadProgress({ progress, fileName: file.name });
         }, 
         (error) => {
-          // Handle specific errors
-          switch (error.code) {
-            case 'storage/unauthorized':
-              reject(new Error("Permission denied. Please ensure CORS is configured correctly on your Firebase Storage bucket."));
-              break;
-            case 'storage/canceled':
-              reject(new Error("Upload canceled."));
-              break;
-            default:
-              reject(new Error("An unknown error occurred during upload."));
-              break;
-          }
+          // This is where we handle upload errors, including CORS
+          reject(error);
         }, 
         async () => {
           try {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
             resolve(downloadURL);
           } catch (urlError) {
-             reject(new Error("Could not get download URL."));
+             reject(new Error("Could not get download URL after upload. Check storage permissions."));
           }
         }
       );
@@ -194,8 +184,17 @@ export default function VerifyNicPage() {
 
     } catch (error: any) {
       console.error("Error submitting NIC verification:", error);
-      const errorMessage = error.message || "An unexpected error occurred during the upload process. Please try again.";
-      toast({ title: "Submission Failed", description: errorMessage, variant: "destructive" });
+      let errorMessage = "An unexpected error occurred during the upload process. Please try again.";
+
+      // This is the key change: Detect and explain the CORS error.
+      if (error.code === 'storage/unauthorized') {
+        const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "YOUR_BUCKET_ID";
+        errorMessage = `Permission Denied: Your website is not authorized to upload files. This is a backend CORS configuration issue. To fix it, run this command in your terminal: \n\ngsutil cors set cors.json gs://${bucketName}`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({ title: "Submission Failed", description: errorMessage, variant: "destructive", duration: 20000 });
       setFormError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -260,7 +259,7 @@ export default function VerifyNicPage() {
               )}
             </div>
             {formError && (
-                <Alert variant="destructive" className="mt-4">
+                <Alert variant="destructive" className="mt-4 whitespace-pre-wrap">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Error</AlertTitle>
                     <AlertDescription>{formError}</AlertDescription>
