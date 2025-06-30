@@ -14,6 +14,9 @@ import { Loader2, AlertTriangle, UploadCloud, ShieldCheck, Info, Fingerprint, Fi
 import Image from 'next/image';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from '@/components/ui/progress';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
+import { doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 
 const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
 const MAX_FILE_SIZE_MB = 5;
@@ -37,6 +40,7 @@ export default function VerifyNicPage() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -114,46 +118,85 @@ export default function VerifyNicPage() {
 
     setIsSubmitting(true);
 
-    const formData = new FormData();
-    formData.append('frontImage', frontImageFile);
-    formData.append('backImage', backImageFile);
-    formData.append('nic', nic.trim());
-
     try {
-      const token = await user.getIdToken();
-      const response = await fetch('/api/upload-nic', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
+        const handleUpload = (file: File, path: string): Promise<string> => {
+            return new Promise((resolve, reject) => {
+                const storageRef = ref(storage, path);
+                const uploadTask = uploadBytesResumable(storageRef, file);
 
-      const result = await response.json();
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        setUploadProgress({ progress, fileName: file.name });
+                    },
+                    (error) => {
+                        console.error("Upload error:", error);
+                        reject(new Error(`Failed to upload ${file.name}. Please check your connection and storage rules.`));
+                    },
+                    () => {
+                        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                            resolve(downloadURL);
+                        }).catch(error => {
+                            console.error("Error getting download URL:", error);
+                            reject(new Error(`Could not get URL for ${file.name}.`));
+                        });
+                    }
+                );
+            });
+        };
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to upload images. The server responded with an error.');
-      }
-      
-      toast({
-        title: "NIC Images Submitted",
-        description: "Your NIC details have been uploaded for verification.",
-        variant: "default",
-        action: <CheckCircle2 className="text-green-500" />
-      });
-      router.push('/my-bookings');
+        const fileExtensionFront = frontImageFile.name.split('.').pop() || 'jpg';
+        const fileExtensionBack = backImageFile.name.split('.').pop() || 'jpg';
+
+        const frontPath = `nic_verification/${user.uid}/nic_front_${Date.now()}.${fileExtensionFront}`;
+        const backPath = `nic_verification/${user.uid}/nic_back_${Date.now()}.${fileExtensionBack}`;
+
+        const frontUrl = await handleUpload(frontImageFile, frontPath);
+        const backUrl = await handleUpload(backImageFile, backPath);
+        
+        setUploadProgress(null);
+
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+            nic: nic.trim(),
+            nicFrontUrl: frontUrl,
+            nicBackUrl: backUrl,
+            nicVerificationStatus: 'pending',
+            updatedAt: serverTimestamp(),
+        });
+
+        // Create a notification for admins
+        const userProfile = (await doc(userDocRef).get()).data() as UserProfile | undefined;
+        await addDoc(collection(db, 'notifications'), {
+            type: 'nic_verification',
+            message: `NIC submitted for verification by ${userProfile?.displayName || user.email}.`,
+            link: '/admin/verify-nic',
+            isRead: false,
+            recipient: 'admins',
+            createdAt: serverTimestamp()
+        });
+
+        toast({
+            title: "NIC Images Submitted",
+            description: "Your NIC details have been uploaded for verification.",
+            variant: "default",
+            action: <CheckCircle2 className="text-green-500" />
+        });
+
+        router.push('/my-bookings');
 
     } catch (error: any) {
-      console.error("Error submitting NIC verification via API:", error);
-      setFormError(error.message || 'An unexpected error occurred during the upload process.');
-      toast({ 
-        title: "Submission Failed", 
-        description: error.message || 'An unexpected error occurred.', 
-        variant: "destructive",
-        duration: 9000
-      });
+        console.error("Error during NIC submission process:", error);
+        setFormError(error.message || 'An unexpected error occurred during the upload process. Please try again.');
+        toast({ 
+            title: "Submission Failed", 
+            description: error.message || 'An unexpected error occurred.', 
+            variant: "destructive",
+            duration: 9000
+        });
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
+        setUploadProgress(null);
     }
   };
 
@@ -213,6 +256,15 @@ export default function VerifyNicPage() {
                 </div>
               )}
             </div>
+
+            {isSubmitting && uploadProgress && (
+                <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">{`Uploading: ${uploadProgress.fileName}`}</Label>
+                    <Progress value={uploadProgress.progress} className="w-full" />
+                    <p className="text-xs text-right text-muted-foreground">{Math.round(uploadProgress.progress)}%</p>
+                </div>
+            )}
+
             {formError && (
                 <Alert variant="destructive" className="mt-4 whitespace-pre-wrap">
                     <AlertTriangle className="h-4 w-4" />

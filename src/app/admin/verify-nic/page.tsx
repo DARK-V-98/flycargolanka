@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, type Timestamp } from 'firebase/firestore';
 import type { UserProfile, NicVerificationStatus } from '@/contexts/AuthContext';
-import { getSignedUrlForNicImage } from './actions';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -52,37 +51,16 @@ const getStatusBadgeVariant = (status: NicVerificationStatus): 'default' | 'seco
   }
 };
 
-
-const NicImageViewer = ({ imagePath, alt }: { imagePath: string | null | undefined, alt: string }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  const fetchSignedUrl = useCallback(async () => {
-    if (!imagePath) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const url = await getSignedUrlForNicImage(imagePath);
-      setImageUrl(url);
-    } catch (err: any) {
-      setError(err.message);
-      toast({ title: "Failed to load image", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  }, [imagePath, toast]);
-
-  if (!imagePath) {
+const NicImageViewer = ({ imageUrl, alt }: { imageUrl: string | null | undefined, alt: string }) => {
+  if (!imageUrl) {
      return <p className="text-xs text-muted-foreground">{alt} not submitted.</p>;
   }
   
   return (
-    <Dialog onOpenChange={(open) => { if(open && !imageUrl) fetchSignedUrl() }}>
+    <Dialog>
         <DialogTrigger asChild>
             <button className="border rounded-md p-1 hover:border-primary transition-colors w-[120px] h-[75px] flex items-center justify-center bg-muted/50 relative group">
-                {imageUrl ? <Image src={imageUrl} alt={alt} layout="fill" className="object-contain rounded-md p-1" /> : <ImageIcon className="h-8 w-8 text-muted-foreground"/>}
+                <Image src={imageUrl} alt={alt} layout="fill" className="object-contain rounded-md p-1" />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                     <ExternalLink className="h-6 w-6 text-white"/>
                 </div>
@@ -91,18 +69,7 @@ const NicImageViewer = ({ imagePath, alt }: { imagePath: string | null | undefin
         <DialogContent className="max-w-xl">
             <DialogHeader><DialogTitle>{alt}</DialogTitle></DialogHeader>
             <div className="w-full h-auto min-h-[300px] flex items-center justify-center rounded-md mt-4 relative">
-              {loading && <Loader2 className="h-8 w-8 animate-spin text-primary absolute" />}
-              {error && (
-                  <div className="text-center text-destructive">
-                      <p>{error}</p>
-                      <Button variant="outline" size="sm" className="mt-2" onClick={fetchSignedUrl}>
-                          <RefreshCw className="mr-2 h-4 w-4"/> Retry
-                      </Button>
-                  </div>
-              )}
-              {imageUrl && !loading && !error && (
-                <Image src={imageUrl} alt={alt} width={800} height={500} className="w-full h-auto" />
-              )}
+              <Image src={imageUrl} alt={alt} width={800} height={500} className="w-full h-auto" />
             </div>
         </DialogContent>
     </Dialog>
@@ -290,8 +257,8 @@ export default function VerifyNicPage() {
                     <div className="space-y-2 pt-2">
                         <h4 className="font-semibold flex items-center text-sm"><ImageIcon className="mr-2 h-4 w-4 text-muted-foreground"/> Submitted Images</h4>
                         <div className="flex gap-4">
-                           <NicImageViewer imagePath={user.nicFrontPath} alt="NIC Front" />
-                           <NicImageViewer imagePath={user.nicBackPath} alt="NIC Back" />
+                           <NicImageViewer imageUrl={user.nicFrontUrl} alt="NIC Front" />
+                           <NicImageViewer imageUrl={user.nicBackUrl} alt="NIC Back" />
                         </div>
                     </div>
 
