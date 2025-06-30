@@ -36,9 +36,9 @@ export default function Footer() {
           <div className="md:col-span-1 space-y-4 text-left md:text-right">
             <p className="text-lg font-semibold">Contact Us</p>
             <address className="mt-2 text-sm opacity-90 not-italic space-y-1">
-              <p>Fly cargo lanka. No.05, avariwatta, katunayake</p>
-              <p>Mobile: <a href="tel:+94704917636" className="hover:underline">+94 704 917 636</a></p>
-              <p>Landline: <a href="tel:+94112345678" className="hover:underline">+94 11 234 5678</a></p>
+              <div>Fly cargo lanka. No.05, avariwatta, katunayake</div>
+              <div>Mobile: <a href="tel:+94704917636" className="hover:underline">+94 704 917 636</a></div>
+              <div>Landline: <a href="tel:+94112345678" className="hover:underline">+94 11 234 5678</a></div>
             </address>
           </div>
         </div>
@@ -46,5 +46,3 @@ export default function Footer() {
     </footer>
   );
 }
-
-    
