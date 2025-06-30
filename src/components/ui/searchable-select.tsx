@@ -67,8 +67,9 @@ export function SearchableSelect({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.label} // Use label for filtering/searching
+                  value={option.label}
                   onSelect={(currentLabel) => {
+                    // Find the option whose label was selected to get the correct value
                     const selectedValue = options.find(
                       (opt) => opt.label.toLowerCase() === currentLabel.toLowerCase()
                     )?.value;
