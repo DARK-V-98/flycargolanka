@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, type ChangeEvent } from 'react';
@@ -183,17 +184,19 @@ export default function VerifyNicPage() {
     } catch (error: any) {
       console.error("Error uploading NIC images:", error);
       let errorMessage = "Could not upload NIC images. Please check your network and try again.";
+      let detailedError: string | null = null;
 
       if (error.code) {
         switch (error.code) {
           case 'storage/unauthorized':
-            errorMessage = "Permission Denied. Please ensure you are logged in and have the correct permissions.";
+            errorMessage = "Permission Denied. Your Firebase Storage rules may be preventing the upload.";
             break;
           case 'storage/canceled':
             errorMessage = "Upload was canceled. Please try again.";
             break;
           case 'storage/unknown':
-            errorMessage = "An unknown storage error occurred. This is often caused by a misconfigured CORS policy on your Firebase Storage bucket. Please contact support.";
+            errorMessage = "A storage error occurred. This is very likely a CORS configuration issue on your Firebase Storage bucket.";
+            detailedError = "To fix this, please run the following command in your project's terminal: `gsutil cors set cors.json gs://flycargolanka-35017.appspot.com`";
             break;
           default:
             errorMessage = `An error occurred: ${error.message}`;
@@ -203,8 +206,9 @@ export default function VerifyNicPage() {
         errorMessage = error.message;
       }
       
-      toast({ title: "Upload Failed", description: errorMessage, variant: "destructive" });
-      setFormError(errorMessage);
+      toast({ title: "Upload Failed", description: errorMessage, variant: "destructive", duration: 15000 });
+      setFormError(`${errorMessage}${detailedError ? ` ${detailedError}` : ''}`);
+
     } finally {
       setIsUploading(false);
       setUploadStatus('');
@@ -279,13 +283,6 @@ export default function VerifyNicPage() {
                 <AlertTitle>Important</AlertTitle>
                 <AlertDescription>
                     Ensure images are clear, well-lit, and all details are readable. Max file size: {MAX_FILE_SIZE_MB}MB. Accepted formats: JPG, PNG, WEBP.
-                </AlertDescription>
-            </Alert>
-            <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4"/>
-                <AlertTitle>Having trouble uploading?</AlertTitle>
-                <AlertDescription>
-                    If the upload gets stuck, it is likely a permissions issue with the backend storage. Please contact support and mention a possible <strong className="font-semibold">CORS configuration error</strong> on the Firebase Storage bucket.
                 </AlertDescription>
             </Alert>
           </CardContent>
