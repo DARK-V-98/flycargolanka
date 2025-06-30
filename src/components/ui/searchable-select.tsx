@@ -18,6 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { ScrollArea } from "./scroll-area"
 
 interface SearchableSelectProps {
   options: { label: string; value: string }[]
@@ -41,7 +42,7 @@ export function SearchableSelect({
   const [open, setOpen] = React.useState(false)
 
   const displayLabel = value
-    ? options.find((option) => option.value.toLowerCase() === value.toLowerCase())?.label
+    ? options.find((option) => option.value === value)?.label
     : placeholder;
 
   return (
@@ -64,31 +65,26 @@ export function SearchableSelect({
           <CommandList>
             <CommandEmpty>{emptyPlaceholder}</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.label}
-                  onSelect={(currentLabel) => {
-                    // Find the option whose label was selected to get the correct value
-                    const selectedValue = options.find(
-                      (opt) => opt.label.toLowerCase() === currentLabel.toLowerCase()
-                    )?.value;
-
-                    if (selectedValue) {
-                      onChange(selectedValue);
-                    }
-                    setOpen(false)
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value?.toLowerCase() === option.value.toLowerCase() ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
+                <ScrollArea className="h-72">
+                    {options.map((option) => (
+                        <CommandItem
+                        key={option.value}
+                        value={option.value}
+                        onSelect={(currentValue) => {
+                            onChange(currentValue === value ? "" : currentValue)
+                            setOpen(false)
+                        }}
+                        >
+                        <Check
+                            className={cn(
+                            "mr-2 h-4 w-4",
+                            value === option.value ? "opacity-100" : "opacity-0"
+                            )}
+                        />
+                        {option.label}
+                        </CommandItem>
+                    ))}
+                </ScrollArea>
             </CommandGroup>
           </CommandList>
         </Command>

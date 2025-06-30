@@ -30,7 +30,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
@@ -611,31 +611,24 @@ export default function BookingPage() {
                   <FormField control={form.control} name="receiverCountry" render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <FormLabel>Destination Country</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          form.setValue('approxWeight', '' as any);
-                          setCalculatedCost(null);
-                          setCalculationError(null);
-                          setAvailableWeights([]);
-                        }}
-                        defaultValue={field.value}
-                        value={field.value}
-                        disabled={loadingCountries || availableCountries.length === 0}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={loadingCountries ? "Loading countries..." : "Select a country"} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableCountries.map((country) => (
-                            <SelectItem key={country.id} value={country.name}>
-                              {country.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        <SearchableSelect
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('approxWeight', '' as any);
+                            setCalculatedCost(null);
+                            setCalculationError(null);
+                            setAvailableWeights([]);
+                          }}
+                          options={availableCountries.map((country) => ({
+                            label: country.name,
+                            value: country.name,
+                          }))}
+                          placeholder={loadingCountries ? "Loading countries..." : "Select a country"}
+                          searchPlaceholder="Search country..."
+                          emptyPlaceholder="No country found."
+                          disabled={loadingCountries || availableCountries.length === 0}
+                        />
                       <FormMessage />
                     </FormItem>
                   )} />
