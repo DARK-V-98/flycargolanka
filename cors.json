@@ -1,0 +1,11 @@
+[
+  {
+    "origin": ["http://localhost:3000", "https://www.flycargolanka.lk"],
+    "method": ["GET", "POST", "PUT"],
+    "responseHeader": [
+      "Content-Type",
+      "Access-Control-Allow-Origin"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, type ChangeEvent } from 'react';
@@ -21,6 +20,8 @@ import { Progress } from '@/components/ui/progress';
 
 
 const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export default function VerifyNicPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -64,40 +65,28 @@ export default function VerifyNicPage() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, type: 'front' | 'back') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-            title: "File Too Large",
-            description: `File size for ${type} image should not exceed 5MB.`,
-            variant: "destructive"
-        });
-        if (type === 'front') {
-            setFrontImageFile(null);
-            setFrontImageUrlPreview(null);
-        } else {
-            setBackImageFile(null);
-            setBackImageUrlPreview(null);
-        }
-        e.target.value = ''; // Clear the input
+      // Clear previous errors on new file selection
+      setFormError(null);
+
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        const errorMsg = `File size for ${type} image should not exceed ${MAX_FILE_SIZE_MB}MB.`;
+        toast({ title: "File Too Large", description: errorMsg, variant: "destructive" });
+        setFormError(errorMsg);
+        if (type === 'front') { setFrontImageFile(null); setFrontImageUrlPreview(null); } 
+        else { setBackImageFile(null); setBackImageUrlPreview(null); }
+        e.target.value = '';
         return;
       }
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        toast({
-            title: "Invalid File Type",
-            description: `Please use JPG, PNG, or WEBP for the ${type} image.`,
-            variant: "destructive"
-        });
-         if (type === 'front') {
-            setFrontImageFile(null);
-            setFrontImageUrlPreview(null);
-        } else {
-            setBackImageFile(null);
-            setBackImageUrlPreview(null);
-        }
-        e.target.value = ''; // Clear the input
+        const errorMsg = `Please use JPG, PNG, or WEBP for the ${type} image.`;
+        toast({ title: "Invalid File Type", description: errorMsg, variant: "destructive" });
+        setFormError(errorMsg);
+        if (type === 'front') { setFrontImageFile(null); setFrontImageUrlPreview(null); }
+        else { setBackImageFile(null); setBackImageUrlPreview(null); }
+        e.target.value = '';
         return;
       }
 
-      setFormError(null); // Clear any previous error
       const previewUrl = URL.createObjectURL(file);
       if (type === 'front') {
         setFrontImageFile(file);
@@ -198,13 +187,13 @@ export default function VerifyNicPage() {
       if (error.code) {
         switch (error.code) {
           case 'storage/unauthorized':
-            errorMessage = "Permission Denied. Please ensure you are logged in.";
+            errorMessage = "Permission Denied. Please ensure you are logged in and have the correct permissions.";
             break;
           case 'storage/canceled':
             errorMessage = "Upload was canceled. Please try again.";
             break;
           case 'storage/unknown':
-            errorMessage = "An unknown error occurred. This can happen if the storage service is misconfigured (CORS rules). Please contact support if this persists.";
+            errorMessage = "An unknown storage error occurred. This is often caused by a misconfigured CORS policy on your Firebase Storage bucket. Please contact support.";
             break;
           default:
             errorMessage = `An error occurred: ${error.message}`;
@@ -285,11 +274,18 @@ export default function VerifyNicPage() {
                     <AlertDescription>{formError}</AlertDescription>
                 </Alert>
             )}
-            <Alert variant="default" className="bg-secondary/50 border-secondary">
+             <Alert variant="default" className="bg-secondary/50 border-secondary">
                 <Info className="h-5 w-5"/>
                 <AlertTitle>Important</AlertTitle>
                 <AlertDescription>
-                    Ensure images are clear, well-lit, and all details are readable. Max file size: 5MB. Accepted formats: JPG, PNG, WEBP.
+                    Ensure images are clear, well-lit, and all details are readable. Max file size: {MAX_FILE_SIZE_MB}MB. Accepted formats: JPG, PNG, WEBP.
+                </AlertDescription>
+            </Alert>
+            <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4"/>
+                <AlertTitle>Having trouble uploading?</AlertTitle>
+                <AlertDescription>
+                    If the upload gets stuck, it is likely a permissions issue with the backend storage. Please contact support and mention a possible <strong className="font-semibold">CORS configuration error</strong> on the Firebase Storage bucket.
                 </AlertDescription>
             </Alert>
           </CardContent>
