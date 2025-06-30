@@ -72,5 +72,14 @@ service cloud.firestore {
         allow write: if isAdminOrHigher();
       }
     }
+
+    // Rules for the 'notifications' collection
+    match /notifications/{notificationId} {
+      // Only Admins/Developers can read/write notifications.
+      allow read, update, delete: if isAdminOrHigher();
+
+      // Only backend can create notifications. Client-side creation is denied.
+      allow create: if false; 
+    }
   }
 }
