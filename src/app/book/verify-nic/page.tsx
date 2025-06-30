@@ -4,8 +4,7 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, type NicVerificationStatus } from '@/contexts/AuthContext';
-import { storage, db } from '@/lib/firebase';
-import { ref, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
+import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -37,7 +36,6 @@ export default function VerifyNicPage() {
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(0);
   
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -82,7 +80,7 @@ export default function VerifyNicPage() {
         const errorMsg = `Please use JPG, PNG, or WEBP for the ${type} image.`;
         toast({ title: "Invalid File Type", description: errorMsg, variant: "destructive" });
         setFormError(errorMsg);
-        if (type === 'front') { setFrontImageFile(null); setFrontImageUrlPreview(null); }
+        if (type === 'front') { setFrontImageFile(null); setFrontImageUrlPreview(null); } 
         else { setBackImageFile(null); setBackImageUrlPreview(null); }
         e.target.value = '';
         return;
@@ -99,39 +97,12 @@ export default function VerifyNicPage() {
     }
   };
 
-  const uploadImage = (file: File, side: 'front' | 'back', onProgress: (progress: number) => void): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      if (!user) {
-        return reject(new Error("User not authenticated."));
-      }
-      const fileExtension = file.name.split('.').pop();
-      const storageRef = ref(storage, `nic_verification/${user.uid}/nic_${side}_${Date.now()}.${fileExtension}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          onProgress(progress);
-        },
-        (error) => {
-          console.error(`Upload failed for ${side}:`, error);
-          reject(error);
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL);
-          }).catch(reject);
-        }
-      );
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError(null);
 
     if (!user || !userProfile) {
-      toast({ title: "Error", description: "User not found.", variant: "destructive" });
+      toast({ title: "Error", description: "User not found. Please log in again.", variant: "destructive" });
       return;
     }
     if (!frontImageFile || !backImageFile) {
@@ -144,16 +115,38 @@ export default function VerifyNicPage() {
     }
 
     setIsUploading(true);
+    setUploadStatus("Preparing upload...");
 
     try {
-      setUploadStatus("Uploading front image...");
-      const frontUrl = await uploadImage(frontImageFile, 'front', setUploadProgress);
+      const token = await user.getIdToken();
       
-      setUploadStatus("Uploading back image...");
-      const backUrl = await uploadImage(backImageFile, 'back', setUploadProgress);
+      const formData = new FormData();
+      formData.append('frontImage', frontImageFile);
+      formData.append('backImage', backImageFile);
+
+      setUploadStatus("Uploading images... This may take a moment.");
+
+      const response = await fetch('/api/upload-nic', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to upload images. The server responded with an error.');
+      }
+      
+      const { frontUrl, backUrl } = result;
+
+      if (!frontUrl || !backUrl) {
+        throw new Error("Server did not return the required image URLs.");
+      }
 
       setUploadStatus("Finalizing submission...");
-      setUploadProgress(100);
       
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
@@ -182,38 +175,13 @@ export default function VerifyNicPage() {
       router.push('/my-bookings');
 
     } catch (error: any) {
-      console.error("Error uploading NIC images:", error);
-      let errorMessage = "Could not upload NIC images. Please try again.";
-      let detailedError: string | null = null;
-
-      if (error.code) {
-        switch (error.code) {
-          case 'storage/unauthorized':
-            errorMessage = "Permission Denied. Your Firebase Storage rules may be preventing the upload.";
-            detailedError = "Please check your `storage.rules` file and ensure they are deployed correctly."
-            break;
-          case 'storage/canceled':
-            errorMessage = "Upload was canceled. Please try again.";
-            break;
-          case 'storage/unknown':
-            errorMessage = "A CORS configuration error occurred on your Firebase backend.";
-            detailedError = "This is a server configuration issue that must be fixed. In your project's terminal, please run the following command to allow your website to upload files: `gsutil cors set cors.json gs://flycargolanka-35017.appspot.com`";
-            break;
-          default:
-            errorMessage = `An error occurred: ${error.message}`;
-            break;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({ title: "Upload Failed", description: errorMessage, variant: "destructive", duration: 15000 });
-      setFormError(`${errorMessage}${detailedError ? ` ${detailedError}` : ''}`);
-
+      console.error("Error submitting NIC verification:", error);
+      const errorMessage = error.message || "An unexpected error occurred during the upload process. Please try again.";
+      toast({ title: "Submission Failed", description: errorMessage, variant: "destructive" });
+      setFormError(errorMessage);
     } finally {
       setIsUploading(false);
       setUploadStatus('');
-      setUploadProgress(0);
     }
   };
 
@@ -298,7 +266,7 @@ export default function VerifyNicPage() {
             {isUploading && (
                 <div className="w-full space-y-2 mt-4 text-center">
                     <p className="text-sm text-muted-foreground">{uploadStatus}</p>
-                    <Progress value={uploadProgress} className="w-full" />
+                    <Progress value={isUploading ? undefined : 0} className="w-full" />
                 </div>
             )}
           </CardFooter>

@@ -1,0 +1,17 @@
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Allow public read on files that have been made public via the Admin SDK.
+    // The server-side upload process makes the NIC images public.
+    // Admins can view these URLs directly in the admin panel.
+    match /nic_verification/{userId}/{fileName} {
+      allow read: if true;
+
+      // Disallow client-side writes completely. All uploads must go through our API.
+      allow write: if false;
+    }
+  }
+}
