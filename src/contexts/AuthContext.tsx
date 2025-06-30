@@ -409,7 +409,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const isMaintenancePage = pathname === '/maintenance';
-    const isTrackPackagePage = pathname === '/track-package';
     
     return (
       <AuthContext.Provider value={value}>
@@ -420,11 +419,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             children
         ) : (
             <div className="flex flex-col min-h-screen bg-background">
-                {!isTrackPackagePage && <Header />}
+                <Header />
                 <main className="flex-grow flex flex-col">
                     {children}
                 </main>
-                {!isTrackPackagePage && <Footer />}
+                <Footer />
                 <Toaster />
             </div>
         )}

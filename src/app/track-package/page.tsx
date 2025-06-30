@@ -7,22 +7,20 @@ export default function TrackPackagePage() {
   const trackingUrl = "https://expoceylonplc.com/track/";
 
   return (
-    <div className="flex flex-col h-screen opacity-0 animate-fadeInUp">
-      <header className="container mx-auto px-4 pt-8 pb-4">
-        <PageHeader
-          title="Track Your Package"
-          description="Enter your tracking number on the page below to see the current status of your shipment."
-        />
-        <Alert className="mt-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Tracking Information</AlertTitle>
-          <AlertDescription>
-            Tracking is provided by our partner, Expolanka. You are interacting directly with their website. If the area below appears blank, their site may not support embedding.
-          </AlertDescription>
-        </Alert>
-      </header>
+    <div className="container mx-auto px-4 py-8 opacity-0 animate-fadeInUp">
+      <PageHeader
+        title="Track Your Package"
+        description="Enter your tracking number on the page below to see the current status of your shipment."
+      />
+      <Alert className="mt-4 max-w-4xl mx-auto">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Tracking Information</AlertTitle>
+        <AlertDescription>
+          Tracking is provided by our partner, Expolanka. You are interacting directly with their website. If the area below appears blank, their site may not support embedding.
+        </AlertDescription>
+      </Alert>
       
-      <div className="flex-1 w-full border-t">
+      <div className="mt-8 w-full h-[75vh] border rounded-lg overflow-hidden shadow-lg">
         <iframe
           src={trackingUrl}
           title="Expoceylon Tracking"
