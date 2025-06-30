@@ -26,6 +26,7 @@ const baseNavItems = [
   { href: '/', label: 'Home' },
   { href: '/services', label: 'About Us' },
   { href: '/book', label: 'Book Courier' },
+  { href: '/track-package', label: 'Track Package' },
 ];
 
 export default function Header() {
