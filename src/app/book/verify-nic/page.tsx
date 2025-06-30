@@ -13,16 +13,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle, CheckCircle2, UploadCloud, ShieldCheck, Info } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, UploadCloud, ShieldCheck, Info, Fingerprint } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
+const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
+
 export default function VerifyNicPage() {
-  const { user, userProfile, loading: authLoading, updateNicVerificationDetails } = useAuth();
+  const { user, userProfile, loading: authLoading, updateUserExtendedProfile, updateNicVerificationDetails } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
+  const [nic, setNic] = useState('');
   const [frontImageFile, setFrontImageFile] = useState<File | null>(null);
   const [backImageFile, setBackImageFile] = useState<File | null>(null);
   const [frontImageUrlPreview, setFrontImageUrlPreview] = useState<string | null>(null);
@@ -34,20 +37,18 @@ export default function VerifyNicPage() {
     if (!authLoading) {
       if (!user) {
         router.push('/auth?redirect=/book/verify-nic');
-      } else if (userProfile && (!userProfile.nic || userProfile.nic.trim() === '')) {
-        toast({
-          title: "NIC Not Found",
-          description: "Please update your NIC in your profile before proceeding with verification.",
-          variant: "destructive",
-        });
-        router.push('/profile?redirect=/book/verify-nic');
-      } else if (userProfile && (userProfile.nicVerificationStatus === 'verified' || userProfile.nicVerificationStatus === 'pending')) {
-        toast({
-          title: `NIC Status: ${userProfile.nicVerificationStatus}`,
-          description: "Your NIC is already verified or pending verification.",
-          variant: "default",
-        });
-        router.push('/my-bookings');
+      } else if (userProfile) {
+        if (userProfile.nic) {
+          setNic(userProfile.nic);
+        }
+        if (userProfile.nicVerificationStatus === 'verified' || userProfile.nicVerificationStatus === 'pending') {
+          toast({
+            title: `NIC Status: ${userProfile.nicVerificationStatus}`,
+            description: "Your NIC is already verified or pending verification.",
+            variant: "default",
+          });
+          router.push('/my-bookings');
+        }
       }
     }
   }, [user, userProfile, authLoading, router, toast]);
@@ -104,9 +105,18 @@ export default function VerifyNicPage() {
       setFormError("Please upload both front and back images of your NIC.");
       return;
     }
+    if (!nicRegex.test(nic.trim())) {
+      setFormError("Invalid NIC format. Please enter a valid 12-digit or 9-digit + V/X NIC number.");
+      return;
+    }
+
 
     setIsUploading(true);
     try {
+      if (nic.trim() !== userProfile.nic) {
+        await updateUserExtendedProfile({ nic: nic.trim() });
+      }
+
       const uploadImage = async (file: File, side: 'front' | 'back'): Promise<string> => {
         const fileExtension = file.name.split('.').pop();
         const storageRef = ref(storage, `nic_verification/${user.uid}/nic_${side}.${fileExtension}`);
@@ -125,7 +135,7 @@ export default function VerifyNicPage() {
 
       toast({
         title: "NIC Images Submitted",
-        description: "Your NIC images have been uploaded. Verification will take some time. You can check the status on your My Bookings page.",
+        description: "Your NIC details have been uploaded. Verification will take some time. You can check the status on your My Bookings page.",
         variant: "default",
         duration: 7000,
       });
@@ -144,66 +154,42 @@ export default function VerifyNicPage() {
     }
   };
 
-  if (authLoading || !user || !userProfile) {
+  if (authLoading || !user) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" /> <p className="ml-2">Loading Verification Page...</p>
       </div>
     );
   }
-   if (!userProfile.nic || userProfile.nic.trim() === '') {
-    // This case should ideally be caught by useEffect, but as a fallback:
-    return (
-        <div className="container mx-auto px-4 py-8 text-center">
-             <Alert variant="destructive" className="max-w-lg mx-auto">
-                <AlertTriangle className="h-5 w-5" />
-                <AlertTitle>NIC Not Set</AlertTitle>
-                <AlertDescription>
-                    Please set your NIC number in your profile before attempting verification.
-                    <Button asChild variant="link" className="block mx-auto mt-2">
-                        <Link href="/profile?redirect=/book/verify-nic">Go to Profile</Link>
-                    </Button>
-                </AlertDescription>
-            </Alert>
-        </div>
-    );
-  }
-  if (userProfile.nicVerificationStatus === 'verified' || userProfile.nicVerificationStatus === 'pending') {
-     // This case should also be caught by useEffect, but as a fallback:
-    return (
-        <div className="container mx-auto px-4 py-8 text-center">
-             <Alert variant="default" className="max-w-lg mx-auto bg-primary/10 border-primary/30">
-                <Info className="h-5 w-5 text-primary" />
-                <AlertTitle className="text-primary">NIC Status: {userProfile.nicVerificationStatus}</AlertTitle>
-                <AlertDescription>
-                    Your NIC verification is already '{userProfile.nicVerificationStatus}'. No further action is needed here.
-                    <Button asChild variant="link" className="block mx-auto mt-2">
-                        <Link href="/my-bookings">Go to My Bookings</Link>
-                    </Button>
-                </AlertDescription>
-            </Alert>
-        </div>
-    );
-  }
-
 
   return (
     <div className="opacity-0 animate-fadeInUp container mx-auto px-4 py-8">
       <PageHeader
-        title="Verify Your NIC"
-        description="Please upload clear images of the front and back of your National Identity Card."
+        title="Verify Your Identity"
+        description="Please provide your NIC number and upload clear images of your National Identity Card."
       />
       <Card className="max-w-lg mx-auto shadow-xl border-border/50">
         <CardHeader>
           <CardTitle className="text-2xl font-headline text-accent flex items-center">
-            <ShieldCheck className="mr-2 h-6 w-6 text-primary" /> NIC Details
+            <ShieldCheck className="mr-2 h-6 w-6 text-primary" /> NIC Verification
           </CardTitle>
           <CardDescription>
-            Your NIC Number: <span className="font-semibold text-foreground">{userProfile.nic}</span>
+            Enter your NIC number and upload photos to complete verification.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
+            <div className="space-y-2">
+                <Label htmlFor="nicNumber" className="text-base flex items-center"><Fingerprint className="mr-2 h-4 w-4"/>NIC Number</Label>
+                <Input 
+                    id="nicNumber" 
+                    type="text" 
+                    placeholder="e.g., 199012345V or 200012345678"
+                    value={nic}
+                    onChange={(e) => setNic(e.target.value)}
+                    required
+                />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="nicFront" className="text-base">NIC Front Image</Label>
               <Input id="nicFront" type="file" accept="image/jpeg, image/png, image/webp" onChange={(e) => handleFileChange(e, 'front')} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" />
@@ -239,7 +225,7 @@ export default function VerifyNicPage() {
             </Alert>
           </CardContent>
           <CardFooter>
-            <Button type="submit" className="w-full" size="lg" disabled={isUploading || !frontImageFile || !backImageFile}>
+            <Button type="submit" className="w-full" size="lg" disabled={isUploading || !frontImageFile || !backImageFile || !nic}>
               {isUploading ? (
                 <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Uploading & Submitting...</>
               ) : (
