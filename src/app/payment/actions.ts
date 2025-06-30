@@ -4,15 +4,20 @@
 import crypto from 'crypto';
 import type { PayhereData } from '@/types/payhere';
 
-// IMPORTANT: These values are hardcoded based on your provided details.
-// For better security in production, consider moving them to environment variables.
-const MERCHANT_ID = '1230954';
-const MERCHANT_SECRET = 'MjMwNDYxNDIyNjMyMzEwOTgyMzU1NjkwMDA5NjExOTI5NDA3MjA=';
-const PAYHERE_MODE = 'sandbox'; // Set to 'live' for production
-const APP_URL = 'http://localhost:3000'; // Your app's public URL
+// Read credentials from environment variables.
+// Ensure they are set in your .env.local file.
+const MERCHANT_ID = process.env.NEXT_PUBLIC_PAYHERE_MERCHANT_ID;
+const MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET;
+const PAYHERE_MODE = process.env.PAYHERE_MODE || 'sandbox'; // Default to sandbox
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'; // Default for local dev
+
+// Runtime check to ensure variables are loaded
+if (!MERCHANT_ID || !MERCHANT_SECRET || !APP_URL) {
+    throw new Error("Payhere environment variables (NEXT_PUBLIC_PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET, NEXT_PUBLIC_APP_URL) are not set. Please check your .env.local file.");
+}
 
 // Determine Payhere URL based on the mode.
-const isLive = PAYHERE_MODE.trim() === 'live';
+const isLive = PAYHERE_MODE.trim().toLowerCase() === 'live';
 const PAYHERE_URL = isLive
   ? 'https://www.payhere.lk/pay/checkout' // Live URL
   : 'https://sandbox.payhere.lk/pay/checkout'; // Sandbox URL for testing

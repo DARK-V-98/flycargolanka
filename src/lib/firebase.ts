@@ -4,15 +4,20 @@ import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage'; // Added Storage
 
-// Your new Firebase configuration, hardcoded from your details.
+// These environment variables are expected to be in a .env.local file
 const firebaseConfig = {
-  apiKey: "AIzaSyAqy6K5OHi9w9MDhl6fZtT3gk_XNdT_KWQ",
-  authDomain: "flycargolanka-35017.firebaseapp.com",
-  projectId: "flycargolanka-35017",
-  storageBucket: "flycargolanka-35017.appspot.com",
-  messagingSenderId: "259174581889",
-  appId: "1:259174581889:web:376e007e75321e493aef80",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
+
+// Simple validation to ensure environment variables are loaded
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  throw new Error("Firebase configuration environment variables are not set. Please create a .env.local file with your Firebase project's credentials. See new-firebase-env-details.txt for details.");
+}
 
 let app: FirebaseApp;
 
