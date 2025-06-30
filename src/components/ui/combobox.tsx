@@ -51,12 +51,12 @@ export function Combobox({
           disabled={disabled}
         >
           {value
-            ? options.find((option) => option.value.toLowerCase() === value.toLowerCase())?.label
+            ? options.find((option) => option.value === value)?.label
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width)] p-0">
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
@@ -67,16 +67,14 @@ export function Combobox({
                   key={option.value}
                   value={option.value}
                   onSelect={(currentValue) => {
-                    // Find the original label to pass to onChange
-                    const selectedOption = options.find(o => o.value.toLowerCase() === currentValue);
-                    onChange(selectedOption ? selectedOption.value : "")
+                    onChange(currentValue)
                     setOpen(false)
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value?.toLowerCase() === option.value.toLowerCase() ? "opacity-100" : "opacity-0"
+                      value === option.value ? "opacity-100" : "opacity-0"
                     )}
                   />
                   {option.label}
