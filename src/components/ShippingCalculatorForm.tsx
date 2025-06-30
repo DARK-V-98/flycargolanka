@@ -273,9 +273,9 @@ export default function ShippingCalculatorForm() {
                           ))}
                         </ScrollArea>
                       ) : (
-                          <div className="p-2 text-center text-sm text-muted-foreground">
+                          <p className="px-2 py-2 text-center text-sm text-muted-foreground">
                               {availableCountries.length === 0 ? "No countries available." : "No country found."}
-                          </div>
+                          </p>
                       )}
                     </SelectContent>
                   </Select>

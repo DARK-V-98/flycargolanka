@@ -651,9 +651,9 @@ export default function BookingPage() {
                                   ))}
                                   </ScrollArea>
                               ) : (
-                                  <div className="p-2 text-center text-sm text-muted-foreground">
+                                  <p className="px-2 py-2 text-center text-sm text-muted-foreground">
                                       {availableCountries.length > 0 ? "No country found." : "No countries configured."}
-                                  </div>
+                                  </p>
                               )}
                           </SelectContent>
                         </Select>
