@@ -21,7 +21,7 @@ export default function Footer() {
 
           {/* Middle Column: Quick Links */}
           <div className="md:col-span-1 space-y-4 text-left md:text-center">
-            <p className="text-lg font-semibold">Quick Links</p>
+            <div className="text-lg font-semibold">Quick Links</div>
             <nav className="mt-2 text-sm opacity-90 space-y-2 flex flex-col items-start md:items-center">
               <Link href="/book" className="hover:underline">Book Courier</Link>
               <Link href="/track-package" className="hover:underline">Track Package</Link>
@@ -34,7 +34,7 @@ export default function Footer() {
 
           {/* Right Column: Contact */}
           <div className="md:col-span-1 space-y-4 text-left md:text-right">
-            <p className="text-lg font-semibold">Contact Us</p>
+            <div className="text-lg font-semibold">Contact Us</div>
             <address className="mt-2 text-sm opacity-90 not-italic space-y-1">
               <div>Fly cargo lanka. No.05, avariwatta, katunayake</div>
               <div>Mobile: <a href="tel:+94704917636" className="hover:underline">+94 704 917 636</a></div>
