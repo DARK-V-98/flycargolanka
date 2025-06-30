@@ -1,6 +1,7 @@
 
 "use client";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import NavLink from './NavLink';
 import FlyCargoLogo from '@/components/icons/FlyCargoLogo';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -14,9 +15,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog, Info, BookMarked } from "lucide-react"; // Added BookMarked
-import { useAuth } from '@/contexts/AuthContext';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog, Info, BookMarked, Bell, Package, Fingerprint } from "lucide-react";
+import { useAuth, type AdminNotification } from '@/contexts/AuthContext';
 import type { Route } from 'next';
+import { formatDistanceToNow } from 'date-fns';
 
 
 const baseNavItems = [
@@ -26,7 +29,14 @@ const baseNavItems = [
 ];
 
 export default function Header() {
-  const { user, userProfile, role, logout, loading } = useAuth();
+  const { user, userProfile, role, logout, loading, notifications, markNotificationAsRead } = useAuth();
+  const router = useRouter();
+
+  const handleNotificationClick = async (notification: AdminNotification) => {
+    await markNotificationAsRead(notification.id);
+    router.push(notification.link);
+  };
+
 
   const getNavItems = () => {
     let items = [...baseNavItems];
@@ -41,6 +51,7 @@ export default function Header() {
   };
 
   const navItemsToDisplay = getNavItems();
+  const unreadCount = notifications.length;
 
   return (
     <header className="bg-accent text-accent-foreground sticky top-0 z-50 shadow-md">
@@ -48,7 +59,7 @@ export default function Header() {
         <Link href="/">
           <FlyCargoLogo />
         </Link>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <nav className="hidden md:flex space-x-1 items-center">
             {navItemsToDisplay.map((item) => (
               <NavLink key={item.label} href={item.href} className="text-base px-2 py-1.5">
@@ -60,6 +71,49 @@ export default function Header() {
               </NavLink>
             ))}
           </nav>
+
+          {role && (role === 'admin' || role === 'developer') && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/10">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                      {unreadCount}
+                    </span>
+                  )}
+                  <span className="sr-only">Notifications</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 sm:w-96" align="end" forceMount>
+                 <DropdownMenuLabel>
+                    <p className="font-semibold">Notifications</p>
+                 </DropdownMenuLabel>
+                 <DropdownMenuSeparator />
+                 <ScrollArea className={unreadCount > 3 ? "h-[300px]" : "h-auto"}>
+                    {unreadCount > 0 ? (
+                        notifications.map((n) => (
+                           <DropdownMenuItem key={n.id} onSelect={() => handleNotificationClick(n)} className="cursor-pointer items-start">
+                             <div className="flex items-start space-x-3 py-1">
+                                <div className="mt-1">
+                                    {n.type === 'new_booking' ? <Package className="h-4 w-4 text-primary" /> : <Fingerprint className="h-4 w-4 text-primary" />}
+                                </div>
+                                <div className="flex flex-col">
+                                    <p className="text-sm leading-snug whitespace-normal">{n.message}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {formatDistanceToNow(n.createdAt.toDate(), { addSuffix: true })}
+                                    </p>
+                                </div>
+                             </div>
+                           </DropdownMenuItem>
+                        ))
+                    ) : (
+                        <DropdownMenuItem disabled>No new notifications</DropdownMenuItem>
+                    )}
+                 </ScrollArea>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           {loading ? (
              <Button variant="ghost" size="icon" className="animate-pulse">

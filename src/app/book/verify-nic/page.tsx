@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, type NicVerificationStatus } from '@/contexts/AuthContext';
 import { storage, db } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,30 +34,36 @@ export default function VerifyNicPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
+    if (!authLoading && !user) {
         router.push('/auth?redirect=/book/verify-nic');
-      } else if (userProfile) {
-        if (userProfile.nic) {
-          setNic(userProfile.nic);
-        }
-        if (userProfile.nicVerificationStatus === 'verified' || userProfile.nicVerificationStatus === 'pending') {
-          toast({
-            title: `NIC Status: ${userProfile.nicVerificationStatus}`,
-            description: "Your NIC is already verified or pending verification.",
-            variant: "default",
-          });
-          router.push('/my-bookings');
-        }
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (userProfile) {
+      if (userProfile.nic) {
+        setNic(userProfile.nic);
+      }
+      if (userProfile.nicVerificationStatus === 'verified' || userProfile.nicVerificationStatus === 'pending') {
+        toast({
+          title: `NIC Status: ${userProfile.nicVerificationStatus}`,
+          description: "Your NIC is already verified or pending verification. You will be redirected.",
+          variant: "default",
+        });
+        router.push('/my-bookings');
       }
     }
-  }, [user, userProfile, authLoading, router, toast]);
+  }, [userProfile, router, toast]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, type: 'front' | 'back') => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setFormError(`File size for ${type} image should not exceed 5MB.`);
+        toast({
+            title: "File Too Large",
+            description: `File size for ${type} image should not exceed 5MB.`,
+            variant: "destructive"
+        });
         if (type === 'front') {
             setFrontImageFile(null);
             setFrontImageUrlPreview(null);
@@ -69,7 +75,11 @@ export default function VerifyNicPage() {
         return;
       }
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        setFormError(`Invalid file type for ${type} image. Please use JPG, PNG, or WEBP.`);
+        toast({
+            title: "Invalid File Type",
+            description: `Please use JPG, PNG, or WEBP for the ${type} image.`,
+            variant: "destructive"
+        });
          if (type === 'front') {
             setFrontImageFile(null);
             setFrontImageUrlPreview(null);
@@ -131,6 +141,16 @@ export default function VerifyNicPage() {
         nicFrontUrl: frontUrl,
         nicBackUrl: backUrl,
         nicVerificationStatus: 'pending',
+      });
+
+      // Create notification for admins
+      await addDoc(collection(db, 'notifications'), {
+        type: 'nic_verification',
+        message: `NIC submitted for verification by ${userProfile.displayName || user.email}.`,
+        link: '/admin/verify-nic',
+        isRead: false,
+        recipient: 'admins',
+        createdAt: serverTimestamp()
       });
 
       toast({

@@ -2,16 +2,20 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState, Suspense } from 'react';
+import React, { createContext, useContext, useEffect, useState, Suspense, useRef } from 'react';
 import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot, orderBy, type Timestamp } from 'firebase/firestore';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Toaster } from "@/components/ui/toaster";
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+import Link from 'next/link';
+
 
 export type UserRole = 'user' | 'admin' | 'developer';
 export type NicVerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
@@ -33,6 +37,15 @@ export interface UserProfile {
   updatedAt?: any;
 }
 
+export interface AdminNotification {
+  id: string;
+  type: 'new_booking' | 'nic_verification';
+  message: string;
+  link: string;
+  isRead: boolean;
+  createdAt: Timestamp;
+}
+
 interface AuthContextType {
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
@@ -47,6 +60,8 @@ interface AuthContextType {
   updateUserRoleByEmail: (targetUserEmail: string, newRole: UserRole) => Promise<void>;
   updateUserExtendedProfile: (data: { nic?: string | null; phone?: string | null; address?: string | null }) => Promise<void>;
   updateNicVerificationDetails: (details: { nicFrontUrl?: string; nicBackUrl?: string; nicVerificationStatus: NicVerificationStatus }) => Promise<void>;
+  notifications: AdminNotification[];
+  markNotificationAsRead: (id: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,6 +90,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [role, setRole] = useState<UserRole | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const { toast } = useToast();
+  const notifiedIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -168,6 +187,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return () => unsubscribeAuth();
   }, []);
+
+  // Effect for listening to admin notifications
+  useEffect(() => {
+    if (!user || (role !== 'admin' && role !== 'developer')) {
+      setNotifications([]);
+      if(notifiedIdsRef.current.size > 0) notifiedIdsRef.current.clear();
+      return;
+    }
+
+    const notificationsRef = collection(db, 'notifications');
+    const q = query(notificationsRef, where('isRead', '==', false), orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const unreadNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AdminNotification));
+
+      // For any new notification that we haven't shown a toast for, show one.
+      unreadNotifications.forEach(n => {
+        if (!notifiedIdsRef.current.has(n.id)) {
+          toast({
+            title: n.type === 'new_booking' ? 'New Booking Received' : 'New NIC Verification',
+            description: n.message,
+            action: (
+              <ToastAction altText="View" asChild>
+                <Link href={n.link}>View</Link>
+              </ToastAction>
+            ),
+            duration: 15000,
+          });
+          notifiedIdsRef.current.add(n.id);
+        }
+      });
+      setNotifications(unreadNotifications);
+    });
+
+    return () => unsubscribe();
+  }, [user, role, toast]);
+
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
@@ -339,6 +395,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const markNotificationAsRead = async (id: string) => {
+    const notificationRef = doc(db, 'notifications', id);
+    try {
+        await updateDoc(notificationRef, { isRead: true });
+    } catch (error) {
+        console.error("Error marking notification as read:", error);
+    }
+  };
+
   const value = {
       user,
       userProfile,
@@ -352,7 +417,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateUserDisplayName,
       updateUserRoleByEmail,
       updateUserExtendedProfile,
-      updateNicVerificationDetails
+      updateNicVerificationDetails,
+      notifications,
+      markNotificationAsRead
     };
 
     const isMaintenancePage = pathname === '/maintenance';
@@ -364,10 +431,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         </Suspense>
         {isMaintenancePage ? (
             children
-        ) : loading ? (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            </div>
         ) : (
             <div className="flex flex-col min-h-screen bg-background">
                 <Header />

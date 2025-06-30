@@ -25,7 +25,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign, Landmark, Box } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, setDoc, doc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where } from 'firebase/firestore';
+import { collection, setDoc, doc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where, addDoc } from 'firebase/firestore';
 import type { CountryRate, WeightRate } from '@/types/shippingRates';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -463,6 +463,16 @@ export default function BookingPage() {
       const bookingDocRef = doc(db, 'bookings', newBookingId);
       await setDoc(bookingDocRef, bookingData);
 
+      // Create notification for admins
+      await addDoc(collection(db, 'notifications'), {
+        type: 'new_booking',
+        message: `New booking (#${newBookingId}) received from ${data.senderFullName}.`,
+        link: `/admin/orders`,
+        isRead: false,
+        recipient: 'admins',
+        createdAt: serverTimestamp()
+      });
+
 
       toast({
         title: "Booking Submitted!",
@@ -842,5 +852,3 @@ export default function BookingPage() {
     </div>
   );
 }
-
-    
