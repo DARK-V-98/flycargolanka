@@ -121,6 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             };
             setUserProfile(updatedUserProfileState);
             setRole(effectiveRole);
+            setLoading(false);
           } else {
             // New user - create profile
             const determinedRoleForNewUser: UserRole = normalizedUserEmail === NORMALIZED_DEVELOPER_EMAIL ? 'developer' : 'user';
@@ -141,8 +142,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setDoc(userDocRef, newUserProfileData).then(() => {
               setUserProfile(newUserProfileData);
               setRole(determinedRoleForNewUser);
+              setLoading(false);
             }).catch(error => {
               console.error("Error creating new user profile in Firestore:", error);
+              setLoading(false);
             });
           }
         }, (error) => {
@@ -150,9 +153,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(null);
           setUserProfile(null);
           setRole(null);
+          setLoading(false);
         });
 
-        setLoading(false); 
         return () => unsubscribeProfile();
 
       } else {

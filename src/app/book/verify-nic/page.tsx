@@ -55,8 +55,8 @@ export default function VerifyNicPage() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, type: 'front' | 'back') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        setFormError(`File size for ${type} image should not exceed 2MB.`);
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setFormError(`File size for ${type} image should not exceed 5MB.`);
         if (type === 'front') {
             setFrontImageFile(null);
             setFrontImageUrlPreview(null);
@@ -234,7 +234,7 @@ export default function VerifyNicPage() {
                 <Info className="h-5 w-5"/>
                 <AlertTitle>Important</AlertTitle>
                 <AlertDescription>
-                    Ensure images are clear, well-lit, and all details are readable. Max file size: 2MB. Accepted formats: JPG, PNG, WEBP.
+                    Ensure images are clear, well-lit, and all details are readable. Max file size: 5MB. Accepted formats: JPG, PNG, WEBP.
                 </AlertDescription>
             </Alert>
           </CardContent>
