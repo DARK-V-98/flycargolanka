@@ -17,7 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap, CheckCircle, Box } from 'lucide-react';
-import { Combobox } from './ui/combobox';
+import { SearchableSelect } from './ui/searchable-select';
 
 const calculatorSchema = z.object({
   destinationCountry: z.string().min(1, "Please select a destination country."),
@@ -234,7 +234,7 @@ export default function ShippingCalculatorForm() {
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
-                    <Combobox
+                    <SearchableSelect
                       options={availableCountries.map(country => ({ label: country.name, value: country.name }))}
                       value={field.value}
                       onChange={(value) => {
