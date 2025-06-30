@@ -32,8 +32,11 @@ export default function VerifyNicPage() {
   const [backImageFile, setBackImageFile] = useState<File | null>(null);
   const [frontImageUrlPreview, setFrontImageUrlPreview] = useState<string | null>(null);
   const [backImageUrlPreview, setBackImageUrlPreview] = useState<string | null>(null);
+  
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -151,28 +154,17 @@ export default function VerifyNicPage() {
     }
 
     setIsUploading(true);
-    setUploadProgress(0);
 
     try {
-      let frontProgress = 0;
-      let backProgress = 0;
-      const updateCombinedProgress = () => {
-        setUploadProgress((frontProgress + backProgress) / 2);
-      };
+      setUploadStatus("Uploading front image...");
+      const frontUrl = await uploadImage(frontImageFile, 'front', setUploadProgress);
+      
+      setUploadStatus("Uploading back image...");
+      const backUrl = await uploadImage(backImageFile, 'back', setUploadProgress);
 
-      const frontUrlPromise = uploadImage(frontImageFile, 'front', (p) => {
-        frontProgress = p;
-        updateCombinedProgress();
-      });
-
-      const backUrlPromise = uploadImage(backImageFile, 'back', (p) => {
-        backProgress = p;
-        updateCombinedProgress();
-      });
-
-      const [frontUrl, backUrl] = await Promise.all([frontUrlPromise, backUrlPromise]);
+      setUploadStatus("Finalizing submission...");
       setUploadProgress(100);
-
+      
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
         nic: nic.trim(),
@@ -201,15 +193,33 @@ export default function VerifyNicPage() {
 
     } catch (error: any) {
       console.error("Error uploading NIC images:", error);
-      toast({
-        title: "Upload Failed",
-        description: error.message || "Could not upload NIC images. Please try again.",
-        variant: "destructive",
-      });
-      setFormError(error.message || "Could not upload NIC images. Please try again.");
+      let errorMessage = "Could not upload NIC images. Please check your network and try again.";
+
+      if (error.code) {
+        switch (error.code) {
+          case 'storage/unauthorized':
+            errorMessage = "Permission Denied. Please ensure you are logged in.";
+            break;
+          case 'storage/canceled':
+            errorMessage = "Upload was canceled. Please try again.";
+            break;
+          case 'storage/unknown':
+            errorMessage = "An unknown error occurred. This can happen if the storage service is misconfigured (CORS rules). Please contact support if this persists.";
+            break;
+          default:
+            errorMessage = `An error occurred: ${error.message}`;
+            break;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({ title: "Upload Failed", description: errorMessage, variant: "destructive" });
+      setFormError(errorMessage);
     } finally {
       setIsUploading(false);
-      setUploadProgress(null);
+      setUploadStatus('');
+      setUploadProgress(0);
     }
   };
 
@@ -291,10 +301,10 @@ export default function VerifyNicPage() {
                 <><UploadCloud className="mr-2 h-5 w-5" /> Submit for Verification</>
               )}
             </Button>
-            {isUploading && uploadProgress !== null && (
-                <div className="w-full space-y-2 mt-4">
+            {isUploading && (
+                <div className="w-full space-y-2 mt-4 text-center">
+                    <p className="text-sm text-muted-foreground">{uploadStatus}</p>
                     <Progress value={uploadProgress} className="w-full" />
-                    <p className="text-sm text-center text-muted-foreground">Uploading... {Math.round(uploadProgress)}%</p>
                 </div>
             )}
           </CardFooter>
