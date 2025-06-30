@@ -183,20 +183,21 @@ export default function VerifyNicPage() {
 
     } catch (error: any) {
       console.error("Error uploading NIC images:", error);
-      let errorMessage = "Could not upload NIC images. Please check your network and try again.";
+      let errorMessage = "Could not upload NIC images. Please try again.";
       let detailedError: string | null = null;
 
       if (error.code) {
         switch (error.code) {
           case 'storage/unauthorized':
             errorMessage = "Permission Denied. Your Firebase Storage rules may be preventing the upload.";
+            detailedError = "Please check your `storage.rules` file and ensure they are deployed correctly."
             break;
           case 'storage/canceled':
             errorMessage = "Upload was canceled. Please try again.";
             break;
           case 'storage/unknown':
-            errorMessage = "A storage error occurred. This is very likely a CORS configuration issue on your Firebase Storage bucket.";
-            detailedError = "To fix this, please run the following command in your project's terminal: `gsutil cors set cors.json gs://flycargolanka-35017.appspot.com`";
+            errorMessage = "A CORS configuration error occurred on your Firebase backend.";
+            detailedError = "This is a server configuration issue that must be fixed. In your project's terminal, please run the following command to allow your website to upload files: `gsutil cors set cors.json gs://flycargolanka-35017.appspot.com`";
             break;
           default:
             errorMessage = `An error occurred: ${error.message}`;
