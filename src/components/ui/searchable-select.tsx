@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -68,9 +67,15 @@ export function SearchableSelect({
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.label} // Use label for filtering
-                  onSelect={() => {
-                    onChange(option.value)
+                  value={option.label} // Use label for filtering/searching
+                  onSelect={(currentLabel) => {
+                    const selectedValue = options.find(
+                      (opt) => opt.label.toLowerCase() === currentLabel.toLowerCase()
+                    )?.value;
+
+                    if (selectedValue) {
+                      onChange(selectedValue);
+                    }
                     setOpen(false)
                   }}
                 >
