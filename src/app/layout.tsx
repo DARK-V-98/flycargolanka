@@ -11,7 +11,7 @@ const ptSans = PT_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: 'FlyCargo Lanka - Courier Services in Sri Lanka',
+    default: 'air freight - fly cargo lanka global forwarding',
     template: '%s | FlyCargo Lanka',
   },
   description:
