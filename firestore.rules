@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -18,7 +17,11 @@ service cloud.firestore {
     }
 
     function isRole(role) {
-        return isAuth() && getUserData(request.auth.uid).role == role;
+        // Check if the user document and role field exist before accessing them.
+        return isAuth() && 
+               exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+               'role' in getUserData(request.auth.uid) &&
+               getUserData(request.auth.uid).role == role;
     }
 
     function isAdminOrHigher() {
@@ -75,11 +78,12 @@ service cloud.firestore {
 
     // Rules for the 'notifications' collection
     match /notifications/{notificationId} {
-      // Only Admins/Developers can read/write notifications.
+      // Admins/Developers can read, update, and delete notifications.
       allow read, update, delete: if isAdminOrHigher();
 
-      // Only backend can create notifications. Client-side creation is denied.
-      allow create: if false; 
+      // Any authenticated user can create a notification. 
+      // This is needed for new bookings and NIC submissions from the client.
+      allow create: if isAuth();
     }
   }
 }
