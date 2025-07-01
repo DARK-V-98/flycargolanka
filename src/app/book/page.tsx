@@ -30,7 +30,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { SearchableSelect } from '@/components/ui/searchable-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
@@ -149,6 +149,7 @@ export default function BookingPage() {
 
   const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
+  const [countrySearch, setCountrySearch] = useState('');
 
   const [availableWeights, setAvailableWeights] = useState<WeightRate[]>([]);
   const [loadingWeights, setLoadingWeights] = useState(false);
@@ -199,10 +200,12 @@ export default function BookingPage() {
 
   const showRateCalculationFields = !!(watchedShipmentType && watchedServiceType);
   
-  const countryOptions = availableCountries.map(country => ({
-    label: country.name,
-    value: country.name,
-  }));
+  const filteredCountries = countrySearch
+    ? availableCountries.filter(c =>
+        c.name.toLowerCase().includes(countrySearch.toLowerCase())
+      )
+    : availableCountries;
+
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -613,31 +616,59 @@ export default function BookingPage() {
               {showRateCalculationFields && (
                 <div className="space-y-4 pt-4 mt-4 border-t border-border/30">
                   <h3 className="text-lg font-semibold text-muted-foreground flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary" />Destination &amp; Weight for Rate Calculation</h3>
+                  
+                  <div className="space-y-2">
+                    <FormLabel>Destination Country</FormLabel>
+                    <Input
+                      placeholder="Search to filter countries..."
+                      onChange={(e) => setCountrySearch(e.target.value)}
+                      defaultValue={countrySearch}
+                      disabled={loadingCountries || availableCountries.length === 0}
+                    />
+                  </div>
+                  
                   <FormField
                     control={form.control}
                     name="receiverCountry"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Destination Country</FormLabel>
-                        <SearchableSelect
-                          value={field.value}
-                          onChange={(value) => {
+                        <Select
+                          onValueChange={(value) => {
                             field.onChange(value);
                             form.setValue('approxWeight', '' as any);
                             setCalculatedCost(null);
                             setCalculationError(null);
                             setAvailableWeights([]);
                           }}
-                          options={countryOptions}
-                          placeholder={loadingCountries ? "Loading countries..." : "Select a country"}
-                          searchPlaceholder="Search for a country..."
-                          emptyPlaceholder={availableCountries.length > 0 ? "No country found." : "No countries configured."}
-                          disabled={loadingCountries || countryOptions.length === 0}
-                        />
+                          value={field.value}
+                          disabled={loadingCountries || availableCountries.length === 0}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select from filtered list" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                             <ScrollArea className="h-72">
+                                {filteredCountries.length > 0 ? (
+                                    filteredCountries.map((country) => (
+                                        <SelectItem key={country.id} value={country.name}>
+                                            {country.name}
+                                        </SelectItem>
+                                    ))
+                                ) : (
+                                    <SelectItem value="none" disabled>
+                                        {loadingCountries ? 'Loading...' : 'No countries found.'}
+                                    </SelectItem>
+                                )}
+                            </ScrollArea>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField control={form.control} name="approxWeight" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Approximate Weight (KG)</FormLabel>

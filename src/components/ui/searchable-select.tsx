@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -71,8 +72,9 @@ export function SearchableSelect({
                         key={option.value}
                         value={option.value}
                         onSelect={(currentValue) => {
-                            onChange(currentValue)
-                            setOpen(false)
+                            // Simplified logic: always set the value on select
+                            onChange(currentValue);
+                            setOpen(false);
                         }}
                         >
                         <Check
