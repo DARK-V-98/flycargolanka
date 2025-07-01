@@ -29,16 +29,19 @@ export default async function Home() {
   ];
   
   let homepageImageUrl: string | null = null;
-  try {
-    if (db) {
-      const homepageSettingsDoc = await db.collection('settings').doc('homepage').get();
-      if (homepageSettingsDoc.exists) {
-        homepageImageUrl = homepageSettingsDoc.data()?.imageUrl || null;
+  // Only attempt to fetch the homepage image if the admin credentials are provided.
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    try {
+      if (db) {
+        const homepageSettingsDoc = await db.collection('settings').doc('homepage').get();
+        if (homepageSettingsDoc.exists) {
+          homepageImageUrl = homepageSettingsDoc.data()?.imageUrl || null;
+        }
       }
+    } catch (error) {
+      console.error("Failed to fetch homepage image:", error);
+      homepageImageUrl = null;
     }
-  } catch (error) {
-    console.error("Failed to fetch homepage image:", error);
-    homepageImageUrl = null;
   }
 
 
