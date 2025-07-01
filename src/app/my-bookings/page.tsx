@@ -23,43 +23,65 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle, BellRing, CheckCircle2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle, BellRing, CheckCircle2, Eye, Download, Box, Fingerprint } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import type { NicVerificationStatus } from '@/contexts/AuthContext';
+
 
 export type BookingStatus = 'Pending' | 'Confirmed' | 'Collecting' | 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled' | 'Rejected';
 export type PaymentStatus = 'Pending' | 'Paid' | 'Refunded';
 
-interface Booking {
+// This interface is expanded to match the full booking data for the details dialog
+export interface Booking {
   id: string;
   userId: string;
   userEmail: string | null;
+
   shipmentType: 'parcel' | 'document';
   serviceType: 'economy' | 'express';
   locationType: 'pickup' | 'dropoff_katunayake';
+
   receiverCountry: string;
   approxWeight: number;
   approxValue: number;
+
   receiverFullName: string;
   receiverEmail: string;
   receiverAddress: string;
-  receiverDoorCode?: string;
+  receiverDoorCode?: string | null;
   receiverZipCode: string;
   receiverCity: string;
   receiverContactNo: string;
-  receiverWhatsAppNo?: string;
+  receiverWhatsAppNo?: string | null;
+
   senderFullName: string;
   senderAddress: string;
   senderContactNo: string;
-  senderWhatsAppNo?: string;
+  senderWhatsAppNo?: string | null;
+
   status: BookingStatus;
   paymentStatus?: PaymentStatus;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
   estimatedCostLKR?: number | null;
-  declaration1?: boolean;
-  declaration2?: boolean;
+
+  packageContents: string;
+  courierPurpose: 'gift' | 'commercial' | 'personal' | 'sample' | 'return_for_repair' | 'return_after_repair' | 'custom';
+  customPurpose?: string | null;
+  nicVerificationStatus?: NicVerificationStatus;
 }
+
 
 function MyBookingsPageContent() {
   const { user, userProfile, loading: authLoading } = useAuth();
@@ -69,7 +91,9 @@ function MyBookingsPageContent() {
   const [loadingBookings, setLoadingBookings] = useState(true);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
-
+  
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -106,7 +130,6 @@ function MyBookingsPageContent() {
       setLoadingBookings(false);
     });
 
-    // Cleanup subscription on component unmount
     return () => unsubscribe();
   }, [user, toast]);
 
@@ -115,16 +138,16 @@ function MyBookingsPageContent() {
       case 'Pending':
         return { text: 'Pending', variant: 'secondary' };
       case 'Cancelled':
-        return { text: 'Cancelled', variant: 'destructive' };
       case 'Rejected':
-        return { text: 'Rejected', variant: 'destructive' };
+        return { text: status, variant: 'destructive' };
+      case 'Delivered':
+         return { text: 'Delivered', variant: 'outline' };
       case 'Confirmed':
       case 'Collecting':
       case 'Processing':
       case 'In Transit':
-      case 'Delivered':
       case 'On Hold':
-        return { text: 'Confirmed', variant: 'default' };
+        return { text: 'Processing', variant: 'default' };
       default:
         return { text: status, variant: 'secondary' };
     }
@@ -158,7 +181,6 @@ function MyBookingsPageContent() {
         description: `Booking ID ${bookingToCancel.id} has been cancelled.`,
         variant: "default"
       });
-      // No need to manually update state, onSnapshot will handle it.
     } catch (error) {
       console.error("Error cancelling booking:", error);
       toast({
@@ -172,6 +194,84 @@ function MyBookingsPageContent() {
     }
   };
 
+  const handleDownloadInvoice = async () => {
+    if (!viewingBooking) return;
+    setDownloadingPdf(true);
+
+    try {
+        const response = await fetch('/invoice.html');
+        if (!response.ok) {
+            throw new Error("Could not load invoice template. Make sure 'public/invoice.html' exists.");
+        }
+        let template = await response.text();
+
+        const serviceDescription = `Shipping - ${viewingBooking.shipmentType} (${viewingBooking.serviceType}) - ${viewingBooking.approxWeight}kg`;
+        const totalAmount = viewingBooking.estimatedCostLKR?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
+        
+        const replacements: Record<string, string> = {
+            '{{logoUrl}}': '/fg.png',
+            '{{orderId}}': viewingBooking.id,
+            '{{invoiceDate}}': format(viewingBooking.createdAt.toDate(), 'PPP'),
+            '{{senderName}}': viewingBooking.senderFullName,
+            '{{senderAddress}}': viewingBooking.senderAddress,
+            '{{senderEmail}}': viewingBooking.userEmail || 'N/A',
+            '{{receiverName}}': viewingBooking.receiverFullName,
+            '{{receiverAddress}}': viewingBooking.receiverAddress,
+            '{{receiverLocation}}': `${viewingBooking.receiverCity}, ${viewingBooking.receiverCountry}`,
+            '{{serviceDescription}}': serviceDescription,
+            '{{serviceDestination}}': viewingBooking.receiverCountry,
+            '{{totalAmount}}': totalAmount,
+            '{{contactNumber}}': '+94704917636',
+            '{{landlineNumber}}': '+94 11 234 5678',
+        };
+
+        for (const key in replacements) {
+            template = template.replace(new RegExp(key, 'g'), replacements[key]);
+        }
+
+        const { jsPDF } = await import('jspdf');
+        const html2canvas = (await import('html2canvas')).default;
+
+        const invoiceContainer = document.createElement('div');
+        invoiceContainer.style.position = 'fixed';
+        invoiceContainer.style.left = '-9999px';
+        invoiceContainer.style.top = '0';
+        invoiceContainer.style.width = '210mm'; 
+        invoiceContainer.style.height = 'auto';
+        invoiceContainer.innerHTML = template;
+        document.body.appendChild(invoiceContainer);
+
+        const canvas = await html2canvas(invoiceContainer, {
+            scale: 2,
+            useCORS: true,
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`invoice-${viewingBooking.id}.pdf`);
+
+        document.body.removeChild(invoiceContainer);
+
+    } catch (err: any) {
+        console.error("Error downloading PDF invoice:", err);
+        toast({
+            title: "Download Failed",
+            description: err.message,
+            variant: "destructive"
+        });
+    } finally {
+        setDownloadingPdf(false);
+    }
+  };
 
   if (authLoading || (loadingBookings && bookings.length === 0)) { 
     return (
@@ -305,64 +405,143 @@ function MyBookingsPageContent() {
                   <Badge variant={booking.paymentStatus === 'Paid' ? 'default' : booking.paymentStatus === 'Refunded' ? 'destructive' : 'secondary' } className="text-xs mr-auto capitalize">
                     Payment: {booking.paymentStatus || 'Pending'}
                   </Badge>
-                  {booking.status === 'Pending' && (
-                    <AlertDialog open={!!bookingToCancel && bookingToCancel.id === booking.id} onOpenChange={(isOpen) => !isOpen && setBookingToCancel(null)}>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          size="sm" 
-                          variant="destructive" 
-                          onClick={() => setBookingToCancel(booking)}
-                          className="w-full sm:w-auto"
-                        >
-                          <XCircle className="mr-2 h-4 w-4"/> Cancel Booking
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirm Cancellation</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to cancel booking ID: <strong>{bookingToCancel?.id}</strong>? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel onClick={() => setBookingToCancel(null)} disabled={isCancelling}>Back</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleConfirmCancelBooking} 
-                            disabled={isCancelling}
-                            className={buttonVariants({variant: "destructive"})}
-                          >
-                            {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <XCircle className="mr-2 h-4 w-4"/>}
-                            Confirm Cancel
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleProceedToPayment(booking.id)}
-                    className="w-full sm:w-auto"
-                    disabled={
-                        booking.estimatedCostLKR === undefined || 
-                        booking.estimatedCostLKR === null || 
-                        booking.status === 'Cancelled' || 
-                        booking.status === 'Rejected' || 
-                        booking.status === 'Delivered' ||
-                        booking.paymentStatus === 'Paid'
-                    }
-                  >
-                    {booking.paymentStatus === 'Paid' ? (
-                        <><CheckCircle2 className="mr-2 h-4 w-4" /> Paid</>
-                    ) : (
-                        <><CreditCard className="mr-2 h-4 w-4"/> Continue to Payment</>
+                  
+                  <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setViewingBooking(booking)} className="w-full sm:w-auto">
+                      <Eye className="mr-2 h-4 w-4"/> View Details
+                    </Button>
+
+                    {booking.status === 'Pending' && (
+                      <AlertDialog open={!!bookingToCancel && bookingToCancel.id === booking.id} onOpenChange={(isOpen) => !isOpen && setBookingToCancel(null)}>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="destructive" onClick={() => setBookingToCancel(booking)} className="w-full sm:w-auto">
+                            <XCircle className="mr-2 h-4 w-4"/> Cancel
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm Cancellation</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to cancel booking ID: <strong>{bookingToCancel?.id}</strong>? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setBookingToCancel(null)} disabled={isCancelling}>Back</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleConfirmCancelBooking} disabled={isCancelling} className={buttonVariants({variant: "destructive"})}>
+                              {isCancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <XCircle className="mr-2 h-4 w-4"/>}
+                              Confirm Cancel
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     )}
-                  </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => handleProceedToPayment(booking.id)}
+                      className="w-full sm:w-auto"
+                      disabled={
+                          booking.estimatedCostLKR === undefined || 
+                          booking.estimatedCostLKR === null || 
+                          booking.status !== 'Pending' ||
+                          booking.paymentStatus === 'Paid'
+                      }
+                    >
+                      {booking.paymentStatus === 'Paid' ? (
+                          <><CheckCircle2 className="mr-2 h-4 w-4" /> Paid</>
+                      ) : (
+                          <><CreditCard className="mr-2 h-4 w-4"/> Pay Now</>
+                      )}
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             )})}
           </div>
         )}
       </div>
+
+       {viewingBooking && (
+        <Dialog open={!!viewingBooking} onOpenChange={(isOpen) => !isOpen && setViewingBooking(null)}>
+          <DialogContent className="sm:max-w-2xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="text-xl flex items-center">
+                <Info className="mr-2 h-5 w-5 text-primary"/>Booking Details: <span className="ml-1 font-mono text-base text-muted-foreground">{viewingBooking.id}</span>
+              </DialogTitle>
+              <DialogDescription>
+                Full information for your selected booking.
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[65vh] pr-4">
+              <div className="space-y-6 py-4 text-sm">
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Shipment Overview</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                    <div><strong className="text-muted-foreground">ID:</strong> {viewingBooking.id}</div>
+                    <div className="flex items-center gap-2"><strong className="text-muted-foreground">Order Status:</strong> <Badge variant={getDisplayStatus(viewingBooking.status).variant} className="text-xs">{getDisplayStatus(viewingBooking.status).text}</Badge></div>
+                    <div className="flex items-center gap-2"><strong className="text-muted-foreground">Payment Status:</strong> <Badge variant={viewingBooking.paymentStatus === 'Paid' ? 'default' : 'secondary'} className="text-xs">{viewingBooking.paymentStatus || 'Pending'}</Badge></div>
+                    <div><strong className="text-muted-foreground">Booked On:</strong> {viewingBooking.createdAt ? format(viewingBooking.createdAt.toDate(), 'PPp') : 'N/A'}</div>
+                    {viewingBooking.updatedAt && <div><strong className="text-muted-foreground">Last Updated:</strong> {format(viewingBooking.updatedAt.toDate(), 'PPp')}</div>}
+                    <div><strong className="text-muted-foreground">Shipment Type:</strong> <span className="capitalize">{viewingBooking.shipmentType}</span></div>
+                    <div><strong className="text-muted-foreground">Service Type:</strong> <span className="capitalize">{viewingBooking.serviceType}</span></div>
+                    <div><strong className="text-muted-foreground">Location Type:</strong> <span className="capitalize">{viewingBooking.locationType.replace('_', ' ')}</span></div>
+                    <div><strong className="text-muted-foreground">Destination:</strong> {viewingBooking.receiverCountry}</div>
+                    <div><strong className="text-muted-foreground">Weight:</strong> {viewingBooking.approxWeight} kg</div>
+                    <div><strong className="text-muted-foreground">Value (USD):</strong> {viewingBooking.approxValue?.toLocaleString() || 'N/A'}</div>
+                    <div><strong className="text-muted-foreground">Est. Cost (LKR):</strong> {viewingBooking.estimatedCostLKR?.toLocaleString() || 'N/A'}</div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent flex items-center"><Box className="mr-2" />Package &amp; Purpose</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                     <div className="md:col-span-2"><strong className="text-muted-foreground">Contents:</strong> {viewingBooking.packageContents || 'N/A'}</div>
+                     <div><strong className="text-muted-foreground">Purpose:</strong> <span className="capitalize">{viewingBooking.courierPurpose === 'custom' ? (viewingBooking.customPurpose || 'Custom') : (viewingBooking.courierPurpose?.replace(/_/g, ' ') || 'N/A')}</span></div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Receiver Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                    <div><strong className="text-muted-foreground">Full Name:</strong> {viewingBooking.receiverFullName}</div>
+                    <div><strong className="text-muted-foreground">Email:</strong> {viewingBooking.receiverEmail || 'N/A'}</div>
+                    <div className="md:col-span-2"><strong className="text-muted-foreground">Address:</strong> {viewingBooking.receiverAddress}</div>
+                    <div><strong className="text-muted-foreground">ZIP/Postal:</strong> {viewingBooking.receiverZipCode}</div>
+                    <div><strong className="text-muted-foreground">City:</strong> {viewingBooking.receiverCity}</div>
+                    <div><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.receiverContactNo}</div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Sender Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                    <div><strong className="text-muted-foreground">Full Name:</strong> {viewingBooking.senderFullName}</div>
+                    <div className="md:col-span-2"><strong className="text-muted-foreground">Address:</strong> {viewingBooking.senderAddress}</div>
+                    <div><strong className="text-muted-foreground">Contact No:</strong> {viewingBooking.senderContactNo}</div>
+                  </div>
+                </section>
+              </div>
+            </ScrollArea>
+            <DialogFooter className="mt-4 sm:justify-between">
+              <Button
+                onClick={handleDownloadInvoice}
+                disabled={!viewingBooking.estimatedCostLKR || downloadingPdf}
+                title={!viewingBooking.estimatedCostLKR ? "An invoice cannot be generated without an estimated cost." : "Download PDF Invoice"}
+              >
+                {downloadingPdf ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                )}
+                {downloadingPdf ? 'Generating PDF...' : 'Download Invoice'}
+              </Button>
+              <DialogClose asChild>
+                  <Button type="button" variant="outline">Close</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   );
 }
@@ -379,3 +558,5 @@ export default function MyBookingsPage() {
         </Suspense>
     );
 }
+
+    

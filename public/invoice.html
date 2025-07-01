@@ -3,81 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice - {{orderId}}</title>
+    <title>Invoice</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f7f7f7; color: #333; }
-        .container { max-width: 800px; margin: 20px auto; padding: 30px; background-color: #fff; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #eee; padding-bottom: 20px; }
-        .header .logo { max-width: 150px; }
-        .header .invoice-details { text-align: right; }
-        .header .invoice-details h1 { margin: 0; font-size: 24px; color: #0b2e59; }
-        .header .invoice-details p { margin: 2px 0; font-size: 14px; }
-        .addresses { display: flex; justify-content: space-between; margin: 30px 0; }
-        .addresses .address-block { width: 48%; }
-        .addresses h3 { margin-top: 0; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px; color: #0b2e59; }
-        .addresses p { margin: 0; line-height: 1.6; font-size: 14px; }
-        .items-table { width: 100%; border-collapse: collapse; margin-top: 30px; }
-        .items-table th, .items-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        .items-table thead { background-color: #f7f7f7; }
-        .items-table th { font-weight: bold; }
-        .items-table .total-row td { border-top: 2px solid #333; font-weight: bold; font-size: 16px; }
-        .items-table .text-right { text-align: right; }
-        .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
-        .footer p { margin: 5px 0; }
-        a { color: #D4AF37; text-decoration: none; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            color: #1a202c;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            background-color: #fff;
+            font-size: 14px;
+            line-height: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+        .header img {
+            width: 150px;
+            height: auto;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            color: #2d3748;
+            margin: 0;
+        }
+        .details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .details-left, .details-right {
+            width: 48%;
+        }
+        .details h2 {
+            font-size: 1.2em;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .details p {
+            margin: 0 0 5px 0;
+            line-height: 1.6;
+        }
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .item-table thead {
+            background-color: #edf2f7;
+        }
+        .item-table th, .item-table td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: left;
+        }
+        .item-table th {
+            font-weight: 600;
+        }
+        .total-section {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .total-box {
+            width: 40%;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+        }
+        .total-box .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="invoice-box">
         <div class="header">
-            <img src="{{logoUrl}}" alt="FlyCargo Lanka Logo" class="logo">
-            <div class="invoice-details">
-                <h1>INVOICE</h1>
-                <p><strong>Invoice ID:</strong> {{orderId}}</p>
-                <p><strong>Date:</strong> {{invoiceDate}}</p>
-            </div>
+            <img src="{{logoUrl}}" alt="FlyCargo Lanka Logo">
+            <h1>INVOICE</h1>
         </div>
 
-        <div class="addresses">
-            <div class="address-block">
-                <h3>Shipped From (Sender)</h3>
+        <div class="details">
+            <div class="details-left">
+                <h2>Billed To (Sender)</h2>
                 <p><strong>{{senderName}}</strong></p>
                 <p>{{senderAddress}}</p>
                 <p>{{senderEmail}}</p>
             </div>
-            <div class="address-block" style="text-align: right;">
-                <h3>Shipped To (Receiver)</h3>
+            <div class="details-right" style="text-align: right;">
+                <p><strong>Invoice #:</strong> {{orderId}}</p>
+                <p><strong>Date:</strong> {{invoiceDate}}</p>
+            </div>
+        </div>
+
+        <div class="details">
+            <div class="details-left">
+                <h2>Shipped To (Receiver)</h2>
                 <p><strong>{{receiverName}}</strong></p>
                 <p>{{receiverAddress}}</p>
                 <p>{{receiverLocation}}</p>
             </div>
         </div>
 
-        <table class="items-table">
+        <table class="item-table">
             <thead>
                 <tr>
-                    <th>Description</th>
-                    <th class="text-right">Destination</th>
-                    <th class="text-right">Total (LKR)</th>
+                    <th>Service Description</th>
+                    <th>Destination</th>
+                    <th>Amount (LKR)</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>{{serviceDescription}}</td>
-                    <td class="text-right">{{serviceDestination}}</td>
-                    <td class="text-right">{{totalAmount}}</td>
-                </tr>
-                <tr class="total-row">
-                    <td colspan="2" class="text-right"><strong>Grand Total</strong></td>
-                    <td class="text-right"><strong>{{totalAmount}} LKR</strong></td>
+                    <td>{{serviceDestination}}</td>
+                    <td>{{totalAmount}}</td>
                 </tr>
             </tbody>
         </table>
 
+        <div class="total-section">
+            <div class="total-box">
+                <div class="total-row">
+                    <span>Total</span>
+                    <span>LKR {{totalAmount}}</span>
+                </div>
+            </div>
+        </div>
+
         <div class="footer">
             <p>Thank you for choosing FlyCargo Lanka!</p>
-            <p>Fly cargo lanka. No.05, avariwatta, katunayake</p>
-            <p><strong>Contact:</strong> <a href="tel:{{contactNumber}}">{{contactNumber}}</a> (Mobile) / <a href="tel:{{landlineNumber}}">{{landlineNumber}}</a> (Landline)</p>
+            <p>If you have any questions, please contact us at {{contactNumber}} or {{landlineNumber}}.</p>
+            <p>www.flycargolanka.lk</p>
         </div>
     </div>
 </body>
