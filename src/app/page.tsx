@@ -7,6 +7,7 @@ import { Globe2, MapPin, Truck, ShoppingCart, Building2, Eye, Target, Calculator
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
 import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
+import { db } from '@/lib/firebase-admin';
 
 
 const services = [
@@ -15,7 +16,7 @@ const services = [
   { name: "Freight Forwarding", icon: Truck, description: "Comprehensive freight forwarding solutions for your business needs.", href:"/services#freight"  },
 ];
 
-export default function Home() {
+export default async function Home() {
   const partnerLogos = [
     { name: "AliExpress", src: "/ali.webp" },
     { name: "Walmart", src: "/wall.png", removeBg: true },
@@ -26,6 +27,20 @@ export default function Home() {
     { name: "Payoneer", src: "/payoneer.png" },
     { name: "Wish", src: "/Wish.svg" },
   ];
+  
+  let homepageImageUrl: string | null = null;
+  try {
+    if (db) {
+      const homepageSettingsDoc = await db.collection('settings').doc('homepage').get();
+      if (homepageSettingsDoc.exists) {
+        homepageImageUrl = homepageSettingsDoc.data()?.imageUrl || null;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to fetch homepage image:", error);
+    homepageImageUrl = null;
+  }
+
 
   return (
     <div className="flex-1 flex flex-col">
@@ -65,6 +80,21 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {homepageImageUrl && (
+        <section className="container mx-auto px-4 py-8 md:py-16 text-center opacity-0 animate-fadeInUp">
+           <div className="rounded-lg shadow-xl overflow-hidden border-2 border-primary/20 aspect-video relative">
+            <Image
+              src={homepageImageUrl}
+              alt="Promotional Banner"
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
+        </section>
+      )}
 
       <div className="container mx-auto px-4 mt-16 space-y-16">
         
