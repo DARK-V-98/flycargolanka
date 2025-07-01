@@ -172,7 +172,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="delay-400 md:order-last order-first">
-                <Image src="/us.png" alt="E-commerce Solutions" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team" />
+                <Image src="/why.jpeg" alt="Why FlyCargo Lanka" width={600} height={400} quality={100} className="rounded-lg shadow-xl w-full h-auto" data-ai-hint="logistics team meeting" />
               </div>
             </div>
           </div>
