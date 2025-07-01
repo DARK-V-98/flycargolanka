@@ -39,7 +39,7 @@ export default async function Home() {
         }
       }
     } catch (error) {
-      console.error("Failed to fetch homepage image:", error);
+      console.error("Failed to fetch homepage image. Check Firestore permissions and admin SDK setup.");
       homepageImageUrl = null;
     }
   }
