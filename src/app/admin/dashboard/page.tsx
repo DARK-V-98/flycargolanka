@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, Users, Package, Settings2, BadgeCheck, ArrowRight, DatabaseZap, ImageUp } from "lucide-react";
+import { ShieldCheck, Users, Package, Settings2, BadgeCheck, ArrowRight, DatabaseZap } from "lucide-react";
 import PageHeader from '@/components/PageHeader';
 
 const adminNavItems = [
@@ -36,12 +36,6 @@ const adminNavItems = [
     label: 'Import Rates',
     description: "Bulk upload shipping rates from a CSV file.",
     icon: DatabaseZap
-  },
-  {
-    href: '/admin/manage-homepage',
-    label: 'Manage Homepage',
-    description: 'Upload or delete the promotional image on the homepage.',
-    icon: ImageUp
   },
 ];
 

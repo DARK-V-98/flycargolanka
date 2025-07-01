@@ -1,37 +1,44 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    
-    // Helper function to check for admin/developer role from Firestore
-    function isRole(role) {
-      // Must check for auth being non-null before accessing it.
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
-    }
-    
-    function isAdmin() {
-      return isRole('admin');
-    }
-    
-    function isDeveloper() {
-      return isRole('developer');
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Homepage promo image can be read by anyone, but only written by admins/developers
-    match /homepage/{fileName} {
-      allow read: if true;
-      allow write, delete: if request.auth != null && (isAdmin() || isDeveloper());
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // NIC verification images
+    // Safely checks for admin/dev roles. MUST be called after isSignedIn().
+    function isDeveloperOrAdmin() {
+      // Developer has inherent role.
+      if (request.auth.token.email == "thimira.vishwa2003@gmail.com") {
+        return true;
+      }
+      // Check role from Firestore.
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'developer'];
+    }
+
+    // --- NIC Verification Images ---
+    // Path: /nic_verification/{userId}/{fileName}
     match /nic_verification/{userId}/{fileName} {
-      // User can create/upload to their own folder
-      allow create: if request.auth != null && request.auth.uid == userId;
+      // Allow read access only to the user who owns the files and to admins/developers.
+      allow read: if isOwner(userId) || (isSignedIn() && isDeveloperOrAdmin());
+      
+      // Allow create/write access only to the user who owns the folder.
+      allow write: if isOwner(userId);
 
-      // User can read/delete their own images. Admins/devs can also read them.
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin() || isDeveloper());
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      // Allow owner to delete their own NIC files (e.g., for resubmission).
+      allow delete: if isOwner(userId);
+    }
+
+    // --- Default Deny ---
+    // By default, deny all other read/write access to the bucket for security.
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
