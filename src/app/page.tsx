@@ -29,18 +29,15 @@ export default async function Home() {
   ];
   
   let homepageImageUrl: string | null = null;
-  // Only attempt to fetch the homepage image if the admin credentials are provided.
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    try {
-      if (db) {
-        const homepageSettingsDoc = await db.collection('settings').doc('homepage').get();
-        if (homepageSettingsDoc.exists) {
-          homepageImageUrl = homepageSettingsDoc.data()?.imageUrl || null;
-        }
+  try {
+    if (db) {
+      const homepageSettingsDoc = await db.collection('settings').doc('homepage').get();
+      if (homepageSettingsDoc.exists) {
+        homepageImageUrl = homepageSettingsDoc.data()?.imageUrl || null;
       }
-    } catch (error) {
-      homepageImageUrl = null;
     }
+  } catch (error) {
+    homepageImageUrl = null;
   }
 
 
@@ -82,21 +79,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {homepageImageUrl && (
-        <section className="container mx-auto px-4 py-8 md:py-16 text-center opacity-0 animate-fadeInUp">
-           <div className="rounded-lg shadow-xl overflow-hidden border-2 border-primary/20 aspect-video relative">
-            <Image
-              src={homepageImageUrl}
-              alt="Promotional Banner"
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          </div>
-        </section>
-      )}
 
       <div className="container mx-auto px-4 mt-16 space-y-16">
         
@@ -210,6 +192,21 @@ export default async function Home() {
           </div>
         </section>
         
+        {homepageImageUrl && (
+          <section className="container mx-auto px-4 py-8 md:py-16 text-center opacity-0 animate-fadeInUp" style={{animationDelay: '0.6s'}}>
+             <div className="rounded-lg shadow-xl overflow-hidden border-2 border-primary/20 aspect-video relative">
+              <Image
+                src={homepageImageUrl}
+                alt="Promotional Banner"
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </div>
+          </section>
+        )}
+
         <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.6s'}}>
           <div className="container mx-auto px-4">
             <div>

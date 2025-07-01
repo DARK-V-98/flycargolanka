@@ -5,7 +5,7 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, deleteField } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 
 import PageHeader from '@/components/PageHeader';
@@ -143,9 +143,9 @@ export default function ManageHomepageImagePage() {
             const imageRef = ref(storage, currentImagePath);
             await deleteObject(imageRef);
             await updateDoc(SETTINGS_DOC_REF, {
-                imageUrl: deleteField(),
-                imagePath: deleteField(),
-                updatedAt: deleteField()
+                imageUrl: null,
+                imagePath: null,
+                updatedAt: new Date(),
             });
             
             setCurrentImageUrl(null);
@@ -154,8 +154,11 @@ export default function ManageHomepageImagePage() {
 
         } catch (err: any) {
             if (err.code === 'storage/object-not-found') {
-                // The file is already gone from storage, so just clear Firestore
-                await updateDoc(SETTINGS_DOC_REF, { imageUrl: null, imagePath: null, updatedAt: new Date() });
+                await updateDoc(SETTINGS_DOC_REF, { 
+                    imageUrl: null, 
+                    imagePath: null, 
+                    updatedAt: new Date() 
+                });
                 setCurrentImageUrl(null);
                 setCurrentImagePath(null);
                 toast({ title: "Image Cleared", description: "Image was not found in storage, but database link was removed." });
