@@ -17,8 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Calculator, Globe, Weight, Loader2, AlertTriangle, DollarSign, Package, FileText, Clock, Zap, CheckCircle, Box } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from './ui/scroll-area';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 const calculatorSchema = z.object({
   destinationCountry: z.string().min(1, "Please select a destination country."),
@@ -45,7 +44,6 @@ export default function ShippingCalculatorForm() {
 
   const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
-  const [countrySearch, setCountrySearch] = useState('');
   
   const [availableWeights, setAvailableWeights] = useState<WeightRate[]>([]);
   const [loadingWeights, setLoadingWeights] = useState(false);
@@ -58,9 +56,10 @@ export default function ShippingCalculatorForm() {
     },
   });
 
-  const filteredCountries = availableCountries.filter(country => 
-    country.name.toLowerCase().includes(countrySearch.toLowerCase())
-  );
+  const countryOptions = availableCountries.map(country => ({
+    label: country.name,
+    value: country.name,
+  }));
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -241,44 +240,21 @@ export default function ShippingCalculatorForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
-                  <Input
-                    placeholder="Search for a country..."
-                    onChange={(e) => setCountrySearch(e.target.value)}
-                    className="mb-2"
-                    disabled={loadingCountries || availableCountries.length === 0}
-                  />
-                  <Select
-                    onValueChange={(value) => {
+                  <SearchableSelect
+                    value={field.value}
+                    onChange={(value) => {
                       field.onChange(value);
                       setRateOptions([]);
                       setChargeableWeight(null);
                       setCalculationError(null);
                       setAvailableWeights([]);
                     }}
-                    value={field.value}
-                    disabled={loadingCountries || availableCountries.length === 0}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={loadingCountries ? "Loading countries..." : "Select destination country"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {filteredCountries.length > 0 ? (
-                        <ScrollArea className="h-72">
-                          {filteredCountries.map((country) => (
-                            <SelectItem key={country.id} value={country.name}>
-                              {country.name}
-                            </SelectItem>
-                          ))}
-                        </ScrollArea>
-                      ) : (
-                          <p className="px-2 py-2 text-center text-sm text-muted-foreground">
-                              {availableCountries.length === 0 ? "No countries available." : "No country found."}
-                          </p>
-                      )}
-                    </SelectContent>
-                  </Select>
+                    options={countryOptions}
+                    placeholder={loadingCountries ? "Loading countries..." : "Select destination country"}
+                    searchPlaceholder="Search for a country..."
+                    emptyPlaceholder={availableCountries.length === 0 ? "No countries available." : "No country found."}
+                    disabled={loadingCountries || countryOptions.length === 0}
+                  />
                   <FormMessage />
                 </FormItem>
               )}
@@ -380,3 +356,5 @@ export default function ShippingCalculatorForm() {
     </div>
   );
 }
+
+    

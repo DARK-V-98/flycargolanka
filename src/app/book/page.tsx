@@ -30,7 +30,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
@@ -149,7 +149,6 @@ export default function BookingPage() {
 
   const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
-  const [countrySearch, setCountrySearch] = useState('');
 
   const [availableWeights, setAvailableWeights] = useState<WeightRate[]>([]);
   const [loadingWeights, setLoadingWeights] = useState(false);
@@ -200,9 +199,10 @@ export default function BookingPage() {
 
   const showRateCalculationFields = !!(watchedShipmentType && watchedServiceType);
   
-  const filteredCountries = availableCountries.filter(country => 
-    country.name.toLowerCase().includes(countrySearch.toLowerCase())
-  );
+  const countryOptions = availableCountries.map(country => ({
+    label: country.name,
+    value: country.name,
+  }));
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -619,44 +619,21 @@ export default function BookingPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Destination Country</FormLabel>
-                        <Input
-                          placeholder="Search for a country..."
-                          onChange={(e) => setCountrySearch(e.target.value)}
-                          className="mb-2"
-                          disabled={loadingCountries || availableCountries.length === 0}
-                        />
-                        <Select
-                          onValueChange={(value) => {
+                        <SearchableSelect
+                          value={field.value}
+                          onChange={(value) => {
                             field.onChange(value);
                             form.setValue('approxWeight', '' as any);
                             setCalculatedCost(null);
                             setCalculationError(null);
                             setAvailableWeights([]);
                           }}
-                          value={field.value}
-                          disabled={loadingCountries || availableCountries.length === 0}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={loadingCountries ? "Loading countries..." : "Select a country"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              {filteredCountries.length > 0 ? (
-                                  <ScrollArea className="h-72">
-                                  {filteredCountries.map((country) => (
-                                      <SelectItem key={country.id} value={country.name}>
-                                          {country.name}
-                                      </SelectItem>
-                                  ))}
-                                  </ScrollArea>
-                              ) : (
-                                  <p className="px-2 py-2 text-center text-sm text-muted-foreground">
-                                      {availableCountries.length > 0 ? "No country found." : "No countries configured."}
-                                  </p>
-                              )}
-                          </SelectContent>
-                        </Select>
+                          options={countryOptions}
+                          placeholder={loadingCountries ? "Loading countries..." : "Select a country"}
+                          searchPlaceholder="Search for a country..."
+                          emptyPlaceholder={availableCountries.length > 0 ? "No country found." : "No countries configured."}
+                          disabled={loadingCountries || countryOptions.length === 0}
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -886,3 +863,5 @@ export default function BookingPage() {
     </div>
   );
 }
+
+    
