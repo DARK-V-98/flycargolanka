@@ -1,42 +1,37 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Rules for NIC verification images.
-    // Path: /nic_verification/{userId}/{fileName}
-    match /nic_verification/{userId}/{fileName} {
-      // Allow authenticated users to upload their own NIC images.
-      // File must be an image and under 5MB.
-      allow create: if request.auth != null && request.auth.uid == userId
-                    && request.resource.size < 5 * 1024 * 1024
-                    && request.resource.contentType.matches('image/.*');
-
-      // Allow the user to read their own images.
-      // Allow admins and developers to read for verification purposes.
-      allow read: if request.auth != null &&
-                   (request.auth.uid == userId ||
-                    get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'developer']);
-
-      // Allow users to delete their own images (e.g., for re-submission).
-      // Admins and developers can also delete.
-      allow delete: if request.auth != null &&
-                   (request.auth.uid == userId ||
-                    get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'developer']);
-      
-      // Do not allow updating files to prevent tampering. Users should delete and re-upload.
-      allow update: if false;
+    
+    // Helper function to check for admin/developer role from Firestore
+    function isRole(role) {
+      // Must check for auth being non-null before accessing it.
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
+    function isAdmin() {
+      return isRole('admin');
+    }
+    
+    function isDeveloper() {
+      return isRole('developer');
     }
 
-    // Rules for the homepage promotional image.
-    // Path: /homepage/{fileName}
+    // Homepage promo image can be read by anyone, but only written by admins/developers
     match /homepage/{fileName} {
-      // Anyone can read the homepage image.
       allow read: if true;
+      allow write, delete: if request.auth != null && (isAdmin() || isDeveloper());
+    }
 
-      // Only admins or developers can upload, update, or delete the homepage image.
-      allow write: if request.auth != null &&
-                    get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'developer'];
+    // NIC verification images
+    match /nic_verification/{userId}/{fileName} {
+      // User can create/upload to their own folder
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // User can read/delete their own images. Admins/devs can also read them.
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin() || isDeveloper());
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
