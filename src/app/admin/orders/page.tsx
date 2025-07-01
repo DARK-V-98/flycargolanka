@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp, where } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
@@ -31,7 +31,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { NicVerificationStatus } from '@/contexts/AuthContext';
+import type { NicVerificationStatus, UserProfile } from '@/contexts/AuthContext';
 
 
 export type BookingStatus = 'Pending' | 'Confirmed' | 'Collecting' | 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled' | 'Rejected';
@@ -188,16 +188,50 @@ export default function AdminOrdersPage() {
     const fetchBookings = async () => {
       setLoading(true);
       try {
+        // 1. Fetch all bookings
         const bookingsCol = collection(db, 'bookings');
-        const q = query(bookingsCol, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const bookingsData = querySnapshot.docs.map(docSnap => {
-          const data = docSnap.data();
-          return {
-            id: docSnap.id,
-            ...data,
-            paymentStatus: data.paymentStatus || 'Pending', // Default to pending
-          } as Booking;
+        const bookingsQuery = query(bookingsCol, orderBy('createdAt', 'desc'));
+        const bookingsSnapshot = await getDocs(bookingsQuery);
+        const bookingsList = bookingsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Booking));
+
+        if (bookingsList.length === 0) {
+            setAllBookings([]);
+            setLoading(false);
+            return;
+        }
+
+        // 2. Extract unique user IDs
+        const userIds = [...new Set(bookingsList.map(b => b.userId))];
+
+        // 3. Fetch user profiles in batches of 30 (Firestore 'in' query limit)
+        const usersMap = new Map<string, UserProfile>();
+        const userProfilePromises = [];
+        for (let i = 0; i < userIds.length; i += 30) {
+            const batchIds = userIds.slice(i, i + 30);
+            if (batchIds.length > 0) {
+              const usersQuery = query(collection(db, 'users'), where('uid', 'in', batchIds));
+              userProfilePromises.push(getDocs(usersQuery));
+            }
+        }
+        
+        const userSnapshots = await Promise.all(userProfilePromises);
+        userSnapshots.forEach(snapshot => {
+            snapshot.forEach(doc => {
+                usersMap.set(doc.id, { uid: doc.id, ...doc.data() } as UserProfile);
+            });
+        });
+
+        // 4. Merge live user data into booking data
+        const bookingsData = bookingsList.map(booking => {
+            const userProfile = usersMap.get(booking.userId);
+            return {
+                ...booking,
+                paymentStatus: booking.paymentStatus || 'Pending',
+                // Use live status from user profile, fallback to booking's status
+                nicVerificationStatus: userProfile?.nicVerificationStatus || booking.nicVerificationStatus || 'none', 
+                // Use live email if available
+                userEmail: userProfile?.email || booking.userEmail,
+            };
         });
 
         setAllBookings(bookingsData);
@@ -634,5 +668,7 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
+
+    
 
     
