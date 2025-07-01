@@ -1,18 +1,5 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Facebook, MessageSquare } from 'lucide-react';
-
-const TikTokIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    {...props}
-  >
-    <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-2.43.05-4.86-.95-6.69-2.81-1.77-1.8-2.55-4.16-2.4-6.61.12-2.04 1.03-3.96 2.4-5.36 1.17-1.16 2.61-1.96 4.15-2.41.02-1.6.01-3.2-.01-4.8.48-.01.96-.02 1.43-.02z"></path>
-  </svg>
-);
-
 
 export default function Footer() {
   return (
@@ -57,13 +44,13 @@ export default function Footer() {
                 <div className="text-lg font-semibold">Follow Us</div>
                 <div className="flex items-center md:justify-end space-x-4 mt-2">
                     <a href="https://wa.me/94704917636" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="hover:opacity-80 transition-opacity">
-                        <MessageSquare className="h-6 w-6"/>
+                        <Image src="/whatsapp.png" alt="WhatsApp" width={24} height={24} className="h-6 w-6" />
                     </a>
                     <a href="https://www.facebook.com/share/1LXH5NvzJV/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="hover:opacity-80 transition-opacity">
-                        <Facebook className="h-6 w-6"/>
+                        <Image src="/facebook.png" alt="Facebook" width={24} height={24} className="h-6 w-6" />
                     </a>
                     <a href="https://www.tiktok.com/@fly.cargo.lanka?_t=ZS-8xesOSRxtFn&_r=1" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="hover:opacity-80 transition-opacity">
-                        <TikTokIcon className="h-6 w-6"/>
+                        <Image src="/tiktok.png" alt="TikTok" width={24} height={24} className="h-6 w-6" />
                     </a>
                 </div>
             </div>
