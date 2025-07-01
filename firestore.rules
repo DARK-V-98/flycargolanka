@@ -1,9 +1,10 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions to check user authentication and roles
+    // ====== Helper Functions ======
     function isAuth() {
       return request.auth != null;
     }
@@ -13,77 +14,70 @@ service cloud.firestore {
     }
 
     function getUserData(userId) {
+      // Caching the result of get() is handled by Firestore rules engine
       return get(/databases/$(database)/documents/users/$(userId)).data;
     }
 
-    function isRole(role) {
-        // Check if the user document and role field exist before accessing them.
-        return isAuth() && 
-               exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-               'role' in getUserData(request.auth.uid) &&
-               getUserData(request.auth.uid).role == role;
+    function isAdminOrDev() {
+      return isAuth() && (getUserData(request.auth.uid).role == 'admin' || getUserData(request.auth.uid).role == 'developer');
     }
 
-    function isAdminOrHigher() {
-      return isAuth() && (isRole('admin') || isRole('developer'));
-    }
+    // ====== Collection Rules ======
 
-    // Rules for the 'users' collection
+    // User profiles
     match /users/{userId} {
-      // A user can read their own profile. Admins/Developers can read any profile.
-      allow read: if isOwner(userId) || isAdminOrHigher();
-
-      // A new user can create their own profile document.
       allow create: if isOwner(userId);
-
-      // A user can update their own profile, but cannot change their role.
-      // Admins/Developers can update any user's profile.
-      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdminOrHigher();
+      allow read: if isOwner(userId) || isAdminOrDev();
+      allow update: if 
+        // A user can update their own profile data, but cannot change their own role.
+        (isOwner(userId) && request.resource.data.role == resource.data.role) ||
+        // An admin/dev can update a user's role or verification status.
+        (isAdminOrDev() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'nicVerificationStatus', 'updatedAt']));
+      allow delete: if false; // Disallow user deletion from client
     }
 
-    // Rules for the 'bookings' collection
+    // Bookings
     match /bookings/{bookingId} {
-      // A user can read their own bookings. Admins/Developers can read all bookings.
-      allow read: if (isAuth() && resource.data.userId == request.auth.uid) || isAdminOrHigher();
-
-      // An authenticated user can create a booking for themselves.
-      // The initial status must be 'Pending'.
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'Pending';
-
-      // A user can only update their own booking to cancel it if it's 'Pending'.
-      // Admins/Developers can update any field.
-      allow update: if (isAuth() && resource.data.userId == request.auth.uid &&
-                       request.resource.data.status == 'Cancelled' && resource.data.status == 'Pending' &&
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']))
-                  || isAdminOrHigher();
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow read: if isAdminOrDev() || (isAuth() && resource.data.userId == request.auth.uid);
+      allow update: if 
+        // User can cancel their own pending booking
+        (isAuth() && resource.data.userId == request.auth.uid && resource.data.status == 'Pending' && request.resource.data.status == 'Cancelled' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+        // Admins/devs can update specific status fields of any booking
+        (isAdminOrDev() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'paymentStatus', 'updatedAt']));
+      
+      allow delete: if isAdminOrDev(); // Only admins can delete bookings
     }
 
-    // Rules for the 'shipping_rates' collection
+    // Shipping rates (countries and weights)
     match /shipping_rates/{countryId} {
-      // Allow anyone (including unauthenticated users) to read rates for the calculator.
-      allow read: if true;
+      // Authenticated users can read rates for calculator/booking
+      allow read: if isAuth();
+      // Only admins/devs can manage rates
+      allow write: if isAdminOrDev();
 
-      // Only Admins/Developers can write rates.
-      allow write: if isAdminOrHigher();
-
-      // Rules for the 'weights' subcollection
       match /weights/{weightId} {
-        // Allow anyone to read for the calculator.
-        allow read: if true;
-        
-        // Only Admins/Developers can write rates.
-        allow write: if isAdminOrHigher();
+        // Authenticated users can read rates for calculator/booking
+        allow read: if isAuth();
+        // Only admins/devs can manage rates
+        allow write: if isAdminOrDev();
       }
     }
-
-    // Rules for the 'notifications' collection
+    
+    // Settings for the app, e.g., homepage image
+    match /settings/{settingId} {
+        // Anyone can read settings
+        allow read: if true;
+        // Only admins/devs can change settings
+        allow write: if isAdminOrDev();
+    }
+    
+    // Notifications for admins
     match /notifications/{notificationId} {
-      // Admins/Developers can read, update, and delete notifications.
-      allow read, update, delete: if isAdminOrHigher();
-
-      // Any authenticated user can create a notification. 
-      // This is needed for new bookings and NIC submissions from the client.
-      allow create: if isAuth();
+        // Any authenticated user can create a notification for admins
+        allow create: if isAuth();
+        // Only admins/devs can read, update (mark as read), or delete notifications
+        allow read, update, delete: if isAdminOrDev();
     }
   }
 }
