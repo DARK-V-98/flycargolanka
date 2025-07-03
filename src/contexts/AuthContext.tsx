@@ -183,6 +183,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         }, (error) => {
           console.error("Error on user profile snapshot:", error);
+          toast({
+            title: "Profile Access Error",
+            description: "Could not fetch your profile due to a permissions issue. This can sometimes happen with new accounts. Please refresh.",
+            variant: "destructive",
+            duration: 10000,
+          });
           setUser(null);
           setUserProfile(null);
           setRole(null);
@@ -200,7 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     return () => unsubscribeAuth();
-  }, []);
+  }, [toast]);
 
   // Effect for listening to notifications
   useEffect(() => {

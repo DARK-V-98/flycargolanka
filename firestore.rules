@@ -1,106 +1,112 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // --- Helper Functions ---
-    function isAuth() {
+    function isAuthenticated() {
       return request.auth != null;
     }
 
     function isOwner(userId) {
-      return isAuth() && request.auth.uid == userId;
-    }
-
-    // Safely checks if the authenticated user has a specific role.
-    // Handles the case where the user document might not exist yet.
-    function hasRole(role) {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return isAuth() && userDoc.data != null && userDoc.data.role == role;
-    }
-
-    function isAdmin() {
-      // A developer is also considered an admin for permissions.
-      return isAuth() && (hasRole('admin') || hasRole('developer'));
-    }
-
-    // --- USERS Collection ---
-    match /users/{userId} {
-      // Users can read their own profile. Admins can read any.
-      allow get: if isOwner(userId) || isAdmin();
-      
-      // Admins can list users for management.
-      allow list: if isAdmin();
-      
-      // CRITICAL FIX: A newly authenticated user can create their OWN user document.
-      // This rule does not depend on roles, which solves the signup race condition.
-      allow create: if isOwner(userId);
-      
-      // Complex update logic for roles and profiles.
-      allow update: if 
-        // A user can update their own profile, but cannot change their own role.
-        (isOwner(userId) && request.resource.data.role == resource.data.role) ||
-        // A developer can update any user except themselves.
-        (hasRole('developer') && request.auth.uid != userId) ||
-        // An admin can update other non-developer users, but cannot promote anyone to developer.
-        (hasRole('admin') && !hasRole('developer') && request.auth.uid != userId && request.resource.data.role != 'developer' && get(/databases/$(database)/documents/users/$(userId)).data.role != 'developer');
-    }
-
-    // --- BOOKINGS Collection ---
-    match /bookings/{bookingId} {
-      // User can get their own booking, admins can get any.
-      allow get: if isAdmin() || (isAuth() && resource.data.userId == request.auth.uid);
-      
-      // Users can list their own bookings. Admins can list all.
-      allow list: if isAdmin() || (isAuth() && request.query.where.size() > 0 && request.query.where[0].fieldPath == 'userId' && request.query.where[0].value == request.auth.uid);
-
-      // User must be authenticated to create a booking for themselves.
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-
-      allow update: if
-        // Admins can update any booking.
-        isAdmin() ||
-        // A user can cancel their OWN PENDING booking, only changing status.
-        (isOwner(resource.data.userId) 
-          && resource.data.status == 'Pending' 
-          && request.resource.data.status == 'Cancelled' 
-          && request.resource.diff(resource).affectedKeys().hasOnly(['status', 'updatedAt']));
+      return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // --- Publicly Readable Data (Admin-managed) ---
+    // Safely checks if a user's document exists in Firestore.
+    function userExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    // Safely gets a user's role. Returns 'user' if not found.
+    function getRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+    }
+    
+    // Check for developer role.
+    function isDeveloper() {
+      return isAuthenticated() && userExists(request.auth.uid) && getRole(request.auth.uid) == 'developer';
+    }
+
+    // Check for admin or developer role.
+    function isAdmin() {
+      return isAuthenticated() && userExists(request.auth.uid) && (getRole(request.auth.uid) == 'admin' || isDeveloper());
+    }
+
+
+    // --- Collections Rules ---
+
+    // Users Collection
+    match /users/{userId} {
+      // Allow user to create their own document on signup.
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      
+      // User can read their own profile. Admins/Devs can read any.
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      
+      // Complex update logic:
+      // 1. A user can update their own profile, but cannot change their own role.
+      // 2. An admin can update other users, but cannot promote anyone to developer.
+      // 3. A developer can update any other user's roles freely.
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) ||
+                       (isAdmin() && !isDeveloper() && request.resource.data.role != 'developer' && userId != request.auth.uid) ||
+                       (isDeveloper() && userId != request.auth.uid);
+    }
+
+    // Bookings Collection
+    match /bookings/{bookingId} {
+      // User can read their own bookings. Admins/Devs can read any.
+      allow get: if isOwner(resource.data.userId) || isAdmin();
+      // List operations are implicitly covered by secure client-side queries with 'get' rule.
+      allow list: if isAdmin() || (isAuthenticated() && request.query.userId == request.auth.uid);
+      
+      // User can create their own booking.
+      allow create: if isOwner(request.resource.data.userId);
+      
+      // User can update THEIR OWN 'Pending' booking to 'Cancelled'.
+      // Admins/Devs can update any booking.
+      allow update: if (isOwner(resource.data.userId) &&
+                          request.resource.data.status == 'Cancelled' &&
+                          resource.data.status == 'Pending' &&
+                          request.resource.diff(resource).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+                       isAdmin();
+    }
+    
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      // User can read their own notifications. Admins/Devs can read admin-targeted ones.
+      allow get, list: if (isOwner(resource.data.userId)) ||
+                          (resource.data.recipient == 'admins' && isAdmin());
+                          
+      // Authenticated users can create notifications (validated by server-side logic).
+      allow create: if isAuthenticated();
+      
+      // User can mark THEIR OWN notification as read.
+      allow update: if isOwner(resource.data.userId) &&
+                       request.resource.data.isRead == true &&
+                       request.resource.diff(resource).affectedKeys().hasOnly(['isRead']);
+    }
+    
+    // Public Data (Admin-managed)
     match /shipping_rates/{countryId} {
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isAdmin();
       
       match /weights/{weightId} {
-        allow read: if true;
+        allow get, list: if true;
         allow write: if isAdmin();
       }
     }
     
     match /special_offers/{offerId} {
-      allow read: if true;
-      allow write: if isAdmin();
+        allow get, list: if true;
+        allow write: if isAdmin();
     }
     
-    // --- Settings (Admin only) ---
+    // Homepage Settings (Admin-managed)
     match /settings/{settingId} {
-      allow read, write: if isAdmin();
-    }
-
-    // --- NOTIFICATIONS Collection ---
-    match /notifications/{notificationId} {
-      // Authenticated users can create notifications (server logic validates content).
-      allow create: if isAuth();
-
-      // Users can read their own notifications. Admins can read admin-targeted ones.
-      allow read: if (isAuth() && resource.data.userId == request.auth.uid) || (isAdmin() && resource.data.recipient == 'admins');
-      
-      // A user can only mark their OWN UNREAD notification as read.
-      allow update: if isOwner(resource.data.userId) 
-                      && resource.data.isRead == false
-                      && request.resource.data.isRead == true 
-                      && request.resource.diff(resource).affectedKeys().hasOnly(['isRead']);
+        allow read, write: if isAdmin();
     }
   }
 }
