@@ -239,7 +239,7 @@ function MyBookingsPageContent() {
         };
 
         for (const key in replacements) {
-            template = template.replace(new RegExp(key.replace(/{{|}}/g, ''), 'g'), replacements[key]);
+            template = template.replaceAll(key, replacements[key]);
         }
 
         const { jsPDF } = await import('jspdf');
