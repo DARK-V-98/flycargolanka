@@ -70,13 +70,21 @@ const NORMALIZED_DEVELOPER_EMAIL = DEVELOPER_EMAIL.toLowerCase();
 function AuthRedirectHandler({ user, loading }: { user: FirebaseUser | null; loading: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const redirect = searchParams.get('redirect');
 
   useEffect(() => {
-    if (!loading && user && redirect) {
-      router.push(redirect);
+    if (!loading && user) {
+      // If a redirect URL is specified (e.g., from being sent to login from a protected page)
+      if (redirect) {
+        router.push(redirect);
+      } 
+      // If user is on the auth page (meaning they just logged in/signed up directly)
+      else if (pathname === '/auth') {
+        router.push('/');
+      }
     }
-  }, [user, loading, redirect, router]);
+  }, [user, loading, redirect, router, pathname]);
 
   return null;
 }
