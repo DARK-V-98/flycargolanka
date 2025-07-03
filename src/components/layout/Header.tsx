@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Menu, LogIn, UserCircle, LogOut, ShieldCheck, PackageSearch, UserCog, Info, BookMarked, Bell, Package, Fingerprint } from "lucide-react";
-import { useAuth, type AdminNotification } from '@/contexts/AuthContext';
+import { useAuth, type AppNotification } from '@/contexts/AuthContext';
 import type { Route } from 'next';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -33,9 +33,9 @@ export default function Header() {
   const { user, userProfile, role, logout, loading, notifications, markNotificationAsRead } = useAuth();
   const router = useRouter();
 
-  const handleNotificationClick = async (notification: AdminNotification) => {
+  const handleNotificationClick = async (notification: AppNotification) => {
     await markNotificationAsRead(notification.id);
-    router.push(notification.link);
+    router.push(notification.link as Route);
   };
 
 
@@ -62,7 +62,7 @@ export default function Header() {
         <div className="flex items-center space-x-2 sm:space-x-4">
           <nav className="hidden md:flex space-x-1 items-center">
             {navItemsToDisplay.map((item) => (
-              <NavLink key={item.label} href={item.href} className="text-base px-2 py-1.5">
+              <NavLink key={item.label} href={item.href as Route} className="text-base px-2 py-1.5">
                 {item.label === 'Admin Dashboard' && <ShieldCheck className="inline-block mr-0.5 h-3.5 w-3.5" />}
                 {item.label === 'Track Package' && <PackageSearch className="inline-block mr-0.5 h-3.5 w-3.5" />}
                 {item.label === 'About Us' && <Info className="inline-block mr-0.5 h-3.5 w-3.5" />}
@@ -72,7 +72,7 @@ export default function Header() {
             ))}
           </nav>
 
-          {role && (role === 'admin' || role === 'developer') && (
+          {!loading && user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/10">
@@ -96,7 +96,10 @@ export default function Header() {
                            <DropdownMenuItem key={n.id} onSelect={() => handleNotificationClick(n)} className="cursor-pointer items-start">
                              <div className="flex items-start space-x-3 py-1">
                                 <div className="mt-1">
-                                    {n.type === 'new_booking' ? <Package className="h-4 w-4 text-primary" /> : <Fingerprint className="h-4 w-4 text-primary" />}
+                                    {n.type === 'new_booking' ? <Package className="h-4 w-4 text-primary" /> 
+                                    : n.type === 'nic_verification' ? <Fingerprint className="h-4 w-4 text-primary" />
+                                    : <PackageSearch className="h-4 w-4 text-primary" />
+                                    }
                                 </div>
                                 <div className="flex flex-col">
                                     <p className="text-sm leading-snug whitespace-normal">{n.message}</p>
@@ -171,7 +174,7 @@ export default function Header() {
                  <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <nav className="flex flex-col space-y-3 mt-8">
                   {navItemsToDisplay.map((item) => (
-                    <NavLink key={item.label} href={item.href} className="text-lg text-center py-2.5">
+                    <NavLink key={item.label} href={item.href as Route} className="text-lg text-center py-2.5">
                        {item.label === 'Admin Dashboard' && <ShieldCheck className="inline-block mr-2 h-5 w-5" />}
                        {item.label === 'Track Package' && <PackageSearch className="inline-block mr-2 h-5 w-5" />}
                        {item.label === 'About Us' && <Info className="inline-block mr-2 h-5 w-5" />}

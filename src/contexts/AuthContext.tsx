@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from 'react';
@@ -10,6 +11,7 @@ import { FirebaseError } from 'firebase/app';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import Link from 'next/link';
+import { type Route } from 'next';
 
 
 export type UserRole = 'user' | 'admin' | 'developer';
@@ -32,13 +34,15 @@ export interface UserProfile {
   updatedAt?: any;
 }
 
-export interface AdminNotification {
+export interface AppNotification {
   id: string;
-  type: 'new_booking' | 'nic_verification';
+  type: 'new_booking' | 'nic_verification' | 'tracking_update';
   message: string;
   link: string;
   isRead: boolean;
   createdAt: Timestamp;
+  userId?: string;
+  recipient?: 'admins';
 }
 
 interface AuthContextType {
@@ -54,7 +58,7 @@ interface AuthContextType {
   updateUserDisplayName: (newName: string) => Promise<void>;
   updateUserRoleByEmail: (targetUserEmail: string, newRole: UserRole) => Promise<void>;
   updateUserExtendedProfile: (data: { nic?: string | null; phone?: string | null; address?: string | null }) => Promise<void>;
-  notifications: AdminNotification[];
+  notifications: AppNotification[];
   markNotificationAsRead: (id: string) => Promise<void>;
 }
 
@@ -77,6 +81,15 @@ function AuthRedirectHandler({ user, loading }: { user: FirebaseUser | null; loa
   return null;
 }
 
+const getNotificationTitle = (type: AppNotification['type']): string => {
+    switch (type) {
+        case 'new_booking': return 'New Booking Received';
+        case 'nic_verification': return 'New NIC Verification';
+        case 'tracking_update': return 'Tracking Number Updated';
+        default: return 'New Notification';
+    }
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -84,7 +97,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [role, setRole] = useState<UserRole | null>(null);
   const router = useRouter();
 
-  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const { toast } = useToast();
   const notifiedIdsRef = useRef(new Set<string>());
 
@@ -181,29 +194,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => unsubscribeAuth();
   }, []);
 
-  // Effect for listening to admin notifications
+  // Effect for listening to notifications
   useEffect(() => {
-    if (!user || (role !== 'admin' && role !== 'developer')) {
+    if (!user || !role) {
       setNotifications([]);
       if(notifiedIdsRef.current.size > 0) notifiedIdsRef.current.clear();
       return;
     }
 
     const notificationsRef = collection(db, 'notifications');
-    const q = query(notificationsRef, where('isRead', '==', false), orderBy('createdAt', 'desc'));
+    let q;
+
+    if (role === 'admin' || role === 'developer') {
+        q = query(notificationsRef, where('recipient', '==', 'admins'), where('isRead', '==', false), orderBy('createdAt', 'desc'));
+    } else { // 'user' role
+        q = query(notificationsRef, where('userId', '==', user.uid), where('isRead', '==', false), orderBy('createdAt', 'desc'));
+    }
+
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const unreadNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AdminNotification));
+      const unreadNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppNotification));
 
       // For any new notification that we haven't shown a toast for, show one.
       unreadNotifications.forEach(n => {
         if (!notifiedIdsRef.current.has(n.id)) {
           toast({
-            title: n.type === 'new_booking' ? 'New Booking Received' : 'New NIC Verification',
+            title: getNotificationTitle(n.type),
             description: n.message,
             action: (
               <ToastAction altText="View" asChild>
-                <Link href={n.link}>View</Link>
+                <Link href={n.link as Route}>View</Link>
               </ToastAction>
             ),
             duration: 15000,
@@ -215,8 +235,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, (error) => {
         console.error("Firestore snapshot error on notifications:", error);
         toast({
-            title: "Notification Access Denied",
-            description: "Could not fetch admin notifications due to a permissions issue. Please check your Firestore security rules.",
+            title: "Notification Access Error",
+            description: "Could not fetch notifications due to a permissions issue. Please check your Firestore security rules.",
             variant: "destructive",
             duration: 10000,
         });

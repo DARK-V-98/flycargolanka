@@ -33,7 +33,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle, BellRing, CheckCircle2, Eye, Download, Box, Fingerprint } from 'lucide-react';
+import { Loader2, Package, CalendarDays, ShieldCheck, Info, BookMarked, CreditCard, XCircle, AlertTriangle, BellRing, CheckCircle2, Eye, Download, Box, Fingerprint, PackageSearch } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import type { NicVerificationStatus } from '@/contexts/AuthContext';
@@ -47,6 +47,7 @@ export interface Booking {
   id: string;
   userId: string;
   userEmail: string | null;
+  trackingNumber?: string | null;
 
   shipmentType: 'parcel' | 'document';
   serviceType: 'economy' | 'express';
@@ -379,14 +380,11 @@ function MyBookingsPageContent() {
                           <BellRing className="h-5 w-5 text-green-600"/>
                           <AlertTitle className="text-green-700 font-semibold">Booking Confirmed & Processing!</AlertTitle>
                           <AlertDescription>
-                              Your order <strong className="font-mono text-xs">{booking.id}</strong> is now processing. You can track its progress using your booking ID on the{' '}
-                              <Link href="/track-package" className="font-semibold underline hover:text-primary/80">
-                                  Track Package page
-                              </Link>.
+                              Your order <strong className="font-mono text-xs">{booking.id}</strong> is now being processed. A tracking number will appear here once it is assigned.
                           </AlertDescription>
                       </Alert>
                   )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
                       <p><span className="font-semibold">Sender:</span> {booking.senderFullName}</p>
                       <p><span className="font-semibold">Receiver:</span> {booking.receiverFullName}</p>
                       <p><span className="font-semibold">Destination:</span> {booking.receiverCountry}</p>
@@ -400,6 +398,27 @@ function MyBookingsPageContent() {
                           </div>
                       )}
                   </div>
+                  {booking.trackingNumber ? (
+                    <div className="mt-4 pt-3 border-t">
+                        <h4 className="font-semibold text-accent flex items-center mb-2"><PackageSearch className="mr-2 h-5 w-5"/>Tracking Information</h4>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                            <p className="font-mono text-sm bg-muted p-2 rounded-md whitespace-nowrap">{booking.trackingNumber}</p>
+                            <Button asChild size="sm" className="w-full sm:w-auto">
+                                <a 
+                                    href={`https://www.ups.com/track?loc=en_SG&tracknum=${encodeURIComponent(booking.trackingNumber)}&requester=ST/`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Track on UPS
+                                </a>
+                            </Button>
+                        </div>
+                    </div>
+                ) : booking.status !== 'Pending' && booking.status !== 'Cancelled' && (
+                    <div className="mt-4 pt-3 border-t text-sm text-muted-foreground">
+                        Tracking number will be assigned soon.
+                    </div>
+                )}
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row justify-end items-center gap-2">
                   <Badge variant={booking.paymentStatus === 'Paid' ? 'default' : booking.paymentStatus === 'Refunded' ? 'destructive' : 'secondary' } className="text-xs mr-auto capitalize">
@@ -498,6 +517,25 @@ function MyBookingsPageContent() {
                      <div><strong className="text-muted-foreground">Purpose:</strong> <span className="capitalize">{viewingBooking.courierPurpose === 'custom' ? (viewingBooking.customPurpose || 'Custom') : (viewingBooking.courierPurpose?.replace(/_/g, ' ') || 'N/A')}</span></div>
                   </div>
                 </section>
+                
+                {viewingBooking.trackingNumber && (
+                    <section>
+                        <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent flex items-center"><PackageSearch className="mr-2" />Tracking</h3>
+                         <div className="flex items-center justify-between mt-2">
+                            <p className="font-mono text-sm bg-muted p-2 rounded-md">{viewingBooking.trackingNumber}</p>
+                            <Button asChild size="sm">
+                                <a 
+                                    href={`https://www.ups.com/track?loc=en_SG&tracknum=${encodeURIComponent(viewingBooking.trackingNumber || '')}&requester=ST/`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Track on UPS
+                                </a>
+                            </Button>
+                        </div>
+                    </section>
+                )}
+
 
                 <section>
                   <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent">Receiver Details</h3>
@@ -558,5 +596,3 @@ export default function MyBookingsPage() {
         </Suspense>
     );
 }
-
-    

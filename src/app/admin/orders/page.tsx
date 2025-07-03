@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, type Timestamp, doc, updateDoc, serverTimestamp, where, writeBatch } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Table,
@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard, Download, Box, Fingerprint } from "lucide-react";
+import { Package, CalendarDays, Save, Loader2, AlertTriangle, Search, Filter, Eye, Info, ArrowLeft, CreditCard, Download, Box, Fingerprint, PackageSearch } from "lucide-react";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -43,6 +43,7 @@ export interface Booking {
   id: string;
   userId: string;
   userEmail: string | null; // Email of the user who made the booking
+  trackingNumber?: string | null;
 
   shipmentType: 'parcel' | 'document';
   serviceType: 'economy' | 'express';
@@ -100,6 +101,10 @@ export default function AdminOrdersPage() {
   const [selectedPaymentStatusMap, setSelectedPaymentStatusMap] = useState<Record<string, PaymentStatus>>({});
   const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+  
+  const [trackingNumberMap, setTrackingNumberMap] = useState<Record<string, string>>({});
+  const [updatingTracking, setUpdatingTracking] = useState<Record<string, boolean>>({});
+
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<BookingStatus | 'All'>('All');
@@ -227,9 +232,7 @@ export default function AdminOrdersPage() {
             return {
                 ...booking,
                 paymentStatus: booking.paymentStatus || 'Pending',
-                // Use live status from user profile, fallback to booking's status
                 nicVerificationStatus: userProfile?.nicVerificationStatus || booking.nicVerificationStatus || 'none', 
-                // Use live email if available
                 userEmail: userProfile?.email || booking.userEmail,
             };
         });
@@ -238,13 +241,18 @@ export default function AdminOrdersPage() {
         
         const initialStatuses: Record<string, BookingStatus> = {};
         const initialPaymentStatuses: Record<string, PaymentStatus> = {};
+        const initialTrackingNumbers: Record<string, string> = {};
 
         bookingsData.forEach(b => {
             initialStatuses[b.id] = b.status;
             initialPaymentStatuses[b.id] = b.paymentStatus || 'Pending';
+            if (b.trackingNumber) {
+                initialTrackingNumbers[b.id] = b.trackingNumber;
+            }
         });
         setSelectedStatusMap(initialStatuses);
         setSelectedPaymentStatusMap(initialPaymentStatuses);
+        setTrackingNumberMap(initialTrackingNumbers);
 
       } catch (error) {
         console.error("Error fetching bookings: ", error);
@@ -387,6 +395,58 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleSaveTrackingNumber = async (bookingId: string) => {
+    const trackingNumber = trackingNumberMap[bookingId]?.trim();
+    if (!trackingNumber) {
+        toast({ title: "Error", description: "Tracking number cannot be empty.", variant: "destructive" });
+        return;
+    }
+    
+    const booking = allBookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
+    setUpdatingTracking(prev => ({ ...prev, [bookingId]: true }));
+
+    try {
+        const bookingDocRef = doc(db, 'bookings', bookingId);
+        const notificationColRef = collection(db, 'notifications');
+        
+        const batch = writeBatch(db);
+
+        // Update booking
+        batch.update(bookingDocRef, {
+            trackingNumber: trackingNumber,
+            updatedAt: serverTimestamp()
+        });
+
+        // Create notification for user
+        batch.set(doc(notificationColRef), {
+            type: 'tracking_update',
+            message: `Your tracking number for booking #${bookingId} is now available.`,
+            link: '/my-bookings',
+            isRead: false,
+            userId: booking.userId, // Target the specific user
+            createdAt: serverTimestamp()
+        });
+
+        await batch.commit();
+
+        setAllBookings(prev => prev.map(b => b.id === bookingId ? { ...b, trackingNumber } : b));
+        
+        toast({
+            title: "Success",
+            description: `Tracking number added for booking ${bookingId}.`,
+            variant: "default"
+        });
+
+    } catch (error) {
+        console.error("Error saving tracking number:", error);
+        toast({ title: "Error", description: "Could not save tracking number.", variant: "destructive" });
+    } finally {
+        setUpdatingTracking(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
 
   if (loading && allBookings.length === 0) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin text-primary mr-2" /> Loading orders...</div>;
@@ -445,7 +505,7 @@ export default function AdminOrdersPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-            <Table className="min-w-[1200px]">
+            <Table className="min-w-[1600px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[100px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">ID</TableHead>
@@ -458,6 +518,7 @@ export default function AdminOrdersPage() {
                   <TableHead className="text-right min-w-[140px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Booked On</TableHead>
                   <TableHead className="text-center min-w-[210px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Order Status</TableHead>
                   <TableHead className="text-center min-w-[210px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Payment</TableHead>
+                  <TableHead className="text-center min-w-[240px] px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Tracking Number</TableHead>
                   <TableHead className="text-center px-2 py-2 text-xs sm:text-sm whitespace-nowrap">Details</TableHead>
                 </TableRow>
               </TableHeader>
@@ -544,6 +605,25 @@ export default function AdminOrdersPage() {
                         </Button>
                        </div>
                     </TableCell>
+                    <TableCell className="px-2 py-2.5">
+                        <div className="flex items-center justify-center space-x-1 sm:space-x-2">
+                            <Input
+                                value={trackingNumberMap[booking.id] || ''}
+                                onChange={(e) => setTrackingNumberMap(prev => ({ ...prev, [booking.id]: e.target.value }))}
+                                placeholder="Enter tracking #"
+                                className="h-8 text-xs min-w-[150px]"
+                                disabled={updatingTracking[booking.id]}
+                            />
+                            <Button
+                                size="sm"
+                                onClick={() => handleSaveTrackingNumber(booking.id)}
+                                disabled={updatingTracking[booking.id] || !trackingNumberMap[booking.id] || trackingNumberMap[booking.id] === booking.trackingNumber}
+                                className="h-8 px-2"
+                            >
+                                {updatingTracking[booking.id] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                            </Button>
+                        </div>
+                    </TableCell>
                     <TableCell className="text-center px-2 py-2.5">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewingBooking(booking)}>
                             <Eye className="h-4 w-4 text-primary" />
@@ -594,6 +674,25 @@ export default function AdminOrdersPage() {
                     <div><strong className="text-muted-foreground">Est. Cost (LKR):</strong> {viewingBooking.estimatedCostLKR?.toLocaleString() || 'N/A'}</div>
                   </div>
                 </section>
+                
+                {viewingBooking.trackingNumber && (
+                    <section>
+                        <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent flex items-center"><PackageSearch className="mr-2" />Tracking</h3>
+                         <div className="flex items-center justify-between mt-2">
+                            <p className="font-mono text-sm bg-muted p-2 rounded-md">{viewingBooking.trackingNumber}</p>
+                            <Button asChild size="sm">
+                                <a 
+                                    href={`https://www.ups.com/track?loc=en_SG&tracknum=${encodeURIComponent(viewingBooking.trackingNumber || '')}&requester=ST/`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Track on UPS
+                                </a>
+                            </Button>
+                        </div>
+                    </section>
+                )}
+
 
                 {/* Package & Purpose Details */}
                 <section>
@@ -668,7 +767,3 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
-
-    
-
-    
