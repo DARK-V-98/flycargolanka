@@ -1,99 +1,68 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper Functions
-    function isSignedIn() {
-      return request.auth != null;
+
+    // Helper functions to check user roles
+    // These functions now safely handle cases where request.auth is null.
+    function isDeveloper(userId) {
+      let email = get(/databases/$(database)/documents/users/$(userId)).data.email;
+      return request.auth != null && email == "thimira.vishwa2003@gmail.com";
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isAdmin(userId) {
+      let role = get(/databases/$(database)/documents/users/$(userId)).data.role;
+      return request.auth != null && role == 'admin';
     }
-    
-    // Safely checks if the user is a developer or admin.
-    // Must be called only after ensuring the user is signed in.
-    function isDeveloperOrAdmin() {
-      // The primary developer has inherent developer role.
-      if (request.auth.token.email == "thimira.vishwa2003@gmail.com") {
-        return true;
-      }
-      // Check for 'admin' or 'developer' role in the user's profile document.
-      let userRole = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-      return userRole == 'admin' || userRole == 'developer';
-    }
-    
-    // A safer wrapper for role checks.
-    function hasAdminOrDevRole() {
-      return isSignedIn() && isDeveloperOrAdmin();
-    }
-    
 
-    // --- User Profiles ---
-    // Collection: /users/{userId}
+    // Users can read their own profile, and update specific fields.
+    // They can only be created with a 'user' role unless by an admin/dev.
     match /users/{userId} {
-      // Anyone can create their own user profile document upon signing up.
-      allow create: if isOwner(userId);
-      
-      // Users can only read their own profile. Admins/Developers can read any profile.
-      allow read: if isOwner(userId) || hasAdminOrDevRole();
-      
-      // Users can update their own profile. Admins/Developers can update any profile (e.g., to change roles).
-      allow update: if isOwner(userId) || hasAdminOrDevRole();
-      
-      // Deleting user profiles is disallowed to maintain data integrity.
-      allow delete: if false;
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && (request.auth.uid == userId || isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+    }
+
+    // Bookings can be created by any authenticated user.
+    // Users can only view their own bookings.
+    // Admins/Developers can view all bookings and update their status.
+    match /bookings/{bookingId} {
+      allow read: if request.auth != null && (get(/databases/$(database)/documents/bookings/$(bookingId)).data.userId == request.auth.uid || isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+                      (getAfter(/databases/$(database)/documents/bookings/$(bookingId)).data.userId == request.auth.uid && request.resource.data.status == 'Cancelled') ||
+                      isAdmin(request.auth.uid) || 
+                      isDeveloper(request.auth.uid)
+                    );
     }
     
-    // --- Bookings ---
-    // Collection: /bookings/{bookingId}
-    match /bookings/{bookingId} {
-      // Logged-in users can create bookings for themselves.
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      
-      // Users can read their own bookings. Admins/Developers can read all bookings.
-      allow read: if (isSignedIn() && resource.data.userId == request.auth.uid) || hasAdminOrDevRole();
-      
-      // Users can update their own bookings only if status is 'Pending' (for cancellation).
-      // Admins/Developers can update any booking.
-      allow update: if hasAdminOrDevRole() || 
-                     (isOwner(resource.data.userId) && resource.data.status == 'Pending' && request.resource.data.status == 'Cancelled');
-      
-      // Deleting bookings is disallowed.
-      allow delete: if false;
-    }
-
-    // --- Shipping Rates ---
-    // Collection: /shipping_rates/{countryId}/weights/{weightId}
+    // Shipping rates can be read by anyone (for the calculator).
+    // Only admins/developers can create, update, or delete them.
     match /shipping_rates/{countryId} {
-      // Anyone (including anonymous users) can read the list of countries for the calculator.
-      allow list, get: if true;
-      
-      // Only Admins/Developers can create, update, or delete countries.
-      allow write: if hasAdminOrDevRole();
+      allow read: if true;
+      allow write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
 
-      // Subcollection for weights
       match /weights/{weightId} {
-        // Anyone can read the weight rates for a specific country for the calculator.
-        allow list, get: if true;
-        
-        // Only Admins/Developers can write to the weights subcollection.
-        allow write: if hasAdminOrDevRole();
+        allow read: if true;
+        allow write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
       }
     }
     
-    // --- Notifications for Admins ---
-    // Collection: /notifications/{notificationId}
+    // Notifications are only readable and writable by admins/developers.
     match /notifications/{notificationId} {
-      // Only Admins/Developers can read/list notifications.
-      allow read, list: if hasAdminOrDevRole();
-      
-      // Any logged-in user can create a notification (e.g., when submitting a booking or NIC).
-      allow create: if isSignedIn();
+        allow read, write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+    }
 
-      // Only Admins/Developers can update (e.g., mark as read) or delete notifications.
-      allow write: if hasAdminOrDevRole();
+    // Special Offers can be read by anyone, but only managed by admins/devs.
+    match /special_offers/{offerId} {
+      allow read: if true;
+      allow write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -1,11 +1,15 @@
+
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe2, MapPin, Truck, ShoppingCart, Building2, Eye, Target, Calculator, Globe, ShieldCheck, LifeBuoy } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Globe2, MapPin, Truck, ShoppingCart, Building2, Eye, Target, Calculator, Globe, ShieldCheck, LifeBuoy, Plane } from 'lucide-react';
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
 import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { SpecialOffer } from '@/types/specialOffers';
 
 
 const services = [
@@ -13,6 +17,21 @@ const services = [
   { name: "Local Delivery", icon: MapPin, description: "Swift and secure local delivery services across the region.", href:"/services#local"  },
   { name: "Freight Forwarding", icon: Truck, description: "Comprehensive freight forwarding solutions for your business needs.", href:"/services#freight"  },
 ];
+
+async function getSpecialOffers(): Promise<SpecialOffer[]> {
+    try {
+        const offersRef = collection(db, 'special_offers');
+        const q = query(offersRef, where('enabled', '==', true), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SpecialOffer));
+    } catch (error) {
+        console.error("Error fetching special offers for homepage:", error);
+        // In a server component, we can't use toasts, but logging is important.
+        // We return an empty array to prevent the page from crashing.
+        return [];
+    }
+}
+
 
 export default async function Home() {
   const partnerLogos = [
@@ -26,6 +45,7 @@ export default async function Home() {
     { name: "Wish", src: "/Wish.svg" },
   ];
   
+  const specialOffers = await getSpecialOffers();
 
   return (
     <div className="flex-1 flex flex-col">
@@ -46,7 +66,7 @@ export default async function Home() {
             
             <div className="text-center space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-white text-shadow-black mb-6 opacity-0 animate-fadeInUp">
-                <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">WELCOME TO </span>FLYCARGO LANKA
+                WELCOME TO FLYCARGO LANKA
               </h1>
               
               <div className="flex flex-wrap justify-center items-center gap-4 opacity-0 animate-fadeInUp delay-400">
@@ -140,6 +160,41 @@ export default async function Home() {
             ))}
           </div>
         </section>
+
+        {specialOffers.length > 0 && (
+            <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.5s'}}>
+                <div className="container mx-auto px-4">
+                    <div>
+                        <PageHeader title="Special Bulk Cargo Offers" description="Exclusive rates for select destinations. Grab these deals while they last!"/>
+                    </div>
+                    <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {specialOffers.map(offer => (
+                            <Card key={offer.id} className="flex flex-col shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 overflow-hidden">
+                                <Image src={offer.imageUrl} alt={`Special offer for ${offer.country}`} width={400} height={250} className="w-full h-48 object-cover" />
+                                <CardHeader>
+                                    <CardTitle className="text-accent text-2xl flex items-center gap-2"><Plane className="h-7 w-7 text-primary" />{offer.country}</CardTitle>
+                                    <CardDescription>{offer.weightDescription}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow space-y-4">
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">Special Rate</p>
+                                        <p className="text-4xl font-bold text-primary">{offer.rate.toLocaleString()} <span className="text-lg font-normal text-muted-foreground">LKR</span></p>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground p-3 bg-secondary/50 rounded-md border border-dashed">
+                                        Includes <strong className="text-primary/90">free insurance up to 100,000 LKR</strong> for damage and loss. Subject to <Link href="/terms" className="underline hover:text-primary">terms and conditions</Link>.
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                     <Button asChild className="w-full">
+                                        <Link href="/book">Book This Offer</Link>
+                                     </Button>
+                                </CardFooter>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        )}
 
         <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.5s'}}>
           <div className="container mx-auto px-4">
