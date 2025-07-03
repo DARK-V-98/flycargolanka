@@ -127,12 +127,12 @@ function MyBookingsPageContent() {
       setLoadingBookings(false);
     }, (error) => {
       console.error("Error fetching bookings in real-time: ", error);
-      toast({ title: "Error", description: "Could not fetch your bookings.", variant: "destructive" });
+      // Removed toast message to avoid confusing users when no bookings are found due to permissions lag.
       setLoadingBookings(false);
     });
 
     return () => unsubscribe();
-  }, [user, toast]);
+  }, [user]);
 
   const getDisplayStatus = (status: BookingStatus): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } => {
     switch (status) {
@@ -610,3 +610,4 @@ export default function MyBookingsPage() {
         </Suspense>
     );
 }
+
