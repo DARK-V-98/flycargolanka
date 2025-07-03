@@ -3,56 +3,41 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-  
-    // --- Helper Functions ---
-    // These functions read from Firestore to check a user's role.
-    function getUserData(userId) {
-      if (userId == null || userId == "") {
-        return null;
-      }
-      return get(/databases/(default)/documents/users/$(userId)).data;
-    }
-
-    function getUserRole(userId) {
-      let userData = getUserData(userId);
-      if (userData == null || !('role' in userData)) {
-        return 'user'; // Default to 'user' if not found
-      }
-      return userData.role;
-    }
-
-    function isAdmin() {
-      // Check if the user is logged in
-      if (request.auth == null) {
-        return false;
-      }
-      // Get the user's role from Firestore
-      let role = getUserRole(request.auth.uid);
-      return role == 'admin' || role == 'developer';
+    
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
     function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // --- Rules for NIC Verification Images ---
-    // Path: /nic_verification/{userId}/{fileName}
-    match /nic_verification/{userId}/{imageId} {
+    match /nic_verification/{userId}/{fileName} {
       
-      // Allow read access to the user who owns the files and to admins/developers.
-      allow read: if isOwner(userId) || isAdmin();
-      
-      // Allow the user to upload their own NIC images.
-      // We also check file size and type.
-      allow write: if isOwner(userId) &&
-                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
-                      request.resource.contentType.matches('image/.*'); // Only allow images
-                      
-      // Allow owner to delete their files (e.g., for resubmission)
-      allow delete: if isOwner(userId);
+      // Only the owner can upload files to their directory.
+      // File size must be less than 5MB.
+      // Content type must be an image.
+      allow create: if isOwner(userId) &&
+                       request.resource.size < 5 * 1024 * 1024 &&
+                       request.resource.contentType.matches('image/.*');
+
+      // Anyone can read the images, as they are accessed via public URLs
+      // in both the NIC verification page (for admins) and a user's profile.
+      allow read: if true;
+
+      // No one can update or delete NIC images from the client to prevent tampering.
+      // Deletions should be handled by an admin process if needed.
+      allow update, delete: if false;
+    }
+
+    // Match the path for the homepage promotional image.
+    match /homepage/{fileName} {
+      allow read: if true;
+      // Write is handled via the Firebase Admin SDK, which bypasses these rules.
+      allow write: if false;
     }
     
-    // Default deny all other paths
+    // Default Deny: Disallow any other operations on any other paths.
     match /{allPaths=**} {
       allow read, write: if false;
     }
