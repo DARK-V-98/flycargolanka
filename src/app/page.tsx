@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
@@ -47,7 +46,7 @@ export default async function Home() {
             
             <div className="text-center space-y-6">
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-headline text-white text-shadow-black mb-6 opacity-0 animate-fadeInUp">
-                <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">Welcome to </span>FlyCargo Lanka
+                <span className="whitespace-nowrap text-3xl sm:text-4xl md:text-5xl">WELCOME TO </span>FLYCARGO LANKA
               </h1>
               
               <div className="flex flex-wrap justify-center items-center gap-4 opacity-0 animate-fadeInUp delay-400">
