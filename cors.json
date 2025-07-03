@@ -6,15 +6,22 @@
       "https://www.flycargolanka.lk",
       "https://flycargolanka-q18x.vercel.app"
     ],
-    "method": ["GET", "PUT", "POST", "DELETE", "OPTIONS"],
+    "method": [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "OPTIONS"
+    ],
     "responseHeader": [
       "Content-Type",
       "Authorization",
       "X-Goog-Resumable",
       "X-Goog-Upload-Command",
-      "X-Goog-Upload-Status",
+      "X-Goog-Upload-Content-Length",
       "X-Goog-Upload-Offset",
-      "X-Requested-With"
+      "X-Goog-Upload-Status",
+      "X-Goog-Upload-Protocol"
     ],
     "maxAgeSeconds": 3600
   }

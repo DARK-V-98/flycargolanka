@@ -3,49 +3,32 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    
-    // --- Helper Functions ---
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+
+    // Helper function to check if the requesting user is an admin or developer
+    function hasAdminRole() {
+      // get() can read from Firestore. It needs the full path.
+      // We check if the user's role in the 'users' collection is 'admin' or 'developer'.
+      return request.auth != null && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['admin', 'developer'];
     }
 
-    function hasRole(role) {
-      if (!isAuthenticated()) {
-        return false;
-      }
-      let userRole = getUserData(request.auth.uid).role;
-      return userRole == role;
-    }
-
-    function isAdmin() {
-      return hasRole('admin') || hasRole('developer');
-    }
-    
-    // --- NIC Verification Folder ---
+    // Rules for NIC verification images
     match /nic_verification/{userId}/{fileName} {
-      // Allow user to write to their own folder
-      allow write: if request.auth.uid == userId &&
-                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
-                      request.resource.contentType.matches('image/.*'); // Only images
-                      
-      // Allow admins to read the images
-      allow read: if isAdmin();
+      // Allow authenticated users to write to their own folder
+      allow write: if request.auth != null && request.auth.uid == userId
+                    && request.resource.size < 5 * 1024 * 1024 // 5MB limit
+                    && request.resource.contentType.matches('image/.*'); // Only images
+
+      // An authenticated user can read their own files.
+      // An admin/developer can read anyone's files.
+      allow read: if request.auth != null && (request.auth.uid == userId || hasAdminRole());
     }
 
-    // --- Publicly Readable Folders (e.g., for homepage promo images) ---
+    // Rules for homepage images
     match /homepage/{fileName} {
+        // Anyone can read the homepage images
         allow read: if true;
-        allow write: if isAdmin();
-    }
-    
-    // --- Default Deny Rule ---
-    // Deny read/write access to all other paths by default
-    match /{allPaths=**} {
-      allow read, write: if false;
+        // Only admins/developers can upload/change homepage images
+        allow write: if request.auth != null && hasAdminRole();
     }
   }
 }
