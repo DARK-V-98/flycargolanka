@@ -44,7 +44,17 @@ export default async function Home() {
     { name: "Wish", src: "/Wish.svg" },
   ];
   
-  const specialOffers = await getSpecialOffers();
+  const specialOffersData = await getSpecialOffers();
+
+  // Convert non-serializable Firestore Timestamps to plain objects
+  // before passing them from a Server Component to a Client Component.
+  const serializableOffers = specialOffersData.map(offer => ({
+    id: offer.id,
+    country: offer.country,
+    weightDescription: offer.weightDescription,
+    rate: offer.rate,
+    enabled: offer.enabled,
+  }));
 
   return (
     <div className="flex-1 flex flex-col">
@@ -160,7 +170,7 @@ export default async function Home() {
           </div>
         </section>
 
-        <SpecialOffersSection offers={specialOffers} />
+        <SpecialOffersSection offers={serializableOffers} />
 
         <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.5s'}}>
           <div className="container mx-auto px-4">
