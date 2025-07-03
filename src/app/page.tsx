@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Globe2, MapPin, Truck, ShoppingCart, Building2, Eye, Target, Calculator, Globe, ShieldCheck, LifeBuoy, Plane } from 'lucide-react';
 import Image from 'next/image';
 import LogoMarquee from '@/components/LogoMarquee';
@@ -169,10 +169,12 @@ export default async function Home() {
                     </div>
                     <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {specialOffers.map(offer => (
-                            <Card key={offer.id} className="flex flex-col shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 overflow-hidden">
-                                <Image src={offer.imageUrl} alt={`Special offer for ${offer.country}`} width={400} height={250} className="w-full h-48 object-cover" />
+                            <Card key={offer.id} className="flex flex-col text-center shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-2">
                                 <CardHeader>
-                                    <CardTitle className="text-accent text-2xl flex items-center gap-2"><Plane className="h-7 w-7 text-primary" />{offer.country}</CardTitle>
+                                    <div className="mx-auto p-4 bg-primary/10 rounded-full inline-block mb-4">
+                                        <Plane className="h-10 w-10 text-primary" />
+                                    </div>
+                                    <CardTitle className="text-accent text-2xl">{offer.country}</CardTitle>
                                     <CardDescription>{offer.weightDescription}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-grow space-y-4">

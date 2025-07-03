@@ -1,15 +1,13 @@
 
 "use client";
 
-import { useState, useEffect, type ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
-import Image from 'next/image';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { useToast } from "@/hooks/use-toast";
 import type { SpecialOffer } from '@/types/specialOffers';
 
@@ -19,14 +17,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as ShadFormDescription } from '@/components/ui/form';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2, ArrowLeft, Upload, Trash2, Edit, PlusCircle, Save, Plane, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowLeft, Trash2, Edit, PlusCircle, Save, Plane, AlertTriangle } from 'lucide-react';
 
-const MAX_FILE_SIZE_MB = 5;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 const offerSchema = z.object({
     country: z.string().min(2, "Country name is required.").max(50),
@@ -42,10 +37,6 @@ export default function ManageSpecialOffersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingOffer, setEditingOffer] = useState<SpecialOffer | null>(null);
-
-    const [newImageFile, setNewImageFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [uploadProgress, setUploadProgress] = useState(0);
     const [formError, setFormError] = useState<string | null>(null);
 
     const form = useForm<OfferFormValues>({
@@ -72,29 +63,6 @@ export default function ManageSpecialOffersPage() {
         fetchOffers();
     }, [toast]);
 
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) {
-            setNewImageFile(null);
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
-            return;
-        }
-
-        setFormError(null);
-        if (file.size > MAX_FILE_SIZE_BYTES) {
-            setFormError(`File too large. Max ${MAX_FILE_SIZE_MB}MB.`);
-            return;
-        }
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-            setFormError('Invalid file type. Use JPG, PNG, or WEBP.');
-            return;
-        }
-
-        setNewImageFile(file);
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(URL.createObjectURL(file));
-    };
 
     const handleEditClick = (offer: SpecialOffer) => {
         setEditingOffer(offer);
@@ -104,29 +72,17 @@ export default function ManageSpecialOffersPage() {
             rate: offer.rate,
             enabled: offer.enabled,
         });
-        setPreviewUrl(offer.imageUrl);
-        setNewImageFile(null);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const resetForm = () => {
         setEditingOffer(null);
         form.reset({ country: '', weightDescription: '', rate: 0, enabled: true });
-        setNewImageFile(null);
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
         setFormError(null);
-        setUploadProgress(0);
     };
 
     const handleDelete = async (offerToDelete: SpecialOffer) => {
         try {
-            // Delete image from Storage
-            const imageRef = ref(storage, offerToDelete.imagePath);
-            await deleteObject(imageRef).catch(err => {
-                if (err.code !== 'storage/object-not-found') throw err;
-            });
-            // Delete doc from Firestore
             await deleteDoc(doc(db, 'special_offers', offerToDelete.id));
             toast({ title: "Success", description: "Offer deleted successfully." });
             setOffers(offers.filter(o => o.id !== offerToDelete.id));
@@ -137,43 +93,11 @@ export default function ManageSpecialOffersPage() {
     };
 
     const onSubmit: SubmitHandler<OfferFormValues> = async (data) => {
-        if (!newImageFile && !editingOffer) {
-            setFormError("An image is required for a new offer.");
-            return;
-        }
         setIsSubmitting(true);
         setFormError(null);
 
         try {
-            let imageUrl = editingOffer?.imageUrl || '';
-            let imagePath = editingOffer?.imagePath || '';
-
-            if (newImageFile) {
-                // Delete old image if editing
-                if (editingOffer && editingOffer.imagePath) {
-                    await deleteObject(ref(storage, editingOffer.imagePath)).catch(err => console.warn("Old image not found, skipping deletion:", err));
-                }
-
-                // Upload new image
-                const newImagePath = `special_offers/${Date.now()}_${newImageFile.name}`;
-                const newImageRef = ref(storage, newImagePath);
-                const uploadTask = uploadBytesResumable(newImageRef, newImageFile);
-
-                await new Promise<void>((resolve, reject) => {
-                    uploadTask.on('state_changed',
-                        (snapshot) => setUploadProgress((snapshot.bytesTransferred / snapshot.totalBytes) * 100),
-                        (error) => reject(error),
-                        async () => {
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            imageUrl = downloadURL;
-                            imagePath = newImagePath;
-                            resolve();
-                        }
-                    );
-                });
-            }
-
-            const offerData = { ...data, imageUrl, imagePath, updatedAt: serverTimestamp() };
+            const offerData = { ...data, updatedAt: serverTimestamp() };
 
             if (editingOffer) {
                 const offerDocRef = doc(db, 'special_offers', editingOffer.id);
@@ -192,7 +116,6 @@ export default function ManageSpecialOffersPage() {
             toast({ title: "Submission Failed", description: err.message, variant: "destructive" });
         } finally {
             setIsSubmitting(false);
-            setUploadProgress(0);
         }
     };
 
@@ -221,15 +144,9 @@ export default function ManageSpecialOffersPage() {
                             <FormField name="rate" control={form.control} render={({ field }) => (
                                 <FormItem><FormLabel>Rate (LKR)</FormLabel><FormControl><Input type="number" placeholder="e.g., 15000" {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
-                            <div className="space-y-2">
-                                <Label htmlFor="offer-image">Offer Image</Label>
-                                <Input id="offer-image" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} />
-                                {previewUrl && <Image src={previewUrl} alt="Preview" width={200} height={100} className="mt-2 rounded-md border" />}
-                            </div>
-                             {uploadProgress > 0 && <Progress value={uploadProgress} />}
                             <FormField name="enabled" control={form.control} render={({ field }) => (
                                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                    <div className="space-y-0.5"><FormLabel>Enabled</FormLabel><FormDescription>Show this offer on the homepage.</FormDescription></div>
+                                    <div className="space-y-0.5"><FormLabel>Enabled</FormLabel><ShadFormDescription>Show this offer on the homepage.</ShadFormDescription></div>
                                     <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                                 </FormItem>
                             )} />
@@ -253,10 +170,12 @@ export default function ManageSpecialOffersPage() {
                         : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {offers.map(offer => (
-                                    <Card key={offer.id} className="flex flex-col">
+                                    <Card key={offer.id} className="flex flex-col text-center">
                                         <CardHeader>
-                                            <Image src={offer.imageUrl} alt={offer.country} width={400} height={200} className="rounded-t-lg object-cover aspect-video" />
-                                            <CardTitle className="pt-4">{offer.country}</CardTitle>
+                                            <div className="mx-auto p-4 bg-primary/10 rounded-full inline-block mb-4">
+                                                <Plane className="h-10 w-10 text-primary" />
+                                            </div>
+                                            <CardTitle>{offer.country}</CardTitle>
                                             <CardDescription>{offer.weightDescription}</CardDescription>
                                         </CardHeader>
                                         <CardContent className="flex-grow">
@@ -265,7 +184,7 @@ export default function ManageSpecialOffersPage() {
                                                 {offer.enabled ? 'Enabled' : 'Disabled'}
                                             </p>
                                         </CardContent>
-                                        <CardFooter className="gap-2">
+                                        <CardFooter className="gap-2 justify-center">
                                             <Button variant="outline" size="sm" onClick={() => handleEditClick(offer)}><Edit className="mr-2 h-4 w-4" /> Edit</Button>
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
