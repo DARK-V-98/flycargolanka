@@ -123,6 +123,17 @@ export default function AdminOrdersPage() {
         const serviceDescription = `Shipping - ${viewingBooking.shipmentType} (${viewingBooking.serviceType}) - ${viewingBooking.approxWeight}kg`;
         const totalAmount = viewingBooking.estimatedCostLKR?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
         
+        const trackingHtml = viewingBooking.trackingNumber
+            ? `<div class="section" style="margin-top: 30px;">
+                <div class="section-title">Tracking Information</div>
+                <p><strong>Tracking Number:</strong> ${viewingBooking.trackingNumber}</p>
+                <p style="margin-top: 10px;"><a href="https://www.ups.com/track?loc=en_SG&tracknum=${encodeURIComponent(viewingBooking.trackingNumber)}&requester=ST/" target="_blank" style="display: inline-block; padding: 8px 12px; background-color: #d4af37; color: #0d1b2a; text-decoration: none; border-radius: 5px; font-weight: 500;">Track on UPS</a></p>
+            </div>`
+            : `<div class="section" style="margin-top: 30px;">
+                <div class="section-title">Tracking Information</div>
+                <p>Tracking number will be assigned soon.</p>
+            </div>`;
+
         const replacements: Record<string, string> = {
             '{{logoUrl}}': '/fg.png',
             '{{orderId}}': viewingBooking.id,
@@ -138,10 +149,11 @@ export default function AdminOrdersPage() {
             '{{totalAmount}}': totalAmount,
             '{{contactNumber}}': '+94704917636',
             '{{landlineNumber}}': '+94 11 234 5678',
+            '{{trackingNumberHtml}}': trackingHtml,
         };
 
         for (const key in replacements) {
-            template = template.replace(new RegExp(key, 'g'), replacements[key]);
+            template = template.replace(new RegExp(key.replace(/{{|}}/g, ''), 'g'), replacements[key]);
         }
 
         const { jsPDF } = await import('jspdf');
@@ -675,10 +687,10 @@ export default function AdminOrdersPage() {
                   </div>
                 </section>
                 
-                {viewingBooking.trackingNumber && (
-                    <section>
-                        <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent flex items-center"><PackageSearch className="mr-2" />Tracking</h3>
-                         <div className="flex items-center justify-between mt-2">
+                <section>
+                    <h3 className="text-md font-semibold mb-2 border-b pb-1 text-accent flex items-center"><PackageSearch className="mr-2" />Tracking</h3>
+                    {viewingBooking.trackingNumber ? (
+                        <div className="flex items-center justify-between mt-2">
                             <p className="font-mono text-sm bg-muted p-2 rounded-md">{viewingBooking.trackingNumber}</p>
                             <Button asChild size="sm">
                                 <a 
@@ -690,8 +702,10 @@ export default function AdminOrdersPage() {
                                 </a>
                             </Button>
                         </div>
-                    </section>
-                )}
+                    ) : (
+                        <p className="text-sm text-muted-foreground mt-2">Tracking number will be assigned soon.</p>
+                    )}
+                </section>
 
 
                 {/* Package & Purpose Details */}
