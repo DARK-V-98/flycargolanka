@@ -10,6 +10,7 @@ import ShippingCalculatorForm from '@/components/ShippingCalculatorForm';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { SpecialOffer } from '@/types/specialOffers';
+import SpecialOffersSection from '@/components/SpecialOffersSection';
 
 
 const services = [
@@ -26,8 +27,6 @@ async function getSpecialOffers(): Promise<SpecialOffer[]> {
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SpecialOffer));
     } catch (error) {
         console.error("Error fetching special offers for homepage:", error);
-        // In a server component, we can't use toasts, but logging is important.
-        // We return an empty array to prevent the page from crashing.
         return [];
     }
 }
@@ -161,42 +160,7 @@ export default async function Home() {
           </div>
         </section>
 
-        {specialOffers.length > 0 && (
-            <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.5s'}}>
-                <div className="container mx-auto px-4">
-                    <div>
-                        <PageHeader title="Special Bulk Cargo Offers" description="Exclusive rates for select destinations. Grab these deals while they last!"/>
-                    </div>
-                    <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {specialOffers.map(offer => (
-                            <Card key={offer.id} className="flex flex-col text-center shadow-lg hover:shadow-2xl transition-all duration-300 ease-in-out transform hover:-translate-y-2">
-                                <CardHeader>
-                                    <div className="mx-auto p-4 bg-primary/10 rounded-full inline-block mb-4">
-                                        <Plane className="h-10 w-10 text-primary" />
-                                    </div>
-                                    <CardTitle className="text-accent text-2xl">{offer.country}</CardTitle>
-                                    <CardDescription>{offer.weightDescription}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-grow space-y-4">
-                                    <div>
-                                        <p className="text-sm text-muted-foreground">Special Rate</p>
-                                        <p className="text-4xl font-bold text-primary">{offer.rate.toLocaleString()} <span className="text-lg font-normal text-muted-foreground">LKR</span></p>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground p-3 bg-secondary/50 rounded-md border border-dashed">
-                                        Includes <strong className="text-primary/90">free insurance up to 100,000 LKR</strong> for damage and loss. Subject to <Link href="/terms" className="underline hover:text-primary">terms and conditions</Link>.
-                                    </div>
-                                </CardContent>
-                                <CardFooter>
-                                     <Button asChild className="w-full">
-                                        <Link href="/book">Book This Offer</Link>
-                                     </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
-                    </div>
-                </div>
-            </section>
-        )}
+        <SpecialOffersSection offers={specialOffers} />
 
         <section className="py-12 md:py-16 opacity-0 animate-fadeInUp" style={{animationDelay: '0.5s'}}>
           <div className="container mx-auto px-4">

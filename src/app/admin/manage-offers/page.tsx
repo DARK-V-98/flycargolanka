@@ -10,6 +10,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
 import type { SpecialOffer } from '@/types/specialOffers';
+import type { CountryRate } from '@/types/shippingRates';
 
 import PageHeader from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -21,10 +22,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Loader2, ArrowLeft, Trash2, Edit, PlusCircle, Save, Plane, AlertTriangle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 const offerSchema = z.object({
-    country: z.string().min(2, "Country name is required.").max(50),
+    country: z.string().min(1, "Country must be selected."),
     weightDescription: z.string().min(2, "Weight description is required.").max(50),
     rate: z.coerce.number().positive("Rate must be a positive number."),
     enabled: z.boolean().default(true),
@@ -38,29 +40,52 @@ export default function ManageSpecialOffersPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingOffer, setEditingOffer] = useState<SpecialOffer | null>(null);
     const [formError, setFormError] = useState<string | null>(null);
+    
+    const [countries, setCountries] = useState<CountryRate[]>([]);
+    const [loadingCountries, setLoadingCountries] = useState(true);
 
     const form = useForm<OfferFormValues>({
         resolver: zodResolver(offerSchema),
         defaultValues: { country: '', weightDescription: '', rate: 0, enabled: true },
     });
 
-    const fetchOffers = async () => {
-        setIsLoading(true);
-        try {
-            const q = query(collection(db, 'special_offers'), orderBy('createdAt', 'desc'));
-            const querySnapshot = await getDocs(q);
-            const fetchedOffers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SpecialOffer));
-            setOffers(fetchedOffers);
-        } catch (err) {
-            console.error("Error fetching offers:", err);
-            toast({ title: "Error", description: "Could not fetch special offers.", variant: "destructive" });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
+        const fetchOffers = async () => {
+            setIsLoading(true);
+            try {
+                const q = query(collection(db, 'special_offers'), orderBy('createdAt', 'desc'));
+                const querySnapshot = await getDocs(q);
+                const fetchedOffers = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SpecialOffer));
+                setOffers(fetchedOffers);
+            } catch (err) {
+                console.error("Error fetching offers:", err);
+                toast({ title: "Error", description: "Could not fetch special offers.", variant: "destructive" });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        const fetchCountries = async () => {
+            setLoadingCountries(true);
+            try {
+                const ratesCol = collection(db, 'shipping_rates');
+                const q = query(ratesCol, orderBy('name', 'asc'));
+                const snapshot = await getDocs(q);
+                const fetchedCountries = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                } as CountryRate));
+                setCountries(fetchedCountries);
+            } catch (error) {
+                console.error("Error fetching countries:", error);
+                toast({ title: "Error", description: "Could not fetch countries for the dropdown.", variant: "destructive" });
+            } finally {
+                setLoadingCountries(false);
+            }
+        };
+
         fetchOffers();
+        fetchCountries();
     }, [toast]);
 
 
@@ -108,7 +133,11 @@ export default function ManageSpecialOffersPage() {
                 toast({ title: "Success", description: "New offer created." });
             }
             resetForm();
-            fetchOffers();
+            // Re-fetch offers after submission
+            const q = query(collection(db, 'special_offers'), orderBy('createdAt', 'desc'));
+            const querySnapshot = await getDocs(q);
+            setOffers(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SpecialOffer)));
+
 
         } catch (err: any) {
             console.error("Error submitting offer:", err);
@@ -135,9 +164,32 @@ export default function ManageSpecialOffersPage() {
                             <CardTitle>{editingOffer ? 'Edit Offer' : 'Create New Offer'}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <FormField name="country" control={form.control} render={({ field }) => (
-                                <FormItem><FormLabel>Country</FormLabel><FormControl><Input placeholder="e.g., Australia" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
+                            <FormField
+                                control={form.control}
+                                name="country"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Country</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={loadingCountries}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a country for the offer" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {loadingCountries ? (
+                                                    <SelectItem value="loading" disabled>Loading countries...</SelectItem>
+                                                ) : (
+                                                    countries.map(country => (
+                                                        <SelectItem key={country.id} value={country.name}>{country.name}</SelectItem>
+                                                    ))
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField name="weightDescription" control={form.control} render={({ field }) => (
                                 <FormItem><FormLabel>Weight</FormLabel><FormControl><Input placeholder='e.g., "Up to 25kg"' {...field} /></FormControl><FormMessage /></FormItem>
                             )} />
