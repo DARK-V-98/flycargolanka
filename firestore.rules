@@ -3,64 +3,107 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions to check user roles
-    // These functions now safely handle cases where request.auth is null.
-    function isDeveloper(userId) {
-      let email = get(/databases/$(database)/documents/users/$(userId)).data.email;
-      return request.auth != null && email == "thimira.vishwa2003@gmail.com";
+    
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    function isAdmin(userId) {
-      let role = get(/databases/$(database)/documents/users/$(userId)).data.role;
-      return request.auth != null && role == 'admin';
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Users can read their own profile, and update specific fields.
-    // They can only be created with a 'user' role unless by an admin/dev.
+    // Safely get user data only if authenticated.
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    // Check if the currently authenticated user has a specific role.
+    function hasRole(role) {
+      if (!isAuthenticated()) {
+        return false;
+      }
+      let userRole = getUserData(request.auth.uid).role;
+      return userRole == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin') || hasRole('developer');
+    }
+
+    function isDeveloper() {
+      return hasRole('developer');
+    }
+
+    // --- Users Collection ---
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && (request.auth.uid == userId || isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      
+      allow create: if isOwner(userId);
+                       
+      allow update: if
+        // A user can update their own profile, but cannot change their role.
+        (isOwner(userId) && request.resource.data.role == resource.data.role) ||
+        // An Admin (who is not a Developer) can update other users, but cannot promote them to Developer.
+        (isAdmin() && !isDeveloper() && userId != request.auth.uid && request.resource.data.role != 'developer') ||
+        // A Developer can update any other user's roles.
+        (isDeveloper() && userId != request.auth.uid);
     }
 
-    // Bookings can be created by any authenticated user.
-    // Users can only view their own bookings.
-    // Admins/Developers can view all bookings and update their status.
+    // --- Bookings Collection ---
     match /bookings/{bookingId} {
-      allow read: if request.auth != null && (get(/databases/$(database)/documents/bookings/$(bookingId)).data.userId == request.auth.uid || isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && (
-                      (getAfter(/databases/$(database)/documents/bookings/$(bookingId)).data.userId == request.auth.uid && request.resource.data.status == 'Cancelled') ||
-                      isAdmin(request.auth.uid) || 
-                      isDeveloper(request.auth.uid)
-                    );
+      allow get: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAuthenticated(); // Secured by where clauses in client queries
+
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      
+      allow update: if 
+        // User can cancel their own pending booking
+        (isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.status == 'Cancelled' && resource.data.status == 'Pending') ||
+        // Admins can update any booking
+        isAdmin();
     }
     
-    // Shipping rates can be read by anyone (for the calculator).
-    // Only admins/developers can create, update, or delete them.
+    // --- Publicly Readable Data (Admin-managed) ---
     match /shipping_rates/{countryId} {
-      allow read: if true;
-      allow write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
-
+      allow get, list: if true;
+      allow write: if isAdmin();
+      
       match /weights/{weightId} {
-        allow read: if true;
-        allow write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+        allow get, list: if true;
+        allow write: if isAdmin();
       }
     }
     
-    // Notifications are only readable and writable by admins/developers.
-    match /notifications/{notificationId} {
-        allow read, write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
-    }
-
-    // Special Offers can be read by anyone, but only managed by admins/devs.
     match /special_offers/{offerId} {
-      allow read: if true;
-      allow write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+        allow get, list: if true;
+        allow write: if isAdmin();
+    }
+    
+    // --- Settings (Admin only) ---
+    match /settings/{settingId} {
+        allow read, write: if isAdmin();
     }
 
-    // Default deny all other collections
+    // --- Notifications Collection ---
+    match /notifications/{notificationId} {
+      // User can read their own notifications. Admins can read admin-targeted notifications.
+      allow get, list: if isAuthenticated() && 
+                         ((resource.data.userId == request.auth.uid) || 
+                          (resource.data.recipient == 'admins' && isAdmin()));
+      
+      // User can mark their own notification as read.
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.isRead == true &&
+                       !('message' in request.resource.diff(resource).affectedKeys());
+                       
+      // Creation is done on behalf of the user by trusted client/server logic.
+      allow create: if isAuthenticated();
+    }
+    
+    // Default Deny: This is a fallback to ensure no path is left open.
     match /{document=**} {
       allow read, write: if false;
     }

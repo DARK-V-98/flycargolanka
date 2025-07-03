@@ -3,33 +3,55 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Helper functions to check roles from Firestore
-    // Safely handles unauthenticated requests
-    function isDeveloper(userId) {
-      return request.auth != null && get(/databases/(default)/documents/users/$(userId)).data.email == "thimira.vishwa2003@gmail.com";
+  
+    // --- Helper Functions ---
+    // These functions read from Firestore to check a user's role.
+    function getUserData(userId) {
+      if (userId == null || userId == "") {
+        return null;
+      }
+      return get(/databases/(default)/documents/users/$(userId)).data;
     }
 
-    function isAdmin(userId) {
-      return request.auth != null && get(/databases/(default)/documents/users/$(userId)).data.role == 'admin';
+    function getUserRole(userId) {
+      let userData = getUserData(userId);
+      if (userData == null || !('role' in userData)) {
+        return 'user'; // Default to 'user' if not found
+      }
+      return userData.role;
     }
 
-    // NIC Verification Images
-    // Users can only write to their own folder.
-    // Admins/Developers can read all verification images.
-    match /nic_verification/{userId}/{fileName} {
-      allow read: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
-      allow write: if request.auth != null && request.auth.uid == userId;
+    function isAdmin() {
+      // Check if the user is logged in
+      if (request.auth == null) {
+        return false;
+      }
+      // Get the user's role from Firestore
+      let role = getUserRole(request.auth.uid);
+      return role == 'admin' || role == 'developer';
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    // Special Offer Images
-    // Anyone can read the offer images for the homepage.
-    // Only admins/devs can upload/delete them.
-    match /special_offers/{fileName} {
-        allow read: if true;
-        allow write: if request.auth != null && (isAdmin(request.auth.uid) || isDeveloper(request.auth.uid));
+    // --- Rules for NIC Verification Images ---
+    // Path: /nic_verification/{userId}/{fileName}
+    match /nic_verification/{userId}/{imageId} {
+      
+      // Allow read access to the user who owns the files and to admins/developers.
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Allow the user to upload their own NIC images.
+      // We also check file size and type.
+      allow write: if isOwner(userId) &&
+                      request.resource.size < 5 * 1024 * 1024 && // Max 5MB
+                      request.resource.contentType.matches('image/.*'); // Only allow images
+                      
+      // Allow owner to delete their files (e.g., for resubmission)
+      allow delete: if isOwner(userId);
     }
-
+    
     // Default deny all other paths
     match /{allPaths=**} {
       allow read, write: if false;
