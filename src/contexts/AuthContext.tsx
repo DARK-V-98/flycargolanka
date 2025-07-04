@@ -108,15 +108,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const { toast } = useToast();
   const notifiedIdsRef = useRef(new Set<string>());
+  
+  const profileUnsubscribe = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
+      // Unsubscribe from any existing profile listener before proceeding.
+      if (profileUnsubscribe.current) {
+        profileUnsubscribe.current();
+        profileUnsubscribe.current = null;
+      }
+      
       if (firebaseUser) {
         setUser(firebaseUser);
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         
-        const unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
+        profileUnsubscribe.current = onSnapshot(userDocRef, (userDocSnap) => {
           const normalizedUserEmail = firebaseUser.email ? firebaseUser.email.toLowerCase() : null;
 
           let profileDataFromAuth = {
@@ -195,8 +202,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setLoading(false);
         });
 
-        return () => unsubscribeProfile();
-
       } else {
         setUser(null);
         setUserProfile(null);
@@ -205,7 +210,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+        unsubscribeAuth();
+        if (profileUnsubscribe.current) {
+            profileUnsubscribe.current();
+        }
+    };
   }, [toast]);
 
   // Effect for listening to notifications
@@ -292,10 +302,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with email:", error);
-       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'invalid-credential') {
+       if (error.code === 'auth/invalid-credential') {
+        throw new Error("Login failed. The email or password you entered is incorrect. Please try again.");
+      }
+       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         throw new Error("Invalid email or password. Please try again.");
       }
-      throw error;
+      throw new Error("An unexpected error occurred during login. Please try again later.");
     }
   };
 
@@ -310,7 +323,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     await firebaseSignOut(auth);
+    setNotifications([]);
+    notifiedIdsRef.current.clear();
     router.push('/');
+    toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+        variant: "default",
+    });
   };
 
   const updateUserDisplayName = async (newName: string) => {
