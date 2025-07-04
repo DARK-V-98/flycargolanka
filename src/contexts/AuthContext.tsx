@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState, Suspense, useRef } from 'react';
 import { type User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot, orderBy, type Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc, collection, query, where, getDocs, writeBatch, onSnapshot, orderBy, type Timestamp, deleteDoc } from 'firebase/firestore';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { FirebaseError } from 'firebase/app';
 import { useToast } from '@/hooks/use-toast';
@@ -59,7 +59,7 @@ interface AuthContextType {
   updateUserRoleByEmail: (targetUserEmail: string, newRole: UserRole) => Promise<void>;
   updateUserExtendedProfile: (data: { nic?: string | null; phone?: string | null; address?: string | null }) => Promise<void>;
   notifications: AppNotification[];
-  markNotificationAsRead: (id: string) => Promise<void>;
+  removeNotification: (id: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,6 +110,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const notifiedIdsRef = useRef(new Set<string>());
   
   const profileUnsubscribe = useRef<(() => void) | null>(null);
+  const notificationsUnsubscribe = useRef<(() => void) | null>(null);
+
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -117,6 +119,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (profileUnsubscribe.current) {
         profileUnsubscribe.current();
         profileUnsubscribe.current = null;
+      }
+       if (notificationsUnsubscribe.current) {
+        notificationsUnsubscribe.current();
+        notificationsUnsubscribe.current = null;
       }
       
       if (firebaseUser) {
@@ -215,11 +221,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (profileUnsubscribe.current) {
             profileUnsubscribe.current();
         }
+        if (notificationsUnsubscribe.current) {
+            notificationsUnsubscribe.current();
+        }
     };
   }, [toast]);
 
   // Effect for listening to notifications
   useEffect(() => {
+     if (notificationsUnsubscribe.current) {
+        notificationsUnsubscribe.current();
+        notificationsUnsubscribe.current = null;
+    }
+
     if (!user || !role) {
       setNotifications([]);
       if(notifiedIdsRef.current.size > 0) notifiedIdsRef.current.clear();
@@ -235,8 +249,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         q = query(notificationsRef, where('userId', '==', user.uid), where('isRead', '==', false), orderBy('createdAt', 'desc'));
     }
 
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    notificationsUnsubscribe.current = onSnapshot(q, (snapshot) => {
       const unreadNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AppNotification));
 
       // For any new notification that we haven't shown a toast for, show one.
@@ -258,15 +271,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setNotifications(unreadNotifications);
     }, (error) => {
         console.error("Firestore snapshot error on notifications:", error);
-        toast({
-            title: "Notification Access Error",
-            description: "Could not fetch notifications due to a permissions issue. Please check your Firestore security rules.",
-            variant: "destructive",
-            duration: 10000,
-        });
     });
 
-    return () => unsubscribe();
+    return () => {
+        if (notificationsUnsubscribe.current) {
+            notificationsUnsubscribe.current();
+        }
+    };
   }, [user, role, toast]);
 
 
@@ -302,11 +313,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return userCredential.user;
     } catch (error: any) {
       console.error("Error signing in with email:", error);
-       if (error.code === 'auth/invalid-credential') {
+       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         throw new Error("Login failed. The email or password you entered is incorrect. Please try again.");
-      }
-       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        throw new Error("Invalid email or password. Please try again.");
       }
       throw new Error("An unexpected error occurred during login. Please try again later.");
     }
@@ -430,12 +438,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const markNotificationAsRead = async (id: string) => {
+  const removeNotification = async (id: string) => {
     const notificationRef = doc(db, 'notifications', id);
     try {
-        await updateDoc(notificationRef, { isRead: true });
+        await deleteDoc(notificationRef);
     } catch (error) {
-        console.error("Error marking notification as read:", error);
+        console.error("Error removing notification:", error);
+        toast({
+            title: "Error",
+            description: "Could not remove notification.",
+            variant: "destructive"
+        })
     }
   };
 
@@ -453,7 +466,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateUserRoleByEmail,
       updateUserExtendedProfile,
       notifications,
-      markNotificationAsRead
+      removeNotification
     };
     
     return (

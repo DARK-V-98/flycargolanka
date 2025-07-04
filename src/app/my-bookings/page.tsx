@@ -233,7 +233,6 @@ function MyBookingsPageContent() {
             '{{senderAddress}}': [
                 viewingBooking.senderAddress,
                 `Tel: ${viewingBooking.senderContactNo}`,
-                viewingBooking.userEmail ? `Email: ${viewingBooking.userEmail}` : null,
             ].filter(Boolean).join('<br />'),
             
             '{{receiverName}}': viewingBooking.receiverFullName,

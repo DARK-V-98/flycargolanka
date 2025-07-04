@@ -30,11 +30,11 @@ const baseNavItems = [
 ];
 
 export default function Header() {
-  const { user, userProfile, role, logout, loading, notifications, markNotificationAsRead } = useAuth();
+  const { user, userProfile, role, logout, loading, notifications, removeNotification } = useAuth();
   const router = useRouter();
 
   const handleNotificationClick = async (notification: AppNotification) => {
-    await markNotificationAsRead(notification.id);
+    await removeNotification(notification.id);
     router.push(notification.link as Route);
   };
 
