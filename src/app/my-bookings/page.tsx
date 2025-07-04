@@ -224,16 +224,18 @@ function MyBookingsPageContent() {
             '{{logoUrl}}': '/fg.png',
             '{{orderId}}': viewingBooking.id,
             '{{invoiceDate}}': format(viewingBooking.createdAt.toDate(), 'PPP'),
-            
-            // Sender details from the booking form
+
+            '{{companyName}}': 'FlyCargo Lanka',
+            '{{companyAddress}}': 'No.05, avariwatta, katunayake',
+            '{{contactNumber}}': '+94704917636',
+
             '{{senderName}}': viewingBooking.senderFullName,
             '{{senderAddress}}': [
                 viewingBooking.senderAddress,
                 `Tel: ${viewingBooking.senderContactNo}`,
                 viewingBooking.userEmail ? `Email: ${viewingBooking.userEmail}` : null,
             ].filter(Boolean).join('<br />'),
-
-            // Receiver details from the booking form
+            
             '{{receiverName}}': viewingBooking.receiverFullName,
             '{{receiverAddress}}': [
                 viewingBooking.receiverAddress,
@@ -246,8 +248,6 @@ function MyBookingsPageContent() {
             '{{serviceDescription}}': serviceDescription,
             '{{serviceDestination}}': viewingBooking.receiverCountry,
             '{{totalAmount}}': totalAmount,
-            '{{contactNumber}}': '+94704917636',
-            '{{landlineNumber}}': '+94 11 234 5678',
             '{{trackingNumberHtml}}': trackingHtml,
         };
 
