@@ -139,19 +139,23 @@ export default function AdminOrdersPage() {
             '{{orderId}}': viewingBooking.id,
             '{{invoiceDate}}': format(viewingBooking.createdAt.toDate(), 'PPP'),
             
-            // Sender is now the company
-            '{{senderName}}': 'FlyCargo Lanka',
-            '{{senderAddress}}': `No. 05, Avariwatta, Katunayake<br />Tel: +94 704 917 636`,
-            '{{senderEmail}}': 'info@flycargolanka.lk',
-
-            // Receiver is now the customer who booked the shipment
-            '{{receiverName}}': viewingBooking.senderFullName,
-            '{{receiverAddress}}': [
+            // Sender details from the booking form
+            '{{senderName}}': viewingBooking.senderFullName,
+            '{{senderAddress}}': [
                 viewingBooking.senderAddress,
                 `Tel: ${viewingBooking.senderContactNo}`,
                 viewingBooking.userEmail ? `Email: ${viewingBooking.userEmail}` : null,
             ].filter(Boolean).join('<br />'),
-            '{{receiverLocation}}': 'Sri Lanka', // Senders are from Sri Lanka
+
+            // Receiver details from the booking form
+            '{{receiverName}}': viewingBooking.receiverFullName,
+            '{{receiverAddress}}': [
+                viewingBooking.receiverAddress,
+                viewingBooking.receiverDoorCode ? `Door Code: ${viewingBooking.receiverDoorCode}` : null,
+                `${viewingBooking.receiverCity}, ${viewingBooking.receiverZipCode}, ${viewingBooking.receiverCountry}`,
+                `Tel: ${viewingBooking.receiverContactNo}`,
+                viewingBooking.receiverEmail ? `Email: ${viewingBooking.receiverEmail}` : null,
+            ].filter(Boolean).join('<br />'),
 
             '{{serviceDescription}}': serviceDescription,
             '{{serviceDestination}}': viewingBooking.receiverCountry,
