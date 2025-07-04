@@ -206,7 +206,7 @@ function MyBookingsPageContent() {
         }
         let template = await response.text();
 
-        const serviceDescription = `Shipping - ${viewingBooking.shipmentType} (${viewingBooking.serviceType}) - ${viewingBooking.approxWeight}kg`;
+        const serviceDescription = `Shipping - ${viewingBooking.shipmentType} (${viewingBooking.serviceType}) to ${viewingBooking.receiverFullName} in ${viewingBooking.receiverCountry} - ${viewingBooking.approxWeight}kg`;
         const totalAmount = viewingBooking.estimatedCostLKR?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0.00';
         
         const trackingHtml = viewingBooking.trackingNumber
@@ -224,17 +224,21 @@ function MyBookingsPageContent() {
             '{{logoUrl}}': '/fg.png',
             '{{orderId}}': viewingBooking.id,
             '{{invoiceDate}}': format(viewingBooking.createdAt.toDate(), 'PPP'),
-            '{{senderName}}': viewingBooking.senderFullName,
-            '{{senderAddress}}': `${viewingBooking.senderAddress}<br />Tel: ${viewingBooking.senderContactNo}`,
-            '{{senderEmail}}': viewingBooking.userEmail || 'N/A',
-            '{{receiverName}}': viewingBooking.receiverFullName,
+            
+            // Sender is now the company
+            '{{senderName}}': 'FlyCargo Lanka',
+            '{{senderAddress}}': `No. 05, Avariwatta, Katunayake<br />Tel: +94 704 917 636`,
+            '{{senderEmail}}': 'info@flycargolanka.lk',
+
+            // Receiver is now the customer who booked the shipment
+            '{{receiverName}}': viewingBooking.senderFullName,
             '{{receiverAddress}}': [
-                viewingBooking.receiverAddress,
-                viewingBooking.receiverDoorCode ? `Door Code: ${viewingBooking.receiverDoorCode}` : null,
-                `Tel: ${viewingBooking.receiverContactNo}`,
-                viewingBooking.receiverEmail ? `Email: ${viewingBooking.receiverEmail}` : null,
+                viewingBooking.senderAddress,
+                `Tel: ${viewingBooking.senderContactNo}`,
+                viewingBooking.userEmail ? `Email: ${viewingBooking.userEmail}` : null,
             ].filter(Boolean).join('<br />'),
-            '{{receiverLocation}}': `${viewingBooking.receiverCity}, ${viewingBooking.receiverZipCode}, ${viewingBooking.receiverCountry}`,
+            '{{receiverLocation}}': 'Sri Lanka', // Senders are from Sri Lanka
+
             '{{serviceDescription}}': serviceDescription,
             '{{serviceDestination}}': viewingBooking.receiverCountry,
             '{{totalAmount}}': totalAmount,
