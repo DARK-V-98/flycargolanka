@@ -245,18 +245,9 @@ export default function BookingPage() {
         router.push(`/auth?redirect=${encodeURIComponent(currentPath)}`);
       } else if (userProfile) {
         setShowProfileCompletionAlert(!userProfile.isProfileComplete);
-        if (userProfile.isProfileComplete) {
-            form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: true });
-            form.setValue('senderAddress', userProfile.address || '', { shouldValidate: true });
-            form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: true });
-        } else {
-            form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: false });
-            form.setValue('senderAddress', userProfile.address || '', { shouldValidate: false });
-            form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
-        }
       }
     }
-  }, [user, userProfile, authLoading, router, form]);
+  }, [user, userProfile, authLoading, router]);
 
   useEffect(() => {
     const fetchWeights = async () => {
@@ -491,17 +482,6 @@ export default function BookingPage() {
       form.reset();
       setCalculatedCost(null);
       setCalculationError(null);
-       if (userProfile) {
-        if (userProfile.isProfileComplete) {
-            form.setValue('senderFullName', userProfile.displayName || '');
-            form.setValue('senderAddress', userProfile.address || '');
-            form.setValue('senderContactNo', userProfile.phone || '');
-        } else {
-            form.setValue('senderFullName', userProfile.displayName || '', { shouldValidate: false });
-            form.setValue('senderAddress', userProfile.address || '', { shouldValidate: false });
-            form.setValue('senderContactNo', userProfile.phone || '', { shouldValidate: false });
-        }
-      }
 
       if (userProfile.nicVerificationStatus === 'none' || userProfile.nicVerificationStatus === 'rejected') {
         router.push('/book/verify-nic');
@@ -782,10 +762,10 @@ export default function BookingPage() {
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><User className="mr-2 h-5 w-5"/>Sender Details</h3>
                 <div className="space-y-4">
-                  <FormField control={form.control} name="senderFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} value={field.value ?? ''} readOnly={!!userProfile?.displayName && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
-                  <FormField control={form.control} name="senderAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Your Address" {...field} value={field.value ?? ''} readOnly={!!userProfile?.address && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="senderFullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="Sender's Name" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="senderAddress" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea placeholder="Sender's Address" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
                   <div className="grid md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="senderContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Your Contact No." {...field} value={field.value ?? ''} readOnly={!!userProfile?.phone && !!userProfile?.isProfileComplete} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="senderContactNo" render={({ field }) => ( <FormItem><FormLabel>Contact No (with country code)</FormLabel><FormControl><Input type="tel" placeholder="Sender's Contact No." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
                     <FormField control={form.control} name="senderWhatsAppNo" render={({ field }) => ( <FormItem><FormLabel>WhatsApp No (with country code, Optional)</FormLabel><FormControl><Input type="tel" placeholder="Your WhatsApp No." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem> )} />
                   </div>
                 </div>
@@ -894,5 +874,3 @@ export default function BookingPage() {
     </div>
   );
 }
-
-    
