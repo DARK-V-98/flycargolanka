@@ -24,7 +24,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertTriangle, CheckCircle2, Loader2, Package, FileText, Clock, Zap, Home, Building, User, MailIcon, MapPin, Hash, Globe, Phone, MessageSquare, Info, AlertCircle, DollarSign, Landmark, Box } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, setDoc, doc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where, addDoc } from 'firebase/firestore';
+import { collection, setDoc, doc, serverTimestamp, query, orderBy, getDocs, type Timestamp, where, addDoc, writeBatch } from 'firebase/firestore';
 import type { CountryRate, WeightRate } from '@/types/shippingRates';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -55,8 +55,8 @@ const bookingSchema = z.object({
   receiverContactNo: z.string().regex(phoneRegex, "Invalid receiver contact number (include country code)."),
   receiverWhatsAppNo: z.string().regex(phoneRegex, "Invalid WhatsApp number (include country code).").optional().or(z.literal('')),
 
-  senderFullName: z.string().min(2, "Sender full name is required.").max(100),
-  senderAddress: z.string().min(5, "Sender address is required.").max(200),
+  senderFullName: z.string().min(2, "Sender's Name is required.").max(100),
+  senderAddress: z.string().min(5, "Sender's Address is required.").max(200),
   senderContactNo: z.string().regex(phoneRegex, "Invalid sender contact number (include country code)."),
   senderWhatsAppNo: z.string().regex(phoneRegex, "Invalid WhatsApp number (include country code).").optional().or(z.literal('')),
 
@@ -458,12 +458,16 @@ export default function BookingPage() {
       
       delete (bookingData as any).agreedToTerms;
 
-
       const bookingDocRef = doc(db, 'bookings', newBookingId);
       await setDoc(bookingDocRef, bookingData);
 
-      // Create notification for admins
-      await addDoc(collection(db, 'notifications'), {
+      // Create notifications for admins and the user in a batch
+      const notificationBatch = writeBatch(db);
+      const notificationsRef = collection(db, 'notifications');
+      
+      // Notification for admins
+      const adminNotificationRef = doc(notificationsRef);
+      notificationBatch.set(adminNotificationRef, {
         type: 'new_booking',
         message: `New booking (#${newBookingId}) received from ${data.senderFullName}.`,
         link: `/admin/orders`,
@@ -472,6 +476,18 @@ export default function BookingPage() {
         createdAt: serverTimestamp()
       });
 
+      // Notification for the user
+      const userNotificationRef = doc(notificationsRef);
+      notificationBatch.set(userNotificationRef, {
+        type: 'new_booking',
+        message: `Your booking (#${newBookingId}) has been successfully submitted and is now pending review.`,
+        link: `/my-bookings`,
+        isRead: false,
+        userId: user.uid, // Target the specific user
+        createdAt: serverTimestamp()
+      });
+      
+      await notificationBatch.commit();
 
       toast({
         title: "Booking Submitted!",
