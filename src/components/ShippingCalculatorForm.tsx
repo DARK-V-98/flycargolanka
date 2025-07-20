@@ -163,7 +163,6 @@ export default function ShippingCalculatorForm() {
     const sortedWeights = [...availableWeights].sort((a, b) => a.weightValue - b.weightValue);
     let selectedWeightBand: WeightRate | undefined = undefined;
 
-    // Find the first band that the chargeable weight fits into (rounding up).
     for (const band of sortedWeights) {
       if (finalChargeableWeight <= band.weightValue) {
         selectedWeightBand = band;
@@ -194,17 +193,17 @@ export default function ShippingCalculatorForm() {
         isDocExpressEnabled, docExpressPrice,
     } = selectedWeightBand;
 
-    if (isNdEconomyEnabled && ndEconomyPrice != null && ndEconomyPrice > 0) {
-      options.push({ shipmentType: 'Parcel', serviceType: 'Economy', price: ndEconomyPrice, icon: Clock, typeIcon: Package });
-    }
     if (isNdExpressEnabled && ndExpressPrice != null && ndExpressPrice > 0) {
       options.push({ shipmentType: 'Parcel', serviceType: 'Express', price: ndExpressPrice, icon: Zap, typeIcon: Package });
     }
-    if (isDocEconomyEnabled && docEconomyPrice != null && docEconomyPrice > 0) {
-      options.push({ shipmentType: 'Document', serviceType: 'Economy', price: docEconomyPrice, icon: Clock, typeIcon: FileText });
+    if (isNdEconomyEnabled && ndEconomyPrice != null && ndEconomyPrice > 0) {
+      options.push({ shipmentType: 'Parcel', serviceType: 'Economy', price: ndEconomyPrice, icon: Clock, typeIcon: Package });
     }
     if (isDocExpressEnabled && docExpressPrice != null && docExpressPrice > 0) {
       options.push({ shipmentType: 'Document', serviceType: 'Express', price: docExpressPrice, icon: Zap, typeIcon: FileText });
+    }
+    if (isDocEconomyEnabled && docEconomyPrice != null && docEconomyPrice > 0) {
+      options.push({ shipmentType: 'Document', serviceType: 'Economy', price: docEconomyPrice, icon: Clock, typeIcon: FileText });
     }
 
     if (options.length === 0) {
@@ -360,13 +359,13 @@ export default function ShippingCalculatorForm() {
                                     <>
                                         <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 3-5 working days</span></li>
                                         <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End-to-end updates. (The tracking number will be provided to you within the day of delivery of the parcel.)</span></li>
-                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance</span></li>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance.</span></li>
                                     </>
                                 ) : (
                                     <>
-                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 14 to 16 working days</span></li>
-                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End To End traking update (You will be provided with a tracking number within 10 days of the parcel being delivered.)</span></li>
-                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance</span></li>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 7 to 10 working days</span></li>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End-to-end updates. (You will be provided with a tracking number within 10 days of the parcel being delivered.)</span></li>
+                                        <li className="flex items-start"><CheckCircle className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance.</span></li>
                                     </>
                                 )}
                             </ul>
@@ -384,5 +383,3 @@ export default function ShippingCalculatorForm() {
     </div>
   );
 }
-
-    

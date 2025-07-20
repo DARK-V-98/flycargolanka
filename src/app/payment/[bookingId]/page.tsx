@@ -16,8 +16,6 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertTriangle, CreditCard, Landmark, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
-// Re-defining Booking type locally to avoid dependency cycles if needed
-// and to keep this page self-contained regarding its primary data structure.
 export type BookingStatus = 'Pending' | 'Confirmed' | 'Collecting' | 'Processing' | 'In Transit' | 'Delivered' | 'On Hold' | 'Cancelled' | 'Rejected';
 export type PaymentStatus = 'Pending' | 'Paid' | 'Refunded';
 
@@ -33,6 +31,9 @@ interface Booking {
   paymentStatus?: PaymentStatus;
 }
 
+interface PaymentSettings {
+  isPayhereEnabled: boolean;
+}
 
 export default function PaymentPage() {
   const params = useParams();
@@ -42,6 +43,7 @@ export default function PaymentPage() {
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [payhereData, setPayhereData] = useState<PayhereData | null>(null);
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({ isPayhereEnabled: true });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,10 +54,16 @@ export default function PaymentPage() {
       return;
     }
 
-    const fetchBookingAndGenerateHash = async () => {
+    const fetchBookingAndSettings = async () => {
       setLoading(true);
       setError(null);
       try {
+        const settingsDocRef = doc(db, 'settings', 'payment');
+        const settingsSnap = await getDoc(settingsDocRef);
+        if (settingsSnap.exists()) {
+            setPaymentSettings(settingsSnap.data() as PaymentSettings);
+        }
+
         const bookingDocRef = doc(db, 'bookings', bookingId);
         const docSnap = await getDoc(bookingDocRef);
 
@@ -103,7 +111,7 @@ export default function PaymentPage() {
     };
 
     if (bookingId && user) {
-      fetchBookingAndGenerateHash();
+      fetchBookingAndSettings();
     }
   }, [bookingId, user, authLoading, router]);
 
@@ -131,7 +139,6 @@ export default function PaymentPage() {
         </Alert>
       ) : booking && (
         <div className="max-w-4xl mx-auto space-y-8">
-          {/* Order Summary */}
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
@@ -148,52 +155,66 @@ export default function PaymentPage() {
             </CardContent>
           </Card>
 
-          {/* Payment Options */}
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Payhere Online Payment */}
-            <Card className="shadow-lg border-primary/50 flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center"><CreditCard className="mr-2 text-primary"/>Pay Online via Card</CardTitle>
-                <CardDescription>Securely pay with your credit or debit card through Payhere.</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <p className="text-sm text-muted-foreground">You will be redirected to the secure Payhere gateway to complete your payment.</p>
-              </CardContent>
-              <CardFooter>
-                {payhereData ? (
-                   <form method="post" action={payhereData.url}>
-                        <input type="hidden" name="merchant_id" value={payhereData.merchant_id} />
-                        <input type="hidden" name="return_url" value={payhereData.return_url} />
-                        <input type="hidden" name="cancel_url" value={payhereData.cancel_url} />
-                        <input type="hidden" name="notify_url" value={payhereData.notify_url} />
-                        
-                        <input type="hidden" name="first_name" value={payhereData.first_name} />
-                        <input type="hidden" name="last_name" value={payhereData.last_name} />
-                        <input type="hidden" name="email" value={payhereData.email} />
-                        <input type="hidden" name="phone" value={payhereData.phone} />
-                        <input type="hidden" name="address" value={payhereData.address} />
-                        <input type="hidden" name="city" value={payhereData.city} />
-                        <input type="hidden" name="country" value={payhereData.country} />
+            {paymentSettings.isPayhereEnabled ? (
+                <Card className="shadow-lg border-primary/50 flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="flex items-center"><CreditCard className="mr-2 text-primary"/>Pay Online via Card</CardTitle>
+                    <CardDescription>Securely pay with your credit or debit card through Payhere.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="text-sm text-muted-foreground">You will be redirected to the secure Payhere gateway to complete your payment.</p>
+                  </CardContent>
+                  <CardFooter>
+                    {payhereData ? (
+                       <form method="post" action={payhereData.url}>
+                            <input type="hidden" name="merchant_id" value={payhereData.merchant_id} />
+                            <input type="hidden" name="return_url" value={payhereData.return_url} />
+                            <input type="hidden" name="cancel_url" value={payhereData.cancel_url} />
+                            <input type="hidden" name="notify_url" value={payhereData.notify_url} />
+                            
+                            <input type="hidden" name="first_name" value={payhereData.first_name} />
+                            <input type="hidden" name="last_name" value={payhereData.last_name} />
+                            <input type="hidden" name="email" value={payhereData.email} />
+                            <input type="hidden" name="phone" value={payhereData.phone} />
+                            <input type="hidden" name="address" value={payhereData.address} />
+                            <input type="hidden" name="city" value={payhereData.city} />
+                            <input type="hidden" name="country" value={payhereData.country} />
 
-                        <input type="hidden" name="order_id" value={payhereData.order_id} />
-                        <input type="hidden" name="items" value={payhereData.items} />
-                        <input type="hidden" name="currency" value={payhereData.currency} />
-                        <input type="hidden" name="amount" value={payhereData.amount} />
-                        
-                        <input type="hidden" name="hash" value={payhereData.hash} /> 
-                       <Button type="submit" className="w-full" size="lg">
-                           <ShieldCheck className="mr-2" /> Proceed to Secure Payment
-                       </Button>
-                   </form>
-                ) : (
+                            <input type="hidden" name="order_id" value={payhereData.order_id} />
+                            <input type="hidden" name="items" value={payhereData.items} />
+                            <input type="hidden" name="currency" value={payhereData.currency} />
+                            <input type="hidden" name="amount" value={payhereData.amount} />
+                            
+                            <input type="hidden" name="hash" value={payhereData.hash} /> 
+                           <Button type="submit" className="w-full" size="lg">
+                               <ShieldCheck className="mr-2" /> Proceed to Secure Payment
+                           </Button>
+                       </form>
+                    ) : (
+                        <Button className="w-full" size="lg" disabled>
+                            <Loader2 className="mr-2 animate-spin"/> Preparing Online Payment...
+                        </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+            ) : (
+                 <Card className="shadow-lg border-muted/50 flex flex-col">
+                  <CardHeader>
+                    <CardTitle className="flex items-center"><CreditCard className="mr-2 text-muted"/>Pay Online via Card</CardTitle>
+                    <CardDescription className="text-muted-foreground">Online payments are temporarily unavailable.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="text-sm text-muted-foreground">Please use the direct bank transfer method. We apologize for any inconvenience.</p>
+                  </CardContent>
+                  <CardFooter>
                     <Button className="w-full" size="lg" disabled>
-                        <Loader2 className="mr-2 animate-spin"/> Preparing Online Payment...
+                        Online Payments Disabled
                     </Button>
-                )}
-              </CardFooter>
-            </Card>
+                  </CardFooter>
+                </Card>
+            )}
 
-            {/* Bank Transfer */}
             <Card className="shadow-lg flex flex-col">
               <CardHeader>
                 <CardTitle className="flex items-center"><Landmark className="mr-2 text-primary"/>Direct Bank Transfer</CardTitle>

@@ -459,9 +459,7 @@ export default function BookingPage() {
       delete (bookingData as any).agreedToTerms;
 
       const bookingDocRef = doc(db, 'bookings', newBookingId);
-      await setDoc(bookingDocRef, bookingData);
-
-      // Create notifications for admins and the user in a batch
+      
       const notificationBatch = writeBatch(db);
       const notificationsRef = collection(db, 'notifications');
       
@@ -487,6 +485,9 @@ export default function BookingPage() {
         createdAt: serverTimestamp()
       });
       
+      // The booking document itself
+      notificationBatch.set(bookingDocRef, bookingData);
+
       await notificationBatch.commit();
 
       toast({
@@ -732,14 +733,14 @@ export default function BookingPage() {
                                         <ul className="space-y-1.5">
                                             <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 3-5 working days</span></li>
                                             <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End-to-end updates. (The tracking number will be provided to you within the day of delivery of the parcel.)</span></li>
-                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance</span></li>
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance.</span></li>
                                         </ul>
                                     )}
                                     {watchedServiceType === 'economy' && (
                                         <ul className="space-y-1.5">
-                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 14 to 16 working days</span></li>
-                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End To End traking update. (You will be provided with a tracking number within 10 days of the parcel being delivered.)</span></li>
-                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance</span></li>
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Duration:</strong> 7 to 10 working days</span></li>
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Tracking:</strong> End-to-end updates. (You will be provided with a tracking number within 10 days of the parcel being delivered.)</span></li>
+                                            <li className="flex items-start"><CheckCircle2 className="h-4 w-4 text-primary/80 mr-2 mt-0.5 shrink-0" /><span><strong>Insurance:</strong> Free insurance.</span></li>
                                         </ul>
                                     )}
                                 </div>

@@ -75,7 +75,7 @@ export default function SpecialOffersSection({ offers }: SpecialOffersSectionPro
                                         <p className="text-4xl font-bold text-primary">{offer.rate.toLocaleString()} <span className="text-lg font-normal text-muted-foreground">LKR</span></p>
                                     </div>
                                     <div className="text-xs text-muted-foreground p-3 bg-secondary/50 rounded-md border border-dashed">
-                                        Includes <strong className="text-primary/90">free insurance up to 100,000 LKR</strong> for damage and loss. Subject to <Link href="/terms" className="underline hover:text-primary">terms and conditions</Link>.
+                                        Includes <strong className="text-primary/90">free insurance</strong> for damage and loss. Subject to <Link href="/terms" className="underline hover:text-primary">terms and conditions</Link>.
                                     </div>
                                 </CardContent>
                                 <CardFooter>

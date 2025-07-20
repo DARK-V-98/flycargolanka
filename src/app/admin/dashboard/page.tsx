@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShieldCheck, Users, Package, Settings2, BadgeCheck, ArrowRight, DatabaseZap, Plane } from "lucide-react";
+import { ShieldCheck, Users, Package, Settings2, BadgeCheck, ArrowRight, DatabaseZap, Plane, Landmark } from "lucide-react";
 import PageHeader from '@/components/PageHeader';
 
 const adminNavItems = [
@@ -42,6 +42,12 @@ const adminNavItems = [
     label: 'Special Offers',
     description: "Manage special bulk cargo offers for homepage.",
     icon: Plane
+  },
+   {
+    href: '/admin/manage-payments',
+    label: 'Manage Payments',
+    description: "Enable or disable payment gateways like Payhere.",
+    icon: Landmark
   },
 ];
 
