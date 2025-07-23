@@ -485,7 +485,6 @@ function MyBookingsPageContent() {
                       disabled={
                           booking.estimatedCostLKR === undefined || 
                           booking.estimatedCostLKR === null || 
-                          booking.status !== 'Pending' ||
                           booking.paymentStatus === 'Paid'
                       }
                     >
