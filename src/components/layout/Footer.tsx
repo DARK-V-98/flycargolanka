@@ -37,7 +37,7 @@ export default function Footer() {
             <address className="mt-2 text-sm opacity-90 not-italic space-y-1">
               <div>Fly cargo lanka. No.05, avariwatta, katunayake</div>
               <div>Mobile: <a href="tel:+94704917636" className="hover:underline">+94 704 917 636</a></div>
-              <div>Landline: <a href="tel:+94112345678" className="hover:underline">+94 11 234 5678</a></div>
+              <div>Landline: <a href="tel:0112260310" className="hover:underline">0112260310</a></div>
             </address>
 
             <div className="pt-4">
