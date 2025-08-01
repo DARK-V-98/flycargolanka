@@ -45,7 +45,6 @@ export default function ShippingCalculatorForm() {
 
   const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
-  const [countrySearchTerm, setCountrySearchTerm] = useState('');
   
   const [availableWeights, setAvailableWeights] = useState<WeightRate[]>([]);
   const [loadingWeights, setLoadingWeights] = useState(false);
@@ -57,12 +56,6 @@ export default function ShippingCalculatorForm() {
       weight: '' as any,
     },
   });
-
-  const filteredCountries = countrySearchTerm
-    ? availableCountries.filter(c =>
-        c.name.toLowerCase().includes(countrySearchTerm.toLowerCase())
-      )
-    : availableCountries;
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -236,20 +229,12 @@ export default function ShippingCalculatorForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
-                <Input
-                  placeholder="Search to filter countries..."
-                  onChange={(e) => setCountrySearchTerm(e.target.value)}
-                  defaultValue={countrySearchTerm}
-                  disabled={loadingCountries || availableCountries.length === 0}
-                />
-              </div>
               <FormField
                 control={form.control}
                 name="destinationCountry"
                 render={({ field }) => (
                   <FormItem>
+                    <FormLabel className="flex items-center"><Globe className="mr-2 h-5 w-5 text-muted-foreground"/>Destination Country</FormLabel>
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
@@ -263,13 +248,13 @@ export default function ShippingCalculatorForm() {
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select from filtered list" />
+                          <SelectValue placeholder="Select a destination" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <ScrollArea className="h-72">
-                          {filteredCountries.length > 0 ? (
-                            filteredCountries.map((country) => (
+                          {availableCountries.length > 0 ? (
+                            availableCountries.map((country) => (
                               <SelectItem key={country.id} value={country.name}>
                                 {country.name}
                               </SelectItem>

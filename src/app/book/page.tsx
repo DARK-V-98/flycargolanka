@@ -149,7 +149,6 @@ export default function BookingPage() {
 
   const [availableCountries, setAvailableCountries] = useState<CountryRate[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
-  const [countrySearch, setCountrySearch] = useState('');
 
   const [availableWeights, setAvailableWeights] = useState<WeightRate[]>([]);
   const [loadingWeights, setLoadingWeights] = useState(false);
@@ -199,12 +198,6 @@ export default function BookingPage() {
   const watchedCourierPurpose = form.watch('courierPurpose');
 
   const showRateCalculationFields = !!(watchedShipmentType && watchedServiceType);
-  
-  const filteredCountries = countrySearch
-    ? availableCountries.filter(c =>
-        c.name.toLowerCase().includes(countrySearch.toLowerCase())
-      )
-    : availableCountries;
 
 
   useEffect(() => {
@@ -614,21 +607,12 @@ export default function BookingPage() {
                 <div className="space-y-4 pt-4 mt-4 border-t border-border/30">
                   <h3 className="text-lg font-semibold text-muted-foreground flex items-center"><DollarSign className="mr-2 h-5 w-5 text-primary" />Destination &amp; Weight for Rate Calculation</h3>
                   
-                  <div className="space-y-2">
-                    <FormLabel>Destination Country</FormLabel>
-                    <Input
-                      placeholder="Search to filter countries..."
-                      onChange={(e) => setCountrySearch(e.target.value)}
-                      defaultValue={countrySearch}
-                      disabled={loadingCountries || availableCountries.length === 0}
-                    />
-                  </div>
-                  
                   <FormField
                     control={form.control}
                     name="receiverCountry"
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>Destination Country</FormLabel>
                         <Select
                           onValueChange={(value) => {
                             field.onChange(value);
@@ -642,13 +626,13 @@ export default function BookingPage() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select from filtered list" />
+                              <SelectValue placeholder="Select a destination" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                              <ScrollArea className="h-72">
-                                {filteredCountries.length > 0 ? (
-                                    filteredCountries.map((country) => (
+                                {availableCountries.length > 0 ? (
+                                    availableCountries.map((country) => (
                                         <SelectItem key={country.id} value={country.name}>
                                             {country.name}
                                         </SelectItem>
